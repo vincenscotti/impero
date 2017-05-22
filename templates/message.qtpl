@@ -1,0 +1,9 @@
+{% import . "impero/model" %}
+
+{% func MessagePage(p *MessageData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+{%v p.Message %}
+
+{% endfunc %}

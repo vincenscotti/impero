@@ -1,0 +1,21 @@
+{% import . "impero/model" %}
+
+{% func HeaderPage(p *HeaderData) %}
+
+{% code
+cp := p.CurrentPlayer
+%}
+
+Ciao {%s cp.Name%}! Hai {%d cp.Budget %}$.
+
+<a href="/game/">Home</a>
+
+<a href="/game/messages/">Messaggi
+{% if p.NewMessages > 0 %}
+        ({%d p.NewMessages %})
+{% endif %} 
+</a>
+
+<a href="/game/logout/">Esci</a>
+
+{% endfunc %}

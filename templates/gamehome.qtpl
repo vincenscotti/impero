@@ -1,0 +1,7 @@
+{% import . "impero/model" %}
+
+{% func GameHomePage(p *GameHomeData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+{% endfunc %}

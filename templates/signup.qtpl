@@ -1,0 +1,15 @@
+{% func SignupPage(msg string) %}
+
+Registrati o <a href="/game/">accedi al gioco</a>.
+
+<p><b>{%s msg %}</b></p>
+
+<form action="/signup/" method="post">
+
+<input type="text" name="name" placeholder="Username">
+<input type="password" name="password" placeholder="Password">
+<input type="submit">
+
+</form>
+
+{% endfunc %}
