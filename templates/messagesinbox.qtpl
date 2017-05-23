@@ -1,0 +1,47 @@
+{% import . "impero/model" %}
+
+{% func MessagesInboxPage(p *MessagesInboxData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+Ricevuti
+
+<a href="/game/message/outbox/">Inviati</a>
+
+{% if len(p.Messages) > 0 %}
+<table>
+<tr>
+	<th>Da</th>
+	<th>Oggetto</th>
+	<th>Data</th>
+</tr>
+
+	{% for _, m := range p.Messages %}
+<tr>
+	<td><a href="/game/player/{%d int(m.From.ID) %}">{%s m.From.Name %}</a></td>
+
+	<td>
+	{% if !m.Read %}
+	<b>
+	{% endif %}
+	<a href="/game/message/{%d int(m.ID) %}">{%s m.Subject %}</a>
+	{% if !m.Read %}
+	</b>
+	{% endif %}
+	</td>
+
+	<td>{%s m.Date.Format("02-01 15:04:05") %}</td>
+</tr>
+	{% endfor %}
+
+</table>
+
+{% else %}
+
+<p>Nessun messaggio!</p>
+
+{% endif %}
+
+{%= FooterPage() %}
+
+{% endfunc %}

@@ -1,0 +1,98 @@
+{% import . "impero/model" %}
+
+{% func CompanyPage(p *CompanyData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+{% code
+cmp := p.Company
+%}
+
+<p><b>{%s cmp.Name %}</b></p>
+<p>Amministratore: {%s cmp.CEO.Name %}</p>
+<p>Capitale: {%d cmp.ShareCapital %}</p>
+<p>Entrate: {%d p.Income %}</p>
+<p>Azioni: {%d p.Shares %}</p>
+<p>Prossime elezioni alla fine del turno {%d cmp.CEOExpiration %}</p>
+
+<table>
+<tr>
+	<th colspan="2">Azionisti</th>
+</tr>
+<tr>
+	<th>Giocatore</th>
+	<th>Azioni</th>
+</tr>
+
+{% for _, sh := range p.SharesInfo %}
+<tr>
+	<td><a href="/game/player/{%d int(sh.Owner.ID) %}">{%s sh.Owner.Name %}</a></td>
+	<td>{%d sh.Shares %}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% if p.CanVote %}
+<p>Punti operazione: {%d cmp.ActionPoints %}</p>
+{% endif %}
+
+{% if cmp.CEO.ID == p.CurrentPlayer.ID %}
+<form action="/game/company/addshare/" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<input type="submit" value="Ricapitalizza">
+</form>
+
+<form action="/game/company/buy/" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<input type="number" name="x" placeholder="X">
+<input type="number" name="y" placeholder="Y">
+<input type="submit" value="Compra cella">
+</form>
+
+<form action="/game/company/invest/" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<input type="number" name="x" placeholder="X">
+<input type="number" name="y" placeholder="Y">
+<input type="submit" value="Migliora cella">
+</form>
+
+{% endif %}
+
+{% if p.CanVote %}
+
+<p><b>Presenta una proposta elettorale</b></p>
+<form action="/game/company/election/proposal/" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<textarea name="text" placeholder="Inserisci qui la tua proposta!"></textarea>
+<input type="checkbox" name="delete" value="1">
+<label for="delete">Ritira candidatura</label>
+<input type="submit" value="Conferma">
+</form>
+
+{% if len(p.ElectionProposals) > 0 %}
+
+<p><b>Proposte presentate</b></p>
+<form action="/game/company/election/vote/" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+
+{% for _, ep := range p.ElectionProposals %}
+{% if p.VotedFor == int(ep.Player.ID) %}
+<input type="radio" name="vote" value="{%d int(ep.Player.ID) %}" checked>
+{% else %}
+<input type="radio" name="vote" value="{%d int(ep.Player.ID) %}">
+{% endif %}
+<label for="vote">{%s ep.Player.Name %} - {%s ep.Text %}</label>
+<br>
+{% endfor %}
+
+<input type="submit" value="Vota">
+</form>
+
+{% endif %}
+
+{% endif %}
+
+{%= FooterPage() %}
+
+{% endfunc %}

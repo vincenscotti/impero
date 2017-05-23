@@ -1,0 +1,23 @@
+{% func ErrorPage(err error, req string, pID uint, stack string) %}
+
+<b>Oops! Si e' verificato un errore!</b>
+
+<P>Segnalalo all'amministratore, includendo il seguente messaggio:</p>
+
+<pre>
+pID = {%d int(pID) %}
+</pre>
+
+<pre>
+{%s err.Error() %}
+</pre>
+
+<pre>
+{%s req %}
+</pre>
+
+<pre>
+{%s stack %}
+</pre>
+
+{% endfunc %}

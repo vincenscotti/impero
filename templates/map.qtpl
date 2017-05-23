@@ -1,0 +1,147 @@
+{% import . "impero/model" %}
+{% import "fmt" %}
+
+{% func MapPage(p *MapData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+<table style="float: left;">
+<tr>
+<th>Y/X</th>
+{% for x := p.XMin; x <= p.XMax; x++ %}
+<th>{%d x %}</th>
+{% endfor %}
+</tr>
+
+{% for y := p.YMin; y <= p.YMax; y++ %}
+<tr>
+<th scope="horizontal">{%d y %}</th>
+	{% for x := p.XMin; x <= p.XMax; x++ %}
+
+		{% code
+		node := &Node{}
+		%}
+
+		{% for _, n := range p.Nodes %}
+			{% if n.X == x && n.Y == y %}
+				{% code
+				node = n
+				break
+				%}
+			{% endif %}
+		{% endfor %}
+
+		{% if node.ID != 0 %}
+			{% if node.Owner.ID != 0 %}
+				<td style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})" data-x="{%d x %}" data-y="{%d y %}">
+			{% else %}
+				<td title="({%d x %}, {%d y %})" data-x="{%d x %}" data-y="{%d y %}">
+			{% endif %}
+
+			{%d node.Yield %}
+		{% else %}
+		<td class="fakenode">
+		{% endif %}
+
+		{% for _, r := range p.Rentals %}
+			{% if r.Node.X == x && r.Node.Y == y %}
+				<div style="height: 10%; background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[r.Tenant.Name].Color) %}" title="{%s r.Tenant.Name %}"><br>
+				</div>
+			{% endif %}
+		{% endfor %}
+			</div>
+	</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+
+</table>
+
+<table>
+<tr>
+<th>Colore</th>
+<th>Nome</th>
+</tr>
+
+{% for _, c := range p.CompaniesByName %}
+<tr>
+	<td style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}"></td>
+	<td>
+	{% if c.CEOID == p.CurrentPlayer.ID %}
+		<b><a href="/game/company/{%d int(c.ID) %}">{%s c.Name %}</a></b>
+	{% else %}
+		<a href="/game/company/{%d int(c.ID) %}">{%s c.Name %}</a>
+	{% endif %}
+	</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<form action="/game/company/buy/" method="POST">
+
+<fieldset>
+<legend>Acquisto rapido</legend>
+
+Clicca sul nodo da acquistare e completa questo form.
+
+<select name="ID">
+{% for _, c := range p.CompaniesByName %}
+	{% if c.CEOID == p.CurrentPlayer.ID %}
+		<option value="{%d int(c.ID) %}">{%s c.Name %}</option>
+	{% endif %}
+{% endfor %}
+</select>
+
+<input type="number" name="X">
+<input type="number" name="Y">
+<input type="submit" value="Acquista">
+
+</fieldset>
+</form>
+
+<form action="/game/company/invest/" method="POST">
+
+<fieldset>
+<legend>Investimento rapido</legend>
+
+Clicca sul nodo sul quale investire e completa questo form.
+
+<select name="ID">
+{% for _, c := range p.CompaniesByName %}
+	{% if c.CEOID == p.CurrentPlayer.ID %}
+		<option value="{%d int(c.ID) %}">{%s c.Name %}</option>
+	{% endif %}
+{% endfor %}
+</select>
+
+<input type="number" name="X">
+<input type="number" name="Y">
+<input type="submit" value="Acquista">
+
+</fieldset>
+</form>
+
+<script language="javascript" type="text/javascript">
+var i;
+var tds;
+
+tds = document.getElementsByTagName("td");
+
+for (i = 0; i < tds.length; i++) {
+	tds[i].onclick = function(e) {
+console.log(e.target.dataset);
+		Xs = document.getElementsByName("X");
+		Ys = document.getElementsByName("Y");
+
+		Xs[0].value = e.target.dataset.x;
+		Xs[1].value = e.target.dataset.x;
+		Ys[0].value = e.target.dataset.y;
+		Ys[1].value = e.target.dataset.y;
+	}
+}
+</script>
+
+{%= FooterPage() %}
+
+{% endfunc %}

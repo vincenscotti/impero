@@ -1,0 +1,93 @@
+{% import . "impero/model" %}
+
+{% func AdminPage(p *AdminData) %}
+
+<b>{%s p.Message %}</b>
+
+<form action="/admin/options/" method="POST">
+<fieldset>
+<legend>Opzioni</legend>
+
+<label for="LastCheckpoint">Ultimo checkpoint</label>
+<input type="text" name="LastCheckpoint" value="{%s= p.Options.LastCheckpoint.Format("2006-01-02 15:04:05-07:00") %}">
+<br>
+
+<label for="LastTurnCalculated">Ultimo turno calcolato</label>
+<input type="text" name="LastTurnCalculated" value="{%s= p.Options.LastTurnCalculated.Format("2006-01-02 15:04:05-07:00") %}">
+<br>
+
+<label for="TurnDuration">Durata turno</label>
+<input type="number" min="0" name="TurnDuration" value="{%d p.Options.TurnDuration %}">
+<br>
+
+<label for="PlayerActionPoints">Punti azione per giocatore</label>
+<input type="number" min="0" name="PlayerActionPoints" value="{%d p.Options.PlayerActionPoints %}">
+<br>
+
+<label for="CompanyActionPoints">Punti azione per societa'</label>
+<input type="number" min="0" name="CompanyActionPoints" value="{%d p.Options.CompanyActionPoints %}">
+<br>
+
+<label for="PlayerBudget">Budget iniziale giocatori</label>
+<input type="number" min="0" name="PlayerBudget" value="{%d p.Options.PlayerBudget %}">
+<br>
+
+<label for="NewCompanyCost">Costo creazione societa'</label>
+<input type="number" min="0" name="NewCompanyCost" value="{%d p.Options.NewCompanyCost %}">
+<br>
+
+<label for="CostPerYield">Costo per unita' di rendimento</label>
+<input type="number" min="0" name="CostPerYield" value="{%d p.Options.CostPerYield %}">
+<br>
+
+<label for="CEODuration">Durata mandato amministratore</label>
+<input type="number" min="0" name="CEODuration" value="{%d p.Options.CEODuration %}">
+<br>
+
+<label for="Turn">Turno attuale</label>
+<input type="number" min="0" name="Turn" value="{%d p.Options.Turn %}">
+<br>
+
+<label for="Password">Password amministratore</label>
+<input type="password" name="Password" placeholder="Password">
+<br>
+
+<input type="submit" value="Aggiorna">
+
+</fieldset>
+</form>
+
+<form action="/admin/map/" method="POST">
+<fieldset>
+<legend>Aggiornamento rendimenti</legend>
+
+<label for="X0">X0</label>
+<input type="number" name="X0" placeholder="X0">
+<br>
+
+<label for="Y0">Y0</label>
+<input type="number" name="Y0" placeholder="Y0">
+<br>
+
+<label for="X1">X1</label>
+<input type="number" name="X1" placeholder="X1">
+<br>
+
+<label for="Y1">Y1</label>
+<input type="number" name="Y1" placeholder="Y1">
+<br>
+
+<input type="checkbox" name="Generate">
+<label for="Generate">Genera rettangolo</label>
+<br>
+
+<label for="Password">Password amministratore</label>
+<input type="password" name="Password" placeholder="Password">
+<br>
+
+<input type="submit" value="Aggiorna">
+
+</fieldset>
+</form>
+
+{% endfunc %}

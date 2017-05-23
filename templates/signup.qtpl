@@ -1,14 +1,20 @@
 {% func SignupPage(msg string) %}
 
-Registrati o <a href="/game/">accedi al gioco</a>.
-
+Registrati o <a href="/login/">accedi</a> al gioco.
+<a href="/help/">Regolamento</a>
 <p><b>{%s msg %}</b></p>
 
 <form action="/signup/" method="post">
 
-<input type="text" name="name" placeholder="Username">
-<input type="password" name="password" placeholder="Password">
-<input type="submit">
+<b>
+<span style="color: red">Attenzione!</span>
+Non utilizzare una password importante!<br>
+Il sistema non implementa ancora alcuna misura di protezione dei dati.<br>
+</b>
+
+<input type="text" name="name" placeholder="Username" required>
+<input type="password" name="password" placeholder="Password" required>
+<input type="submit" value="Registrati">
 
 </form>
 

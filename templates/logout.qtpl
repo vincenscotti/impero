@@ -1,5 +1,0 @@
-{% func LogoutPage() %}
-
-Ora puoi tornare alla <a href="/">home</a>.
-
-{% endfunc %}

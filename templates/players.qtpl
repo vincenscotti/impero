@@ -1,0 +1,28 @@
+{% import . "impero/model" %}
+
+{% func PlayersPage(p *PlayersData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+<table>
+<tr>
+	<th>#</th>
+	<th>Nome</th>
+	<th>Capitale (all'ultimo turno)</th>
+	<th>Profitto (all'ultimo turno)</th>
+</tr>
+
+{% for i, pl := range p.Players %}
+<tr>
+	<td>{%d i+1 %}</td>
+	<td><a href="/game/player/{%d int(pl.ID) %}">{%s pl.Name %}</a></td>
+	<td>{%d pl.LastBudget %}</td>
+	<td>{%d pl.LastIncome %}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+{%= FooterPage() %}
+
+{% endfunc %}

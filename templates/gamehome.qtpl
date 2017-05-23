@@ -4,4 +4,125 @@
 
 {%= HeaderPage(p.HeaderData) %}
 
+{% if len(p.IncomingTransfers) > 0 %}
+
+<table>
+<tr>
+	<th colspan="4">Trasferimenti in ingresso</th>
+</tr>
+<tr>
+	<th>Da</th>
+	<th>Ammontare</th>
+	<th>Rischio pena fiscale</th>
+	<th>Operazioni (rifiutare non costa pt azione)</th>
+</tr>
+
+{% for _, t := range p.IncomingTransfers %}
+<tr>
+<form action="/game/player/transfer/action/" method="POST">
+<input type="hidden" name="id" value="{%d int(t.ID) %}">
+	<td><a href="/game/player/{%d int(t.FromID) %}">{%s t.From.Name %}</a></td>
+	<td>{%d t.Amount %}</td>
+	<td>{%d t.Risk %}%</td>
+	<td>
+		<input type="submit" name="action" value="Accetta">
+		<input type="submit" name="action" value="Rifiuta">
+	</td>
+</form>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endif %}
+
+{% if len(p.SharesInfo) > 0 %}
+
+<table>
+<tr>
+	<th colspan="2">Societa' possedute</th>
+</tr>
+<tr>
+	<th>Nome</th>
+	<th>Azioni</th>
+</tr>
+
+{% for _, c := range p.SharesInfo %}
+<tr>
+	<td>
+	{% if c.Company.CEOID == p.CurrentPlayer.ID %}
+		<b><a href="/game/company/{%d int(c.CompanyID) %}">{%s c.Company.Name %}</a></b>
+	{% else %}
+		<a href="/game/company/{%d int(c.CompanyID) %}">{%s c.Company.Name %}</a>
+	{% endif %}
+	</td>
+	<td>{%d c.Shares %}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endif %}
+
+<form action="/game/company/new/" method="POST">
+Crea societa' (<b>costa {%d p.Options.NewCompanyCost %} punti operazione!</b>)
+<input type="text" name="name" placeholder="Nome" required>
+<input type="number" min="0" name="sharecapital" placeholder="Capitale iniziale" required>
+<input type="submit" value="Crea">
+</form>
+
+{% if len(p.ShareAuctions) > 0 %}
+
+<table>
+<tr>
+	<th colspan="6">Mercato</th>
+</tr>
+<tr>
+	<th>Societa'</th>
+	<th>Valore</th>
+	<th>Offerta piu' alta</th>
+	<th>Punto azione speso</th>
+	<th>Scadenza</th>
+	<th>Operazioni</th>
+</tr>
+
+{% for _, sa := range p.ShareAuctions %}
+<tr>
+
+<form action="/game/bid/share/" method="POST">
+<input type="hidden" name="auction" value="{%d int(sa.ID) %}">
+
+	<td><a href="/game/company/{%d int(sa.Share.CompanyID) %}">{%s sa.Share.Company.Name %}</a></td>
+
+	<td>{%d sa.HighestOffer %}</td>
+
+	<td>
+		{% if sa.HighestOfferPlayerID == p.HeaderData.CurrentPlayer.ID %}
+			X
+		{% endif %}
+	</td>
+
+	<td>
+		{% if len(sa.Participations) > 0 %}
+			X
+		{% endif %}
+	</td>
+
+	<td>{%v sa.Expiration.Format("02-01 15:04:05") %}</td>
+
+	<td>
+		<input type="number" min="{%d sa.HighestOffer + 1 %}" name="amount" value="{%d sa.HighestOffer + 1 %}">
+		<input type="submit" value="Punta">
+	</td>
+</form>
+
+</tr>
+{% endfor %}
+
+</table>
+
+{% endif %}
+
+{%= FooterPage() %}
+
 {% endfunc %}

@@ -1,0 +1,59 @@
+{% import . "impero/model" %}
+
+{% func ReportsPage(p *ReportsData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+<script>
+function selectall() {
+	var i;
+	var chks;
+
+	chks = document.getElementsByName("IDs");
+	for (i = 0; i < chks.length; i++) {
+		chks[i].checked = !chks[i].checked;
+	}
+}
+</script>
+
+{% if len(p.Reports) > 0 %}
+
+<form action="/game/report/delete/" method="POST">
+<input type="submit" value="Cancella">
+<table>
+<tr>
+	<th><a name="selectall" href="#" onclick="selectall()">Inverti selezione</a></th>
+	<th>Oggetto</th>
+	<th>Data</th>
+</tr>
+
+	{% for _, r := range p.Reports %}
+<tr>
+	<td><input type="checkbox" name="IDs" value="{%d int(r.ID) %}"></td>
+
+	<td>
+	{% if !r.Read %}
+	<b>
+	{% endif %}
+	<a href="/game/report/{%d int(r.ID) %}">{%s r.Subject %}</a>
+	{% if !r.Read %}
+	</b>
+	{% endif %}
+	</td>
+
+	<td>{%s r.Date.Format("02-01 15:04:05") %}</td>
+</tr>
+	{% endfor %}
+
+</table>
+</form>
+
+{% else %}
+
+<p>Nessun report!</p>
+
+{% endif %}
+
+{%= FooterPage() %}
+
+{% endfunc %}

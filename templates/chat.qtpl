@@ -1,0 +1,23 @@
+{% import . "impero/model" %}
+
+{% func ChatPage(p *ChatData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+<form action="/game/chat/post/" method="POST">
+<input type="text" name="content" placeholder="Scrivi messaggio" required>
+<input type="submit" value="Invia">
+</form>
+
+{% for _, m := range p.Messages %}
+
+<p>
+&lt;<a href="/game/player/{%d int(m.From.ID) %}">{%s m.From.Name %}</a> @ {%s m.Date.Format("02-01 15:04:05") %}&gt;
+{%s m.Content %}
+</p>
+
+{% endfor %}
+
+{%= FooterPage() %}
+
+{% endfunc %}

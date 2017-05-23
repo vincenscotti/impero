@@ -1,0 +1,28 @@
+{% import . "impero/model" %}
+
+{% func CompaniesPage(p *CompaniesData) %}
+
+{%= HeaderPage(p.HeaderData) %}
+
+<table>
+<tr>
+	<th>#</th>
+	<th>Nome</th>
+	<th>Capitale sociale</th>
+	<th>Rendimento (all'ultimo turno)</th>
+</tr>
+
+{% for i, cmp := range p.Companies %}
+<tr>
+	<td>{%d i+1 %}</i>
+	<td><a href="/game/company/{%d int(cmp.ID) %}">{%s cmp.Name %}</a></td>
+	<td>{%d cmp.ShareCapital %}</td>
+	<td>{%d cmp.LastIncome %}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+{%= FooterPage() %}
+
+{% endfunc %}

@@ -1,8 +1,11 @@
 #!/bin/sh
 
 while inotifywait -r -e modify --exclude "(.*.db.*|.*.swp|build)" .; do
-	cd templates/
-	qtc
-	cd ../
-	echo | nc -q 1 localhost 12345
+	killall impero
+	sleep 0.2
+	cd templates/ &&
+	qtc &&
+	cd ../ &&
+	go build &&
+		(./impero -pass="" -debug=false &)
 done
