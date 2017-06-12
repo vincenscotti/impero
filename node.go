@@ -31,17 +31,16 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	adjacentx := []int{params.X - 1, params.X, params.X + 1}
 	adjacenty := []int{params.Y - 1, params.Y, params.Y + 1}
 
+	// 'no record found' allowed
 	tx.Where(params.ID).First(cmp)
 
-	// 'no record found' allowed
 	if cmp.ID == 0 {
 		session.AddFlash("Societa' inesistente!", "error_")
 		goto out
 	}
 
-	if err := tx.Where("x = ? and y = ?", params.X, params.Y).First(node); err.Error != nil {
-		panic(err.Error)
-	}
+	// 'no record found' allowed
+	tx.Where("x = ? and y = ?", params.X, params.Y).First(node)
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
 		session.AddFlash("Permessi insufficienti!", "error_")
@@ -104,9 +103,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		r.NodeID = node.ID
 		r.TenantID = cmp.ID
 
-		if err := tx.Where(r).Find(r); err.Error != nil {
-			panic(err.Error)
-		}
+		// 'record not found' allowed
+		tx.Where(r).Find(r)
 
 		if node.OwnerID == cmp.ID || r.ID != 0 {
 			session.AddFlash("Cella gia' acquistata!", "error_")
