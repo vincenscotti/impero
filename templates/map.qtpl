@@ -19,19 +19,10 @@
 	{% for x := p.XMin; x <= p.XMax; x++ %}
 
 		{% code
-		node := &Node{}
+		node, ok := p.Nodes[Point{X: x, Y: y}]
 		%}
 
-		{% for _, n := range p.Nodes %}
-			{% if n.X == x && n.Y == y %}
-				{% code
-				node = n
-				break
-				%}
-			{% endif %}
-		{% endfor %}
-
-		{% if node.ID != 0 %}
+		{% if ok %}
 			{% if node.Owner.ID != 0 %}
 				<td style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})" data-x="{%d x %}" data-y="{%d y %}">
 			{% else %}

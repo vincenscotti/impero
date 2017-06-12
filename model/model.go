@@ -19,6 +19,11 @@ type Options struct {
 	Turn                int
 }
 
+type Point struct {
+	X int
+	Y int
+}
+
 type Node struct {
 	gorm.Model
 	X       int

@@ -95,7 +95,8 @@ type ShareholdersPerCompany struct {
 
 type MapData struct {
 	*HeaderData
-	Nodes           []*Node
+	//Nodes           []*Node
+	Nodes           map[Point]*Node
 	Rentals         []*Rental
 	CompaniesByName map[string]*Company
 	XMin            int

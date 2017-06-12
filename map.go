@@ -31,6 +31,7 @@ func GetMap(w http.ResponseWriter, r *http.Request) {
 	}{0, 0, 0, 0}
 
 	nodes := make([]*Node, 0)
+	mapnodes := make(map[Point]*Node)
 	rentals := make([]*Rental, 0)
 	companiesbyname := make(map[string]*Company)
 
@@ -39,6 +40,8 @@ func GetMap(w http.ResponseWriter, r *http.Request) {
 
 	colorn := 0
 	for _, n := range nodes {
+		mapnodes[Point{X: n.X, Y: n.Y}] = n
+
 		if n.Owner.ID != 0 {
 			_, ok := companiesbyname[n.Owner.Name]
 
@@ -52,7 +55,7 @@ func GetMap(w http.ResponseWriter, r *http.Request) {
 
 	tx.Raw("select min(x) as minx, min(y) as miny, max(x) as maxx, max(y) as maxy from nodes").Scan(&s)
 
-	page := MapData{HeaderData: header, Nodes: nodes, Rentals: rentals, CompaniesByName: companiesbyname, XMin: s.Minx, YMin: s.Miny, XMax: s.Maxx, YMax: s.Maxy}
+	page := MapData{HeaderData: header, Nodes: mapnodes, Rentals: rentals, CompaniesByName: companiesbyname, XMin: s.Minx, YMin: s.Miny, XMax: s.Maxx, YMax: s.Maxy}
 
 	renderHTML(w, 200, templates.MapPage(&page))
 }
