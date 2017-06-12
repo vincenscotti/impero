@@ -161,6 +161,6 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func GameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GlobalMiddleware(LoggerMiddleware(HeaderMiddleware(updateGameStatus(next)))).ServeHTTP(w, r)
+		GlobalMiddleware(LoggerMiddleware(updateGameStatus(HeaderMiddleware(next)))).ServeHTTP(w, r)
 	})
 }

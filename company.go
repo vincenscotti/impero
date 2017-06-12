@@ -92,8 +92,8 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	if cmp.ShareCapital < 0 {
-		session.AddFlash("Il budget deve essere almeno 0!", "error_")
+	if cmp.ShareCapital < 1 {
+		session.AddFlash("Il budget deve essere almeno 1!", "error_")
 		goto out
 	}
 
@@ -102,7 +102,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	if header.CurrentPlayer.ActionPoints < opt.PlayerActionPoints/2 {
+	if header.CurrentPlayer.ActionPoints < opt.NewCompanyCost {
 		session.AddFlash("Punti operazione insufficienti!", "error_")
 		goto out
 	}
@@ -150,6 +150,8 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		session.AddFlash("Societa' creata", "success_")
 	} else {
 		session.AddFlash("Nessuna cella disponibile!", "error_")
+
+		tx.Rollback()
 	}
 
 out:
