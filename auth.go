@@ -1,6 +1,7 @@
 package main
 
 import (
+	"golang.org/x/crypto/bcrypt"
 	. "impero/model"
 	"impero/templates"
 	"net/http"
@@ -30,6 +31,14 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		if cnt != 0 {
 			msg = "Username gia' in uso!"
 		} else {
+			pwdhash, err := bcrypt.GenerateFromPassword([]byte(p.Password), 10)
+
+			if err != nil {
+				panic(err)
+			}
+
+			p.Password = string(pwdhash)
+
 			if err := tx.Create(&p); err.Error != nil {
 				panic(err.Error)
 			}
@@ -75,13 +84,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if p.Name != "" || p.Password != "" {
-		if err := tx.Where(&p).FirstOrInit(&p, p); err.Error != nil {
+	if p.Name != "" && p.Password != "" {
+		hashedp := Player{}
+		hashedp.Name = p.Name
+
+		if err := tx.Where(&hashedp).FirstOrInit(&hashedp, hashedp); err.Error != nil {
 			panic(err.Error)
 		}
 
-		if p.ID != 0 {
-			session.Values["playerID"] = p.ID
+		if hashedp.ID != 0 &&
+			bcrypt.CompareHashAndPassword([]byte(hashedp.Password), []byte(p.Password)) == nil {
+			session.Values["playerID"] = hashedp.ID
 			session.Save(r, w)
 
 			url, err := router.Get("gamehome").URL()

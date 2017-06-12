@@ -6,12 +6,6 @@ Registrati o <a href="/login/">accedi</a> al gioco.
 
 <form action="/signup/" method="post">
 
-<b>
-<span style="color: red">Attenzione!</span>
-Non utilizzare una password importante!<br>
-Il sistema non implementa ancora alcuna misura di protezione dei dati.<br>
-</b>
-
 <input type="text" name="name" placeholder="Username" required>
 <input type="password" name="password" placeholder="Password" required>
 <input type="submit" value="Registrati">
