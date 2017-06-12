@@ -78,7 +78,6 @@ L’asta dura 12 ore dal momento in cui è creata.
 cella adiacente controllata da un’altra società: pagherà per intero il costo
 della cella ma il rendimento sarà per lei dimezzato.
 
-
 ### L'Amministratore delegato
 
 Le società hanno un amministratore delegato: il primo amministratore delegato è
@@ -92,6 +91,9 @@ elettorale) sia votare la proposta di un qualsiasi giocatore candidato.
 
 Ogni 4 turni i voti, pesati sulle azioni possedute, concorreranno a determinare
 il nuovo amministratore delegato.
+
+In caso di assenza di voti espressi, l'amministratore precedente restera' in carica.
+In caso di parita' tra gli sfidanti, verra' estratto uno di essi.
 
 ### Trasferimento fondi
 
@@ -111,9 +113,18 @@ Il rendimento di una società viene così suddiviso:
 
  - 30% del rendimento (arrotondato per difetto) viene convertito in capitale
    disponibile e versato nelle casse della società.
- - 70% del rendimento (arrotondato per eccesso) viene convertito in capitale
-   disponibile e diviso tra gli azionisti in ragione delle azioni possedute
-(ancora arrotondando per eccesso)
+ - il restante rendimento viene convertito in capitale disponibile e diviso tra
+   gli azionisti in ragione delle azioni possedute (ancora arrotondando per
+eccesso)
+
+Esempio:
+
+La societa' S1, alla fine del turno, ha un rendimento pari a 10.
+Gli azionisti sono due: A1 con 1 azione, e A2 con 2 azioni.
+Il capitale sociale della societa' aumentera' di 10 * 0.30 = 3$.
+I restanti 7$ si divideranno tra gli azionisti: essendo 3 le azioni totali,
+ognuna varra' 7 / 3 = 2.33 arrotondato a 3. L'azionista A1 guadagnera' quindi
+3$, A2 analogamente guadagnera' 6$.
 
 ### Nuovo turno e fine del gioco
 
