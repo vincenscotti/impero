@@ -134,12 +134,16 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 out:
 	session.Save(r, w)
 
-	url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
-	if err != nil {
-		panic(err)
-	}
+	if ref := r.Referer(); ref != "" {
+		http.Redirect(w, r, ref, http.StatusFound)
+	} else {
+		url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
+		if err != nil {
+			panic(err)
+		}
 
-	http.Redirect(w, r, url.Path, http.StatusFound)
+		http.Redirect(w, r, url.Path, http.StatusFound)
+	}
 }
 
 func InvestNode(w http.ResponseWriter, r *http.Request) {
@@ -211,10 +215,14 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 out:
 	session.Save(r, w)
 
-	url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
-	if err != nil {
-		panic(err)
-	}
+	if ref := r.Referer(); ref != "" {
+		http.Redirect(w, r, ref, http.StatusFound)
+	} else {
+		url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
+		if err != nil {
+			panic(err)
+		}
 
-	http.Redirect(w, r, url.Path, http.StatusFound)
+		http.Redirect(w, r, url.Path, http.StatusFound)
+	}
 }
