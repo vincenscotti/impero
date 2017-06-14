@@ -80,6 +80,8 @@ type CompanyData struct {
 	Company           *Company
 	Income            int
 	Shares            int
+	PureIncome        int
+	IncomePerShare    int
 	SharesInfo        []*ShareholdersPerCompany
 	ElectionProposals []*ElectionProposal
 	CanVote           bool

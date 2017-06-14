@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	. "impero/model"
 	"impero/templates"
+	"math"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -58,6 +59,10 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 		income += r.Node.Yield / 2
 	}
 
+	floatIncome := float64(income)
+	pureIncome := math.Floor(floatIncome * 0.3)
+	valuepershare := int(math.Ceil((floatIncome - pureIncome) / float64(shares)))
+
 	shareholders := make([]*ShareholdersPerCompany, 0)
 
 	tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("company_id = ? and owner_id != 0", cmp.ID).Group("owner_id").Order("owner_id asc").Find(&shareholders)
@@ -68,7 +73,7 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 
 	tx.Preload("Player").Where("company_id = ?", id).Find(&eps)
 
-	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, ElectionProposals: eps, CanVote: canvote >= 1, VotedFor: int(ev.ToID)}
+	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome), IncomePerShare: valuepershare, ElectionProposals: eps, CanVote: canvote >= 1, VotedFor: int(ev.ToID)}
 
 	renderHTML(w, 200, templates.CompanyPage(&page))
 }

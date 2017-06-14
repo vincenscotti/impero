@@ -11,8 +11,9 @@ cmp := p.Company
 <p><b>{%s cmp.Name %}</b></p>
 <p>Amministratore: {%s cmp.CEO.Name %}</p>
 <p>Capitale: {%d cmp.ShareCapital %}</p>
-<p>Entrate: {%d p.Income %}</p>
+<p>Entrate: {%d p.Income %} (di cui {%d p.PureIncome %} vanno alla societa' e {%d p.Income - p.PureIncome %} agli azionisti)</p>
 <p>Azioni: {%d p.Shares %}</p>
+<p>Guadagno azionisti per azione: {%d p.IncomePerShare %}</p>
 <p>Prossime elezioni alla fine del turno {%d cmp.CEOExpiration %}</p>
 
 <table>
