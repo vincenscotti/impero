@@ -215,3 +215,47 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, url.Path, http.StatusFound)
 }
+
+func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	session := GetSession(r)
+
+	msg := &Message{}
+	players := make([]*Player, 0)
+
+	if err := binder.Bind(msg, r); err != nil {
+		panic(err)
+	}
+
+	if msg.Content == "" {
+		session.AddFlash("Non puoi inviare un messaggio vuoto!", "message_")
+
+		goto out
+	}
+
+	msg.Date = time.Now()
+	msg.Read = false
+
+	tx.Find(&players)
+
+	for _, p := range players {
+		msg.ID = 0
+		msg.ToID = p.ID
+
+		if err := tx.Create(msg); err.Error != nil {
+			panic(err.Error)
+		}
+	}
+
+	session.AddFlash("Messaggio inviato!", "message_")
+
+out:
+	session.Save(r, w)
+
+	url, err := router.Get("admin").URL()
+	if err != nil {
+		panic(err)
+	}
+
+	http.Redirect(w, r, url.Path, http.StatusFound)
+}

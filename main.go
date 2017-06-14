@@ -402,6 +402,7 @@ func main() {
 	router.HandleFunc("/admin/", GlobalMiddleware(Admin)).Name("admin")
 	router.HandleFunc("/admin/options/", GlobalMiddleware(UpdateOptions)).Name("admin_options")
 	router.HandleFunc("/admin/map/", GlobalMiddleware(GenerateMap)).Name("admin_map")
+	router.HandleFunc("/admin/broadcast/", GlobalMiddleware(BroadcastMessage)).Name("admin_broadcast")
 
 	game := router.PathPrefix("/game").Subrouter()
 

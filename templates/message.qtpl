@@ -4,7 +4,12 @@
 
 {%= HeaderPage(p.HeaderData) %}
 
-<p>Da: <a href="/game/player/{%d int(p.Message.From.ID) %}">{%s p.Message.From.Name %}</a></p>
+{% if p.Message.From.Name != "" %}
+	<p>Da: <a href="/game/player/{%d int(p.Message.From.ID) %}">{%s p.Message.From.Name %}</a></p>
+{% else %}
+	<p>Da: admin</p>
+{% endif %}
+
 <p>A: <a href="/game/player/{%d int(p.Message.To.ID) %}">{%s p.Message.To.Name %}</a></p>
 <p>Oggetto: {%s p.Message.Subject %}</p>
 <p>Data: {%s p.Message.Date.Format("02-01 15:04:05") %}</p>

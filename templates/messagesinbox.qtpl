@@ -18,7 +18,11 @@ Ricevuti
 
 	{% for _, m := range p.Messages %}
 <tr>
-	<td><a href="/game/player/{%d int(m.From.ID) %}">{%s m.From.Name %}</a></td>
+	{% if m.From.Name != "" %}
+		<td><a href="/game/player/{%d int(m.From.ID) %}">{%s m.From.Name %}</a></td>
+	{% else %}
+		<td>admin</td>
+	{% endif %}
 
 	<td>
 	{% if !m.Read %}

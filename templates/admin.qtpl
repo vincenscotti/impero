@@ -90,4 +90,26 @@
 </fieldset>
 </form>
 
+<form action="/admin/broadcast/" method="POST">
+<fieldset>
+<legend>Messaggio broadcast</legend>
+
+<label for="Subject">Oggetto</label>
+<input type="text" name="Subject" placeholder="Oggetto" required>
+<br>
+
+<label for="Content">Messaggio</label>
+<textarea name="Content" placeholder="Messaggio" required>
+</textarea>
+<br>
+
+<label for="Password">Password amministratore</label>
+<input type="password" name="Password" placeholder="Password">
+<br>
+
+<input type="submit" value="Invia">
+
+</fieldset>
+</form>
+
 {% endfunc %}
