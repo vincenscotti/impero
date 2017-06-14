@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	. "impero/model"
 	"impero/templates"
 	"math"
@@ -41,10 +42,6 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(templates.AdminPage(p)))
 }
 
-type PasswordForm struct {
-	Password string
-}
-
 type formTime time.Time
 
 func (this *formTime) UnmarshalText(text []byte) error {
@@ -54,13 +51,29 @@ func (this *formTime) UnmarshalText(text []byte) error {
 	return err
 }
 
+type PasswordForm struct {
+	Password string
+}
+
+func validateAdmin(r *http.Request) (err error) {
+	p := PasswordForm{}
+
+	if err := binder.Bind(&p, r); err != nil {
+		panic(err)
+	}
+
+	if p.Password != AdminPass {
+		err = errors.New("Password errata!")
+	}
+
+	return
+}
+
 func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	session := GetSession(r)
 
 	newopt := &Options{}
-
-	p := PasswordForm{}
 
 	otheropts := struct {
 		LastCheckpoint     formTime
@@ -68,21 +81,17 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 		Action             string
 	}{}
 
-	if err := binder.Bind(newopt, r); err != nil {
-		panic(err)
+	if err := validateAdmin(r); err != nil {
+		session.AddFlash(err.Error(), "message_")
+		goto out
 	}
 
-	if err := binder.Bind(&p, r); err != nil {
+	if err := binder.Bind(newopt, r); err != nil {
 		panic(err)
 	}
 
 	if err := binder.Bind(&otheropts, r); err != nil {
 		panic(err)
-	}
-
-	if p.Password != AdminPass {
-		session.AddFlash("Password errata", "message_")
-		goto out
 	}
 
 	newopt.ID = 1
@@ -110,8 +119,6 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	session := GetSession(r)
 
-	p := PasswordForm{}
-
 	params := struct {
 		X0       int
 		Y0       int
@@ -120,16 +127,12 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 		Generate bool
 	}{}
 
-	if err := binder.Bind(&p, r); err != nil {
-		panic(err)
-	}
-
 	if err := binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	if p.Password != AdminPass {
-		session.AddFlash("Password errata", "message_")
+	if err := validateAdmin(r); err != nil {
+		session.AddFlash(err.Error(), "message_")
 	} else {
 		xsize := params.X1 - params.X0
 		ysize := params.Y1 - params.Y0
@@ -223,31 +226,35 @@ func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
 	msg := &Message{}
 	players := make([]*Player, 0)
 
-	if err := binder.Bind(msg, r); err != nil {
-		panic(err)
-	}
-
-	if msg.Content == "" {
-		session.AddFlash("Non puoi inviare un messaggio vuoto!", "message_")
-
-		goto out
-	}
-
-	msg.Date = time.Now()
-	msg.Read = false
-
-	tx.Find(&players)
-
-	for _, p := range players {
-		msg.ID = 0
-		msg.ToID = p.ID
-
-		if err := tx.Create(msg); err.Error != nil {
-			panic(err.Error)
+	if err := validateAdmin(r); err != nil {
+		session.AddFlash(err.Error(), "message_")
+	} else {
+		if err := binder.Bind(msg, r); err != nil {
+			panic(err)
 		}
-	}
 
-	session.AddFlash("Messaggio inviato!", "message_")
+		if msg.Content == "" {
+			session.AddFlash("Non puoi inviare un messaggio vuoto!", "message_")
+
+			goto out
+		}
+
+		msg.Date = time.Now()
+		msg.Read = false
+
+		tx.Find(&players)
+
+		for _, p := range players {
+			msg.ID = 0
+			msg.ToID = p.ID
+
+			if err := tx.Create(msg); err.Error != nil {
+				panic(err.Error)
+			}
+		}
+
+		session.AddFlash("Messaggio inviato!", "message_")
+	}
 
 out:
 	session.Save(r, w)
