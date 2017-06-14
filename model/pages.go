@@ -93,9 +93,14 @@ type ShareholdersPerCompany struct {
 	VotedFor uint
 }
 
+type ElectionResults struct {
+	ShareHolderID uint
+	Shares        int
+	Votes         int
+}
+
 type MapData struct {
 	*HeaderData
-	//Nodes           []*Node
 	Nodes           map[Point]*Node
 	Rentals         []*Rental
 	CompaniesByName map[string]*Company

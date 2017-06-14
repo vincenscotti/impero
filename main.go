@@ -235,23 +235,38 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 						if len(shareholders) > 1 {
 							logger.Println("elections for ", cmp.Name)
 
-							votesreceived := make(map[uint]int)
+							votesreceived := make(map[uint]ElectionResults)
 							maxvotes := 0
+							maxshares := 0
 							totalvotes := 0
+
+							for _, sh := range shareholders {
+								vr := votesreceived[sh.OwnerID]
+								vr.ShareHolderID = sh.OwnerID
+								vr.Shares = sh.Shares
+							}
+
 							for _, sh := range shareholders {
 								if sh.VotedFor != 0 {
 									logger.Println(sh.OwnerID, "voted for", sh.VotedFor, "with", sh.Shares, "shares")
-									votesreceived[sh.VotedFor] += sh.Shares
+									voted := votesreceived[sh.VotedFor]
+									voted.Votes += sh.Shares
+									votesreceived[sh.VotedFor] = voted
 									totalvotes += sh.Shares
 
-									if votesreceived[sh.VotedFor] > maxvotes {
-										maxvotes = votesreceived[sh.VotedFor]
+									if voted.Votes > maxvotes {
+										maxvotes = voted.Votes
+									}
+
+									if voted.Shares > maxshares {
+										maxshares = voted.Shares
 									}
 								}
 							}
 
 							logger.Println("Votes received: ", votesreceived)
 							logger.Println("Max votes: ", maxvotes)
+							logger.Println("Max shares: ", maxshares)
 
 							winners := make([]uint, 0, len(shareholders))
 
@@ -259,7 +274,7 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 								winners = append(winners, cmp.CEOID)
 							} else {
 								for k, v := range votesreceived {
-									if v == maxvotes {
+									if v.Votes == maxvotes && v.Shares == maxshares {
 										winners = append(winners, k)
 									}
 								}
