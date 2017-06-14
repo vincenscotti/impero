@@ -194,18 +194,18 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	if cmp.ShareCapital < 1 {
+	if cmp.ShareCapital < 2 {
 		session.AddFlash("Capitale insufficiente!", "error_")
 		goto out
 	}
 
 	cmp.ActionPoints -= 1
-	cmp.ShareCapital -= 1
+	cmp.ShareCapital -= 2
 	if err := tx.Save(cmp); err.Error != nil {
 		panic(err.Error)
 	}
 
-	node.Yield += 1
+	node.Yield += 2
 	if err := tx.Save(node); err.Error != nil {
 		panic(err.Error)
 	}

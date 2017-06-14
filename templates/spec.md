@@ -65,8 +65,8 @@ seguenti azioni:
  -	Acquistare un nuovo nodo: è possibile acquistare il controllo di un nuovo
  	nodo al costo di 1 punto operazione societario e di un valore monetario pari
 al doppio del rendimento della nuova cella
- -	Migliorare un nodo esistente: è possibile innalzare di 1 il livello di rendimento di un nodo posseduto, 
-al costo di 1$ e 1 punto operazione
+ -	Migliorare un nodo esistente: è possibile innalzare di 2 il livello di rendimento di un nodo posseduto, 
+al costo di 2$ e 1 punto operazione
  -	Ricapitalizzare: quando una società è a corto di denaro, può
  	ricapitalizzare mettendo all’asta una nuova azione. I giocatori
 concorreranno ad acquistarla e il ricavato verrà trasferito nel conto della
