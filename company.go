@@ -17,6 +17,26 @@ func Companies(w http.ResponseWriter, r *http.Request) {
 
 	companies := make([]*Company, 0)
 	tx.Order("share_capital desc").Find(&companies)
+
+	for _, cmp := range companies {
+		nodes := make([]*Node, 0)
+		rentals := make([]*Rental, 0)
+
+		tx.Where("owner_id = ?", cmp.ID).Find(&nodes)
+
+		income := 0
+		for _, n := range nodes {
+			income += n.Yield
+		}
+
+		tx.Preload("Node").Where("tenant_id = ?", cmp.ID).Find(&rentals)
+		for _, r := range rentals {
+			income += r.Node.Yield / 2
+		}
+
+		cmp.Income = income
+	}
+
 	page := CompaniesData{HeaderData: header, Companies: companies}
 
 	renderHTML(w, 200, templates.CompaniesPage(&page))

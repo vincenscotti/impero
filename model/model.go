@@ -81,7 +81,7 @@ type Company struct {
 	CEOID         uint
 	CEOExpiration int
 	ActionPoints  int
-	LastIncome    int
+	Income        int   `gorm:"-"`
 	Color         int32 `gorm:"-"`
 }
 

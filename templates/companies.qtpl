@@ -9,7 +9,7 @@
 	<th>#</th>
 	<th>Nome</th>
 	<th>Capitale sociale</th>
-	<th>Rendimento (all'ultimo turno)</th>
+	<th>Rendimento</th>
 </tr>
 
 {% for i, cmp := range p.Companies %}
@@ -17,7 +17,7 @@
 	<td>{%d i+1 %}</i>
 	<td><a href="/game/company/{%d int(cmp.ID) %}">{%s cmp.Name %}</a></td>
 	<td>{%d cmp.ShareCapital %}</td>
-	<td>{%d cmp.LastIncome %}</td>
+	<td>{%d cmp.Income %}</td>
 </tr>
 {% endfor %}
 

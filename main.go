@@ -227,7 +227,6 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					}
 
 					cmp.ShareCapital += int(pureIncome)
-					cmp.LastIncome = income
 
 					// company elections
 
