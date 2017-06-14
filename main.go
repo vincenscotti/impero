@@ -270,11 +270,18 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 
 							winners := make([]uint, 0, len(shareholders))
 
-							if maxvotes == 0 {
+							oldceowinner := false
+
+							if len(votesreceived) == 0 {
 								winners = append(winners, cmp.CEOID)
+								oldceowinner = true
 							} else {
 								for k, v := range votesreceived {
 									if v.Votes == maxvotes && v.Shares == maxshares {
+										if v.ShareHolderID == cmp.CEOID {
+											oldceowinner = true
+										}
+
 										winners = append(winners, k)
 									}
 								}
@@ -282,7 +289,9 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 
 							logger.Println("Winners: ", winners)
 
-							cmp.CEOID = winners[rand.Intn(len(winners))]
+							if !oldceowinner {
+								cmp.CEOID = winners[rand.Intn(len(winners))]
+							}
 
 							logger.Println("Winner: ", cmp.CEOID)
 

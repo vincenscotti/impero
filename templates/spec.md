@@ -89,11 +89,12 @@ Nella schermata di una società di cui si è azionisti è possibile in qualsiasi
 momento sia inserire la propria candidatura (insieme a una breve proposta
 elettorale) sia votare la proposta di un qualsiasi giocatore candidato.
 
-Ogni 4 turni i voti, pesati sulle azioni possedute, concorreranno a determinare
-il nuovo amministratore delegato.
+Il voto espresso pesa quanto il numero di azioni che si possiede.
 
-In caso di assenza di voti espressi, l'amministratore precedente restera' in carica.
-In caso di parita' tra gli sfidanti, verra' estratto uno di essi.
+Ogni 4 turni viene eletto amministratore l'azionista che ha ricevuto il maggior numero di voti.
+A parita' di voti verra' eletto quello tra i vincitori che possiede il maggior numero di azioni.
+A parita' di voti e azioni, se il vecchio amministratore e' tra i vincitori, restera' in carica,
+altrimenti il nuovo amministratore sara' scelto casualmente.
 
 ### Trasferimento fondi
 
