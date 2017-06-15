@@ -31,7 +31,7 @@
 cp := p.CurrentPlayer
 %}
 
-<h2 style="display: inline;">Impero</h2> <h4 style="display: inline;">v0.0.1</h4>
+<img src="/static/logo.jpg" alt="Impero">
 
 <p>
 Ciao {%s cp.Name%}!

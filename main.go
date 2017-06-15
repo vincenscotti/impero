@@ -416,6 +416,8 @@ func main() {
 
 	binder = NewGorillaBinder()
 
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
 	router.HandleFunc("/", GlobalMiddleware(Login)).Name("home")
 	router.HandleFunc("/signup/", GlobalMiddleware(Signup)).Name("signup")
 	router.HandleFunc("/login/", GlobalMiddleware(Login)).Name("login")
