@@ -35,14 +35,19 @@ func GetMap(w http.ResponseWriter, r *http.Request) {
 	rentals := make([]*Rental, 0)
 	companiesbyname := make(map[string]*Company)
 
-	tx.Preload("Owner").Find(&nodes)
+	tx.Find(&nodes)
 	tx.Preload("Node").Preload("Tenant").Find(&rentals)
 
 	colorn := 0
 	for _, n := range nodes {
 		mapnodes[Point{X: n.X, Y: n.Y}] = n
 
-		if n.Owner.ID != 0 {
+		// cannot Preload, cause of sqlite bug
+		if n.OwnerID != 0 {
+			if n.Owner.ID == 0 {
+				tx.Where(n.OwnerID).Find(&n.Owner)
+			}
+
 			_, ok := companiesbyname[n.Owner.Name]
 
 			if !ok {
