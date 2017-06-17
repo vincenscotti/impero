@@ -195,13 +195,12 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					}
 
 					shareholders := make([]*ShareholdersPerCompany, 0)
-					vote := &ElectionVote{}
 
 					shares := 0
 					tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("company_id = ?", cmp.ID).Where("owner_id != 0").Group("owner_id").Find(&shareholders)
 
 					for _, sh := range shareholders {
-						vote.ID = 0
+						vote := &ElectionVote{}
 						shares += sh.Shares
 						tx.Where("company_id = ? and from_id = ?", cmp.ID, sh.OwnerID).Find(vote)
 						sh.VotedFor = vote.ToID
@@ -243,9 +242,14 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 								vr := votesreceived[sh.OwnerID]
 								vr.ShareHolderID = sh.OwnerID
 								vr.Shares = sh.Shares
+								votesreceived[sh.OwnerID] = vr
 							}
 
 							for _, sh := range shareholders {
+								// every shareholder should be in votesreceived
+								o := votesreceived[sh.OwnerID]
+								votesreceived[sh.OwnerID] = o
+
 								if sh.VotedFor != 0 {
 									logger.Println(sh.OwnerID, "voted for", sh.VotedFor, "with", sh.Shares, "shares")
 									voted := votesreceived[sh.VotedFor]
@@ -256,10 +260,12 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 									if voted.Votes > maxvotes {
 										maxvotes = voted.Votes
 									}
+								}
+							}
 
-									if voted.Shares > maxshares {
-										maxshares = voted.Shares
-									}
+							for _, v := range votesreceived {
+								if v.Votes == maxvotes && v.Shares > maxshares {
+									maxshares = v.Shares
 								}
 							}
 
