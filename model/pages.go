@@ -83,21 +83,13 @@ type CompanyData struct {
 	PureIncome     int
 	IncomePerShare int
 	SharesInfo     []*ShareholdersPerCompany
-	CanVote        bool
-	VotedFor       int
+	IsShareHolder  bool
 }
 
 type ShareholdersPerCompany struct {
-	Owner    Player
-	OwnerID  uint
-	Shares   int
-	VotedFor uint
-}
-
-type ElectionResults struct {
-	ShareHolderID uint
-	Shares        int
-	Votes         int
+	Owner   Player
+	OwnerID uint
+	Shares  int
 }
 
 type MapData struct {

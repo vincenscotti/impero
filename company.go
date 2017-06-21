@@ -56,11 +56,11 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 	nodes := make([]*Node, 0)
 	rentals := make([]*Rental, 0)
 	shares := 0
-	canvote := 0
+	myshares := 0
 
 	tx.Preload("CEO").Where(id).First(cmp)
 	tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares)
-	tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", header.CurrentPlayer.ID).Count(&canvote)
+	tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", header.CurrentPlayer.ID).Count(&myshares)
 
 	// calcolo income
 
@@ -88,7 +88,7 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 		tx.Table("players").Where(sh.OwnerID).Find(&sh.Owner)
 	}
 
-	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome), IncomePerShare: valuepershare, CanVote: canvote >= 1}
+	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome), IncomePerShare: valuepershare, IsShareHolder: myshares >= 1}
 
 	renderHTML(w, 200, templates.CompanyPage(&page))
 }

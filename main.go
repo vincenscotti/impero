@@ -91,11 +91,6 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	renderHTML(w, 200, templates.GameHomePage(page))
 }
 
-type votesPerOwner struct {
-	OwnerID uint
-	Votes   int
-}
-
 func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tx := GetTx(r)

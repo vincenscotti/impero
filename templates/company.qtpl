@@ -33,7 +33,7 @@ cmp := p.Company
 
 </table>
 
-{% if p.CanVote %}
+{% if p.IsShareHolder %}
 <p>Punti operazione: {%d cmp.ActionPoints %}</p>
 {% endif %}
 
@@ -55,19 +55,6 @@ cmp := p.Company
 <input type="number" name="x" placeholder="X">
 <input type="number" name="y" placeholder="Y">
 <input type="submit" value="Migliora cella">
-</form>
-
-{% endif %}
-
-{% if p.CanVote %}
-
-<p><b>Presenta una proposta elettorale</b></p>
-<form action="/game/company/election/proposal/" method="POST">
-<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-<textarea name="text" placeholder="Inserisci qui la tua proposta!"></textarea>
-<input type="checkbox" name="delete" value="1">
-<label for="delete">Ritira candidatura</label>
-<input type="submit" value="Conferma">
 </form>
 
 {% endif %}
