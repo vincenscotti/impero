@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/jinzhu/gorm"
 	. "impero/model"
 	"impero/templates"
 	"math"
@@ -17,7 +18,11 @@ func Players(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	players := make([]*Player, 0)
-	tx.Order("last_budget desc").Find(&players)
+
+	if err := tx.Order("last_budget desc").Find(&players).Error; err != nil {
+		panic(err)
+	}
+
 	page := &PlayersData{HeaderData: header, Players: players}
 
 	renderHTML(w, 200, templates.PlayersPage(page))
@@ -26,6 +31,7 @@ func Players(w http.ResponseWriter, r *http.Request) {
 func GetPlayer(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	session := GetSession(r)
 
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -34,11 +40,17 @@ func GetPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := &Player{}
-	if err := tx.Where(id).First(p); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Where(id).First(p).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if p.ID == 0 {
+		session.AddFlash("Giocatore inesistente!", "error_")
 	}
 
 	page := PlayerData{HeaderData: header, Player: p}
+
+	session.Save(r, w)
 
 	renderHTML(w, 200, templates.PlayerPage(&page))
 }
@@ -69,12 +81,12 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 
 	header.CurrentPlayer.Budget -= p.Amount
 	header.CurrentPlayer.ActionPoints -= 1
-	if err := tx.Save(header.CurrentPlayer); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
+		panic(err)
 	}
 
-	if err := tx.Create(p); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Create(p).Error; err != nil {
+		panic(err)
 	}
 
 	session.AddFlash("Proposta inviata!", "success_")
@@ -107,8 +119,8 @@ func TransferAction(w http.ResponseWriter, r *http.Request) {
 
 	randint := rand.Intn(100) + 1
 
-	if err := tx.Where(params.ID).Preload("From").Preload("To").Find(p); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Where(params.ID).Preload("From").Preload("To").Find(p).Error; err != nil {
+		panic(err)
 	}
 
 	if r.FormValue("action") == "Accetta" {
@@ -136,20 +148,20 @@ func TransferAction(w http.ResponseWriter, r *http.Request) {
 			session.AddFlash("Trasferimento completato!", "success_")
 		}
 
-		if err := tx.Save(header.CurrentPlayer); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(header.CurrentPlayer).Error; err != nil {
+			panic(err)
 		}
 	} else {
 		p.From.Budget += p.Amount
-		if err := tx.Save(p.From); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(p.From).Error; err != nil {
+			panic(err)
 		}
 
 		session.AddFlash("Trasferimento rifiutato!", "success_")
 	}
 
-	if err := tx.Delete(p); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Delete(p).Error; err != nil {
+		panic(err)
 	}
 
 out:

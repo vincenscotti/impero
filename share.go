@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/context"
+	"github.com/jinzhu/gorm"
 	. "impero/model"
 	"net/http"
 	"time"
@@ -26,8 +27,14 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 
 	share := &Share{}
 	cmp := &Company{}
-	if err := tx.Where(params.ID).First(cmp); err.Error != nil {
-		panic(err.Error)
+
+	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if cmp.ID == 0 {
+		session.AddFlash("Societa' inesistente!", "error_")
+		goto out
 	}
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
@@ -41,17 +48,17 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmp.ActionPoints -= 1
-	if err := tx.Save(cmp); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(cmp).Error; err != nil {
+		panic(err)
 	}
 
 	share.CompanyID = uint(cmp.ID)
-	if err := tx.Create(share); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Create(share).Error; err != nil {
+		panic(err)
 	}
 
-	if err := tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: 0, Expiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)}); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: 0, Expiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
+		panic(err)
 	}
 
 	session.AddFlash("Asta creata", "success_")
@@ -87,11 +94,17 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	participation.ShareAuctionID = params.Auction
 	participation.PlayerID = header.CurrentPlayer.ID
 
-	// 'record not found' is allowed here
-	tx.Where(participation).Find(participation)
+	if err := tx.Where(participation).Find(participation).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
 
-	if err := tx.Where(params.Auction).First(shareauction); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Where(params.Auction).First(shareauction).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if shareauction.ID == 0 {
+		session.AddFlash("L'asta non esiste!", "error_")
+		goto out
 	}
 
 	if shareauction.HighestOffer >= params.Amount {
@@ -114,32 +127,34 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 			goto out
 		}
 
-		if err := tx.Save(participation); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(participation).Error; err != nil {
+			panic(err)
 		}
 
 		header.CurrentPlayer.ActionPoints -= 1
 	}
 
 	header.CurrentPlayer.Budget -= params.Amount
-	if err := tx.Save(header.CurrentPlayer); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
+		panic(err)
 	}
 
-	// 'record not found' is allowed here
-	tx.Where(shareauction.HighestOfferPlayerID).Find(oldp)
+	if err := tx.Where(shareauction.HighestOfferPlayerID).Find(oldp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
 
 	if oldp.ID != 0 {
 		oldp.Budget += shareauction.HighestOffer
-		if err := tx.Save(oldp); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(oldp).Error; err != nil {
+			panic(err)
 		}
 	}
 
 	shareauction.HighestOffer = params.Amount
 	shareauction.HighestOfferPlayerID = header.CurrentPlayer.ID
-	if err := tx.Save(shareauction); err.Error != nil {
-		panic(err.Error)
+
+	if err := tx.Save(shareauction).Error; err != nil {
+		panic(err)
 	}
 
 	session.AddFlash("Puntata inserita", "success_")

@@ -15,8 +15,8 @@ func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	msgs := make([]*Message, 0)
-	if err := tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Order("`Date` desc", true).Find(&msgs); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Order("`Date` desc", true).Find(&msgs).Error; err != nil {
+		panic(err)
 	}
 
 	page := MessagesInboxData{HeaderData: header, Messages: msgs}
@@ -29,8 +29,8 @@ func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	msgs := make([]*Message, 0)
-	if err := tx.Where("`from_id` = ?", header.CurrentPlayer.ID).Preload("To").Order("`Date` desc", true).Find(&msgs); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Where("`from_id` = ?", header.CurrentPlayer.ID).Preload("To").Order("`Date` desc", true).Find(&msgs).Error; err != nil {
+		panic(err)
 	}
 
 	page := MessagesOutboxData{HeaderData: header, Messages: msgs}
@@ -50,8 +50,8 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := &Message{}
-	if err := tx.Preload("From").Preload("To").Where(id).First(msg); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Preload("From").Preload("To").Where(id).First(msg).Error; err != nil {
+		panic(err)
 	}
 
 	if msg.FromID != header.CurrentPlayer.ID && msg.ToID != header.CurrentPlayer.ID {
@@ -67,8 +67,8 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, url.Path, http.StatusFound)
 	} else if msg.ToID == header.CurrentPlayer.ID {
 		msg.Read = true
-		if err := tx.Save(&msg); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(&msg).Error; err != nil {
+			panic(err)
 		}
 	}
 
@@ -104,8 +104,8 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 	msg.Date = time.Now()
 	msg.Read = false
 
-	if err := tx.Create(msg); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Create(msg).Error; err != nil {
+		panic(err)
 	}
 
 	session.AddFlash("Messaggio inviato!", "success_")

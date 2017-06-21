@@ -43,7 +43,9 @@ func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}()
 
 		opt := &Options{}
-		tx.First(opt)
+		if err := tx.First(opt).Error; err != nil {
+			panic(err)
+		}
 
 		session, err := store.Get(r, "sess")
 
@@ -121,26 +123,30 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if err := tx.Where(pID).First(p); err.Error != nil {
-			url, err := router.Get("logout").URL()
-			if err != nil {
+		if err := tx.Where(pID).First(p).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				url, err := router.Get("logout").URL()
+				if err != nil {
+					panic(err)
+				}
+
+				http.Redirect(w, r, url.Path, http.StatusFound)
+				return
+			} else {
 				panic(err)
 			}
-
-			http.Redirect(w, r, url.Path, http.StatusFound)
-			return
 		}
 
 		msgs := 0
 		if err := tx.Model(&Message{}).Where("`read` = ? and `to_id` = ?", false,
-			p.ID).Count(&msgs); err.Error != nil {
-			panic(err.Error)
+			p.ID).Count(&msgs).Error; err != nil {
+			panic(err)
 		}
 
 		reports := 0
 		if err := tx.Model(&Report{}).Where("`read` = ? and `player_id` = ?", false,
-			p.ID).Count(&reports); err.Error != nil {
-			panic(err.Error)
+			p.ID).Count(&reports).Error; err != nil {
+			panic(err)
 		}
 
 		header := &HeaderData{CurrentPlayer: p, NewMessages: msgs, NewReports: reports, Now: now, Options: opt}

@@ -98,8 +98,8 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	newopt.LastCheckpoint = time.Time(otheropts.LastCheckpoint)
 	newopt.LastTurnCalculated = time.Time(otheropts.LastTurnCalculated)
 
-	if err := tx.Save(newopt); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(newopt).Error; err != nil {
+		panic(err)
 	}
 
 	session.AddFlash("Opzioni aggiornate", "message_")
@@ -154,8 +154,8 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			if err := tx.Where("`x` > ? and `x` < ? and `y` > ? and `y` < ?",
-				params.X0, params.X1, params.Y0, params.Y1).Find(&sortednodes); err.Error != nil {
-				panic(err.Error)
+				params.X0, params.X1, params.Y0, params.Y1).Find(&sortednodes).Error; err != nil {
+				panic(err)
 			}
 		}
 
@@ -182,8 +182,8 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 
 			for nodesperyield > 0 {
 				shufflednodes[0].Yield = yield
-				if err := tx.Save(shufflednodes[0]); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Save(shufflednodes[0]).Error; err != nil {
+					panic(err)
 				}
 
 				shufflednodes = shufflednodes[1:]
@@ -196,8 +196,8 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 
 		for remainingnodes > 0 {
 			shufflednodes[0].Yield = maxyield
-			if err := tx.Save(shufflednodes[0]); err.Error != nil {
-				panic(err.Error)
+			if err := tx.Save(shufflednodes[0]).Error; err != nil {
+				panic(err)
 			}
 
 			shufflednodes = shufflednodes[1:]
@@ -242,14 +242,16 @@ func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
 		msg.Date = time.Now()
 		msg.Read = false
 
-		tx.Find(&players)
+		if err := tx.Find(&players).Error; err != nil {
+			panic(err)
+		}
 
 		for _, p := range players {
 			msg.ID = 0
 			msg.ToID = p.ID
 
-			if err := tx.Create(msg); err.Error != nil {
-				panic(err.Error)
+			if err := tx.Create(msg).Error; err != nil {
+				panic(err)
 			}
 		}
 

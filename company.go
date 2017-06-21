@@ -16,20 +16,27 @@ func Companies(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	companies := make([]*Company, 0)
-	tx.Order("share_capital desc").Find(&companies)
+	if err := tx.Order("share_capital desc").Find(&companies).Error; err != nil {
+		panic(err)
+	}
 
 	for _, cmp := range companies {
 		nodes := make([]*Node, 0)
 		rentals := make([]*Rental, 0)
 
-		tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes)
+		if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
+			panic(err)
+		}
 
 		income := 0
 		for _, n := range nodes {
 			income += n.Yield
 		}
 
-		tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals)
+		if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals); err != nil {
+			panic(err)
+		}
+
 		for _, r := range rentals {
 			income += r.Node.Yield / 2
 		}
@@ -58,20 +65,32 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 	shares := 0
 	myshares := 0
 
-	tx.Preload("CEO").Where(id).First(cmp)
-	tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares)
-	tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", header.CurrentPlayer.ID).Count(&myshares)
+	if err := tx.Preload("CEO").Where(id).First(cmp).Error; err != nil {
+		panic(err)
+	}
+	if err := tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares).Error; err != nil {
+		panic(err)
+	}
+	if err := tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", header.CurrentPlayer.ID).Count(&myshares).Error; err != nil {
+		panic(err)
+	}
 
 	// calcolo income
 
 	income := 0
 
-	tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes)
+	if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
+		panic(err)
+	}
+
 	for _, n := range nodes {
 		income += n.Yield
 	}
 
-	tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals)
+	if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
+		panic(err)
+	}
+
 	for _, r := range rentals {
 		income += r.Node.Yield / 2
 	}
@@ -82,10 +101,14 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 
 	shareholders := make([]*ShareholdersPerCompany, 0)
 
-	tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ? and `owner_id` != 0", cmp.ID).Group("`owner_id`").Order("`owner_id` asc").Find(&shareholders)
+	if err := tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ? and `owner_id` != 0", cmp.ID).Group("`owner_id`").Order("`owner_id` asc").Find(&shareholders).Error; err != nil {
+		panic(err)
+	}
 
 	for _, sh := range shareholders {
-		tx.Table("players").Where(sh.OwnerID).Find(&sh.Owner)
+		if err := tx.Table("players").Where(sh.OwnerID).Find(&sh.Owner).Error; err != nil {
+			panic(err)
+		}
 	}
 
 	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome), IncomePerShare: valuepershare, IsShareHolder: myshares >= 1}
@@ -127,8 +150,8 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	if err := tx.Model(cmp).Where(&Company{Name: cmp.Name}).Count(&cnt); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Model(cmp).Where(&Company{Name: cmp.Name}).Count(&cnt).Error; err != nil {
+		panic(err)
 	}
 
 	if cnt != 0 {
@@ -141,20 +164,20 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	cmp.CEO = *header.CurrentPlayer
 	cmp.ActionPoints = opt.CompanyActionPoints
 
-	if err := tx.Create(cmp); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Create(cmp).Error; err != nil {
+		panic(err)
 	}
 
-	if err := tx.Save(header.CurrentPlayer); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
+		panic(err)
 	}
 
-	if err := tx.Create(&Share{CompanyID: cmp.ID, OwnerID: header.CurrentPlayer.ID}); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Create(&Share{CompanyID: cmp.ID, OwnerID: header.CurrentPlayer.ID}).Error; err != nil {
+		panic(err)
 	}
 
-	if err := tx.Where("`owner_id` = 0 and `yield` = 1").Find(&freenodes); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Where("`owner_id` = 0 and `yield` = 1").Find(&freenodes).Error; err != nil {
+		panic(err)
 	}
 
 	if len(freenodes) != 0 {
@@ -162,8 +185,8 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 
 		node.OwnerID = cmp.ID
 
-		if err := tx.Save(node); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(node).Error; err != nil {
+			panic(err)
 		}
 
 		session.AddFlash("Societa' creata", "success_")

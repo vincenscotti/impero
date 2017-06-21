@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/context"
+	"github.com/jinzhu/gorm"
 	. "impero/model"
 	"net/http"
 )
@@ -31,16 +32,23 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	adjacentx := []int{params.X - 1, params.X, params.X + 1}
 	adjacenty := []int{params.Y - 1, params.Y, params.Y + 1}
 
-	// 'no record found' allowed
-	tx.Where(params.ID).First(cmp)
+	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
 
 	if cmp.ID == 0 {
 		session.AddFlash("Societa' inesistente!", "error_")
 		goto out
 	}
 
-	// 'no record found' allowed
-	tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node)
+	if err := tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if node.ID == 0 {
+		session.AddFlash("Cella inesistente!", "error_")
+		goto out
+	}
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
 		session.AddFlash("Permessi insufficienti!", "error_")
@@ -68,7 +76,9 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// select all adjacent nodes
-	tx.Model(&Node{}).Where("`x` in (?) and `y` in (?)", adjacentx, adjacenty).Find(&adjacentnodes)
+	if err := tx.Model(&Node{}).Where("`x` in (?) and `y` in (?)", adjacentx, adjacenty).Find(&adjacentnodes).Error; err != nil {
+		panic(err)
+	}
 
 	for _, n := range adjacentnodes {
 		if n.OwnerID == cmp.ID {
@@ -82,8 +92,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		// nop, search for rentals then
 
 		for _, n := range adjacentnodes {
-			if err := tx.Model(&Rental{}).Where("`node_id` = ? and `tenant_id` = ?", n.ID, cmp.ID).Count(&adjacentrentals); err.Error != nil {
-				panic(err.Error)
+			if err := tx.Model(&Rental{}).Where("`node_id` = ? and `tenant_id` = ?", n.ID, cmp.ID).Count(&adjacentrentals).Error; err != nil {
+				panic(err)
 			}
 
 			if adjacentrentals > 0 {
@@ -104,29 +114,31 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		r.TenantID = cmp.ID
 
 		// 'record not found' allowed
-		tx.Where(r).Find(r)
+		if err := tx.Where(r).Find(r).Error; err != nil && err != gorm.ErrRecordNotFound {
+			panic(err)
+		}
 
 		if node.OwnerID == cmp.ID || r.ID != 0 {
 			session.AddFlash("Cella gia' acquistata!", "error_")
 
 			goto out
 		} else {
-			if err := tx.Create(r); err.Error != nil {
-				panic(err.Error)
+			if err := tx.Create(r).Error; err != nil {
+				panic(err)
 			}
 		}
 	} else {
 		node.OwnerID = cmp.ID
 
-		if err := tx.Save(node); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(node).Error; err != nil {
+			panic(err)
 		}
 	}
 
 	cmp.ActionPoints -= 1
 	cmp.ShareCapital -= node.Yield * 2
-	if err := tx.Save(cmp); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(cmp).Error; err != nil {
+		panic(err)
 	}
 
 	session.AddFlash("Cella acquistata!", "success_")
@@ -164,15 +176,18 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 	node := &Node{}
 	cmp := &Company{}
 
-	tx.Where(params.ID).First(cmp)
+	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
 
-	// 'no record found' allowed
 	if cmp.ID == 0 {
 		session.AddFlash("Societa' inesistente!", "error_")
 		goto out
 	}
 
-	tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node)
+	if err := tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
 		session.AddFlash("Permessi insufficienti!", "error_")
@@ -201,13 +216,13 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 
 	cmp.ActionPoints -= 1
 	cmp.ShareCapital -= 2
-	if err := tx.Save(cmp); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(cmp).Error; err != nil {
+		panic(err)
 	}
 
 	node.Yield += 2
-	if err := tx.Save(node); err.Error != nil {
-		panic(err.Error)
+	if err := tx.Save(node).Error; err != nil {
+		panic(err)
 	}
 
 	session.AddFlash("Cella migliorata!", "success_")

@@ -66,24 +66,40 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 
 	shares := make([]*SharesPerPlayer, 0)
 
-	tx.Table("shares").Select("DISTINCT company_id, count(company_id) as shares").Where("`owner_id` = ?", header.CurrentPlayer.ID).Group("`company_id`").Order("`shares` desc").Find(&shares)
+	if err := tx.Table("shares").Select("DISTINCT company_id, count(company_id) as shares").Where("`owner_id` = ?", header.CurrentPlayer.ID).Group("`company_id`").Order("`shares` desc").Find(&shares).Error; err != nil {
+		panic(err)
+	}
 
 	for _, sh := range shares {
-		tx.Where(sh.CompanyID).Find(&sh.Company)
+		if err := tx.Where(sh.CompanyID).Find(&sh.Company).Error; err != nil {
+			panic(err)
+		}
 	}
 
 	shareauctions := make([]*ShareAuction, 0)
-	tx.Model(&ShareAuction{}).Preload("Share").Find(&shareauctions)
+
+	if err := tx.Model(&ShareAuction{}).Preload("Share").Find(&shareauctions).Error; err != nil {
+		panic(err)
+	}
 
 	for _, sa := range shareauctions {
-		tx.Where(sa.Share.CompanyID).Find(&sa.Share.Company)
+		if err := tx.Where(sa.Share.CompanyID).Find(&sa.Share.Company).Error; err != nil {
+			panic(err)
+		}
+
 		participations := make([]*ShareAuctionParticipation, 0)
-		tx.Where("`share_auction_id` = ? and `player_id` = ?", sa.ID, header.CurrentPlayer.ID).Find(&participations)
+		if err := tx.Where("`share_auction_id` = ? and `player_id` = ?", sa.ID, header.CurrentPlayer.ID).Find(&participations).Error; err != nil {
+			panic(err)
+		}
+
 		sa.Participations = participations
 	}
 
 	incomingtransfers := make([]*TransferProposal, 0)
-	tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Find(&incomingtransfers)
+
+	if err := tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Find(&incomingtransfers).Error; err != nil {
+		panic(err)
+	}
 
 	page := &GameHomeData{HeaderData: header, SharesInfo: shares,
 		ShareAuctions: shareauctions, IncomingTransfers: incomingtransfers}
@@ -111,24 +127,26 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 			logger.Println("doing everything between ", lastcheckpoint, " and ", endturn)
 
 			shareauctions := make([]*ShareAuction, 0)
-			tx.Preload("Share").Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions)
+			if err := tx.Preload("Share").Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions).Error; err != nil {
+				panic(err)
+			}
 
 			for _, sa := range shareauctions {
 				sa.Share.OwnerID = sa.HighestOfferPlayerID
 
 				cmp := &Company{}
-				if err := tx.Where(sa.Share.CompanyID).First(cmp); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Where(sa.Share.CompanyID).First(cmp).Error; err != nil {
+					panic(err)
 				}
 
 				cmp.ShareCapital += sa.HighestOffer
 
-				if err := tx.Save(sa.Share); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Save(sa.Share).Error; err != nil {
+					panic(err)
 				}
 
-				if err := tx.Save(cmp); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Save(cmp).Error; err != nil {
+					panic(err)
 				}
 
 				participations := make([]*ShareAuctionParticipation, 0)
@@ -140,16 +158,16 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					subject := "Asta " + cmp.Name
 					content := fmt.Sprintf("L'asta a cui hai partecipato per la societa' "+cmp.Name+" e' stata vinta da "+sa.HighestOfferPlayer.Name+" per %d$.", sa.HighestOffer)
 					report := &Report{PlayerID: participant.PlayerID, Date: sa.Expiration, Subject: subject, Content: content}
-					if err := tx.Create(report); err.Error != nil {
-						panic(err.Error)
+					if err := tx.Create(report).Error; err != nil {
+						panic(err)
 					}
 				}
 
-				if err := tx.Delete(sa); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Delete(sa).Error; err != nil {
+					panic(err)
 				}
-				if err := tx.Delete(&ShareAuctionParticipation{}, "share_auction_id = ?", sa.ID); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Delete(&ShareAuctionParticipation{}, "share_auction_id = ?", sa.ID).Error; err != nil {
+					panic(err)
 				}
 			}
 
@@ -169,21 +187,26 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 				}
 				dividendsPerPlayer := make(map[uint][]Dividend)
 
-				if err := tx.Model(&Player{}).Update("last_income", 0); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Model(&Player{}).Update("last_income", 0).Error; err != nil {
+					panic(err)
 				}
 
 				for _, cmp := range cmps {
 					// company income
 
-					tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes)
+					if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
+						panic(err)
+					}
 
 					income := 0
 					for _, n := range nodes {
 						income += n.Yield
 					}
 
-					tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals)
+					if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
+						panic(err)
+					}
+
 					for _, r := range rentals {
 						income += r.Node.Yield / 2
 					}
@@ -191,7 +214,10 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					shareholders := make([]*ShareholdersPerCompany, 0)
 
 					shares := 0
-					tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Group("owner_id").Find(&shareholders)
+
+					if err := tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Group("owner_id").Find(&shareholders).Error; err != nil {
+						panic(err)
+					}
 
 					for _, sh := range shareholders {
 						shares += sh.Shares
@@ -203,14 +229,17 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 
 					for _, sh := range shareholders {
 						shareholder.ID = 0
-						tx.Where(sh.OwnerID).Find(shareholder)
+
+						if err := tx.Where(sh.OwnerID).Find(shareholder).Error; err != nil {
+							panic(err)
+						}
 
 						shareholder.Budget += valuepershare * sh.Shares
 						shareholder.LastIncome += valuepershare * sh.Shares
 						shareholder.LastBudget = shareholder.Budget
 
-						if err := tx.Save(shareholder); err.Error != nil {
-							panic(err.Error)
+						if err := tx.Save(shareholder).Error; err != nil {
+							panic(err)
 						}
 
 						dividendsPerPlayer[sh.OwnerID] = append(dividendsPerPlayer[sh.OwnerID], Dividend{cmp, valuepershare * sh.Shares})
@@ -218,8 +247,8 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 
 					cmp.ShareCapital += int(pureIncome)
 
-					if err := tx.Save(cmp); err.Error != nil {
-						panic(err.Error)
+					if err := tx.Save(cmp).Error; err != nil {
+						panic(err)
 					}
 
 				}
@@ -238,17 +267,17 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 
 					report := &Report{PlayerID: shid, Date: endturn, Subject: subject, Content: content}
 
-					if err := tx.Create(report); err.Error != nil {
-						panic(err.Error)
+					if err := tx.Create(report).Error; err != nil {
+						panic(err)
 					}
 				}
 
-				if err := tx.Model(&Player{}).Update("action_points", opt.PlayerActionPoints); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Model(&Player{}).Update("action_points", opt.PlayerActionPoints).Error; err != nil {
+					panic(err)
 				}
 
-				if err := tx.Model(&Company{}).Update("action_points", opt.CompanyActionPoints); err.Error != nil {
-					panic(err.Error)
+				if err := tx.Model(&Company{}).Update("action_points", opt.CompanyActionPoints).Error; err != nil {
+					panic(err)
 				}
 
 				opt.LastTurnCalculated = endturn
@@ -260,8 +289,8 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		opt.LastCheckpoint = now
-		if err := tx.Save(opt); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Save(opt).Error; err != nil {
+			panic(err)
 		}
 
 		next.ServeHTTP(w, r)

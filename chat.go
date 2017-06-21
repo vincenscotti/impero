@@ -13,7 +13,11 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	msgs := make([]*ChatMessage, 0)
-	tx.Preload("From").Order("Date desc", true).Find(&msgs)
+
+	if err := tx.Preload("From").Order("Date desc", true).Find(&msgs).Error; err != nil {
+		panic(err)
+	}
+
 	page := ChatData{HeaderData: header, Messages: msgs}
 
 	renderHTML(w, 200, templates.ChatPage(&page))
@@ -38,8 +42,8 @@ func PostChat(w http.ResponseWriter, r *http.Request) {
 		msg.FromID = header.CurrentPlayer.ID
 		msg.Date = time.Now()
 
-		if err := tx.Create(msg); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Create(msg).Error; err != nil {
+			panic(err)
 		}
 
 	}

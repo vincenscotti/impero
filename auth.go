@@ -24,8 +24,8 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		p.ActionPoints = opt.PlayerActionPoints
 
 		cnt := 0
-		if err := tx.Model(p).Where(&Player{Name: p.Name}).Count(&cnt); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Model(p).Where(&Player{Name: p.Name}).Count(&cnt).Error; err != nil {
+			panic(err)
 		}
 
 		if cnt != 0 {
@@ -39,8 +39,8 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 			p.Password = string(pwdhash)
 
-			if err := tx.Create(&p); err.Error != nil {
-				panic(err.Error)
+			if err := tx.Create(&p).Error; err != nil {
+				panic(err)
 			}
 
 			session.Values["playerID"] = p.ID
@@ -88,8 +88,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		hashedp := Player{}
 		hashedp.Name = p.Name
 
-		if err := tx.Where(&hashedp).FirstOrInit(&hashedp, hashedp); err.Error != nil {
-			panic(err.Error)
+		if err := tx.Where(&hashedp).FirstOrInit(&hashedp, hashedp).Error; err != nil {
+			panic(err)
 		}
 
 		if hashedp.ID != 0 &&
