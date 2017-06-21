@@ -75,14 +75,13 @@ type ChatMessage struct {
 
 type Company struct {
 	gorm.Model
-	Name          string
-	ShareCapital  int
-	CEO           Player
-	CEOID         uint
-	CEOExpiration int
-	ActionPoints  int
-	Income        int   `gorm:"-"`
-	Color         int32 `gorm:"-"`
+	Name         string
+	ShareCapital int
+	CEO          Player
+	CEOID        uint
+	ActionPoints int
+	Income       int   `gorm:"-"`
+	Color        int32 `gorm:"-"`
 }
 
 type Share struct {
@@ -91,25 +90,6 @@ type Share struct {
 	CompanyID uint
 	Owner     Player
 	OwnerID   uint
-}
-
-type ElectionProposal struct {
-	gorm.Model
-	Company   Company
-	CompanyID uint
-	Player    Player
-	PlayerID  uint
-	Text      string `gorm:"type:text"`
-}
-
-type ElectionVote struct {
-	gorm.Model
-	Company   Company
-	CompanyID uint
-	From      Player
-	FromID    uint
-	To        Player
-	ToID      uint
 }
 
 type ShareAuction struct {

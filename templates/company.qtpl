@@ -14,7 +14,6 @@ cmp := p.Company
 <p>Entrate: {%d p.Income %} (di cui {%d p.PureIncome %} vanno alla societa' e {%d p.Income - p.PureIncome %} agli azionisti)</p>
 <p>Azioni: {%d p.Shares %}</p>
 <p>Guadagno azionisti per azione: {%d p.IncomePerShare %}</p>
-<p>Prossime elezioni alla fine del turno {%d cmp.CEOExpiration %}</p>
 
 <table>
 <tr>
@@ -70,27 +69,6 @@ cmp := p.Company
 <label for="delete">Ritira candidatura</label>
 <input type="submit" value="Conferma">
 </form>
-
-{% if len(p.ElectionProposals) > 0 %}
-
-<p><b>Proposte presentate</b></p>
-<form action="/game/company/election/vote/" method="POST">
-<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-
-{% for _, ep := range p.ElectionProposals %}
-{% if p.VotedFor == int(ep.Player.ID) %}
-<input type="radio" name="vote" value="{%d int(ep.Player.ID) %}" checked>
-{% else %}
-<input type="radio" name="vote" value="{%d int(ep.Player.ID) %}">
-{% endif %}
-<label for="vote">{%s ep.Player.Name %} - {%s ep.Text %}</label>
-<br>
-{% endfor %}
-
-<input type="submit" value="Vota">
-</form>
-
-{% endif %}
 
 {% endif %}
 

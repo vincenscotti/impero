@@ -7,5 +7,5 @@ while inotifywait -r -e modify --exclude "(.*.db.*|.*.swp|build)" .; do
 	qtc &&
 	cd ../ &&
 	go build &&
-		(./impero -pass="" -debug=false &)
+		(./impero -pass="" -debug=true &)
 done

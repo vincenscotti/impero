@@ -56,14 +56,11 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 	nodes := make([]*Node, 0)
 	rentals := make([]*Rental, 0)
 	shares := 0
-	eps := make([]*ElectionProposal, 0)
 	canvote := 0
-	ev := &ElectionVote{}
 
 	tx.Preload("CEO").Where(id).First(cmp)
 	tx.Model(&Share{}).Where("company_id = ?", id).Where("owner_id != 0").Count(&shares)
 	tx.Model(&Share{}).Where("company_id = ?", id).Where("owner_id = ?", header.CurrentPlayer.ID).Count(&canvote)
-	tx.Where("company_id = ? and from_id = ?", id, header.CurrentPlayer.ID).Find(ev)
 
 	// calcolo income
 
@@ -91,9 +88,7 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 		tx.Table("players").Where(sh.OwnerID).Find(&sh.Owner)
 	}
 
-	tx.Preload("Player").Where("company_id = ?", id).Find(&eps)
-
-	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome), IncomePerShare: valuepershare, ElectionProposals: eps, CanVote: canvote >= 1, VotedFor: int(ev.ToID)}
+	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome), IncomePerShare: valuepershare, CanVote: canvote >= 1}
 
 	renderHTML(w, 200, templates.CompanyPage(&page))
 }
@@ -144,7 +139,6 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	header.CurrentPlayer.Budget -= cmp.ShareCapital
 	header.CurrentPlayer.ActionPoints -= opt.NewCompanyCost
 	cmp.CEO = *header.CurrentPlayer
-	cmp.CEOExpiration = opt.Turn + opt.CEODuration
 	cmp.ActionPoints = opt.CompanyActionPoints
 
 	if err := tx.Create(cmp); err.Error != nil {

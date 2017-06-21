@@ -8,12 +8,11 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	. "impero/model"
 	"impero/templates"
 	"log"
 	"math"
-	"math/rand"
 	"net/http"
 	"net/http/httputil"
 	_ "net/http/pprof"
@@ -200,10 +199,7 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("company_id = ?", cmp.ID).Where("owner_id != 0").Group("owner_id").Find(&shareholders)
 
 					for _, sh := range shareholders {
-						vote := &ElectionVote{}
 						shares += sh.Shares
-						tx.Where("company_id = ? and from_id = ?", cmp.ID, sh.OwnerID).Find(vote)
-						sh.VotedFor = vote.ToID
 					}
 
 					floatIncome := float64(income)
@@ -226,101 +222,6 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					}
 
 					cmp.ShareCapital += int(pureIncome)
-
-					// company elections
-
-					if cmp.CEOExpiration == opt.Turn {
-						if len(shareholders) > 1 {
-							logger.Println("elections for ", cmp.Name)
-
-							votesreceived := make(map[uint]ElectionResults)
-							maxvotes := 0
-							maxshares := 0
-							totalvotes := 0
-
-							for _, sh := range shareholders {
-								vr := votesreceived[sh.OwnerID]
-								vr.ShareHolderID = sh.OwnerID
-								vr.Shares = sh.Shares
-								votesreceived[sh.OwnerID] = vr
-							}
-
-							for _, sh := range shareholders {
-								// every shareholder should be in votesreceived
-								o := votesreceived[sh.OwnerID]
-								votesreceived[sh.OwnerID] = o
-
-								if sh.VotedFor != 0 {
-									logger.Println(sh.OwnerID, "voted for", sh.VotedFor, "with", sh.Shares, "shares")
-									voted := votesreceived[sh.VotedFor]
-									voted.Votes += sh.Shares
-									votesreceived[sh.VotedFor] = voted
-									totalvotes += sh.Shares
-
-									if voted.Votes > maxvotes {
-										maxvotes = voted.Votes
-									}
-								}
-							}
-
-							for _, v := range votesreceived {
-								if v.Votes == maxvotes && v.Shares > maxshares {
-									maxshares = v.Shares
-								}
-							}
-
-							logger.Println("Votes received: ", votesreceived)
-							logger.Println("Max votes: ", maxvotes)
-							logger.Println("Max shares: ", maxshares)
-
-							winners := make([]uint, 0, len(shareholders))
-
-							oldceowinner := false
-
-							if len(votesreceived) == 0 {
-								winners = append(winners, cmp.CEOID)
-								oldceowinner = true
-							} else {
-								for k, v := range votesreceived {
-									if v.Votes == maxvotes && v.Shares == maxshares {
-										if v.ShareHolderID == cmp.CEOID {
-											oldceowinner = true
-										}
-
-										winners = append(winners, k)
-									}
-								}
-							}
-
-							logger.Println("Winners: ", winners)
-
-							if !oldceowinner {
-								cmp.CEOID = winners[rand.Intn(len(winners))]
-							}
-
-							logger.Println("Winner: ", cmp.CEOID)
-
-							winner := &Player{}
-							tx.Where(cmp.CEOID).Find(winner)
-
-							// report generation
-							for _, sh := range shareholders {
-								subject := "Elezioni societa' " + cmp.Name
-								content := fmt.Sprintf("Le elezioni per la societa' "+cmp.Name+" sono state vinte da "+winner.Name+" con %d voti/azione su %d.", maxvotes, totalvotes)
-								report := &Report{PlayerID: sh.OwnerID, Date: endturn, Subject: subject, Content: content}
-								if err := tx.Create(report); err.Error != nil {
-									panic(err.Error)
-								}
-
-							}
-						}
-
-						if err := tx.Delete(&ElectionVote{}, "company_id = ?", cmp.ID); err.Error != nil {
-							panic(err.Error)
-						}
-
-						cmp.CEOExpiration += opt.CEODuration
-					}
 
 					if err := tx.Save(cmp); err.Error != nil {
 						panic(err.Error)
@@ -396,7 +297,7 @@ func main() {
 
 	var err error
 
-	db, err = gorm.Open("sqlite3", "impero.db?_busy_timeout=10000")
+	db, err = gorm.Open("mysql", "root:root@/testdb?parseTime=true&loc=Local")
 	if err != nil {
 		panic(err)
 	}
@@ -416,9 +317,9 @@ func main() {
 	}
 
 	db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
-		&ChatMessage{}, &Company{}, &Share{}, &ElectionProposal{},
-		&ElectionVote{}, &Rental{}, &ShareAuction{},
-		&ShareAuctionParticipation{}, &TransferProposal{})
+		&ChatMessage{}, &Company{}, &Share{}, &Rental{},
+		&ShareAuction{}, &ShareAuctionParticipation{},
+		&TransferProposal{})
 
 	binder = NewGorillaBinder()
 
@@ -462,8 +363,6 @@ func main() {
 	game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
-	game.HandleFunc("/company/election/proposal/", GameMiddleware(NewElectionProposal)).Name("company_election_proposal")
-	game.HandleFunc("/company/election/vote/", GameMiddleware(SetElectionVote)).Name("company_election_vote")
 
 	game.HandleFunc("/bid/share/", GameMiddleware(BidShare)).Name("bid_share")
 	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
