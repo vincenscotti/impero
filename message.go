@@ -15,7 +15,7 @@ func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	msgs := make([]*Message, 0)
-	if err := tx.Where("to_id = ?", header.CurrentPlayer.ID).Preload("From").Order("Date desc", true).Find(&msgs); err.Error != nil {
+	if err := tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Order("`Date` desc", true).Find(&msgs); err.Error != nil {
 		panic(err.Error)
 	}
 
@@ -29,7 +29,7 @@ func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	msgs := make([]*Message, 0)
-	if err := tx.Where("from_id = ?", header.CurrentPlayer.ID).Preload("To").Order("Date desc", true).Find(&msgs); err.Error != nil {
+	if err := tx.Where("`from_id` = ?", header.CurrentPlayer.ID).Preload("To").Order("`Date` desc", true).Find(&msgs); err.Error != nil {
 		panic(err.Error)
 	}
 

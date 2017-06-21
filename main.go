@@ -66,7 +66,7 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 
 	shares := make([]*SharesPerPlayer, 0)
 
-	tx.Table("shares").Select("DISTINCT company_id, count(company_id) as shares").Where("owner_id = ?", header.CurrentPlayer.ID).Group("company_id").Order("shares desc").Find(&shares)
+	tx.Table("shares").Select("DISTINCT company_id, count(company_id) as shares").Where("`owner_id` = ?", header.CurrentPlayer.ID).Group("`company_id`").Order("`shares` desc").Find(&shares)
 
 	for _, sh := range shares {
 		tx.Where(sh.CompanyID).Find(&sh.Company)
@@ -78,12 +78,12 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	for _, sa := range shareauctions {
 		tx.Where(sa.Share.CompanyID).Find(&sa.Share.Company)
 		participations := make([]*ShareAuctionParticipation, 0)
-		tx.Where("share_auction_id = ? and player_id = ?", sa.ID, header.CurrentPlayer.ID).Find(&participations)
+		tx.Where("`share_auction_id` = ? and `player_id` = ?", sa.ID, header.CurrentPlayer.ID).Find(&participations)
 		sa.Participations = participations
 	}
 
 	incomingtransfers := make([]*TransferProposal, 0)
-	tx.Where("to_id = ?", header.CurrentPlayer.ID).Preload("From").Find(&incomingtransfers)
+	tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Find(&incomingtransfers)
 
 	page := &GameHomeData{HeaderData: header, SharesInfo: shares,
 		ShareAuctions: shareauctions, IncomingTransfers: incomingtransfers}
@@ -116,7 +116,7 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 			logger.Println("doing everything between ", lastcheckpoint, " and ", endturn)
 
 			shareauctions := make([]*ShareAuction, 0)
-			tx.Preload("Share").Preload("HighestOfferPlayer").Where("expiration < ?", endturn).Find(&shareauctions)
+			tx.Preload("Share").Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions)
 
 			for _, sa := range shareauctions {
 				sa.Share.OwnerID = sa.HighestOfferPlayerID
@@ -137,7 +137,7 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 				}
 
 				participations := make([]*ShareAuctionParticipation, 0)
-				tx.Model(&ShareAuctionParticipation{}).Where("share_auction_id = ?", sa.ID).Find(&participations)
+				tx.Model(&ShareAuctionParticipation{}).Where("`share_auction_id` = ?", sa.ID).Find(&participations)
 
 				// report generation
 
@@ -181,14 +181,14 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 				for _, cmp := range cmps {
 					// company income
 
-					tx.Where("owner_id = ?", cmp.ID).Find(&nodes)
+					tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes)
 
 					income := 0
 					for _, n := range nodes {
 						income += n.Yield
 					}
 
-					tx.Preload("Node").Where("tenant_id = ?", cmp.ID).Find(&rentals)
+					tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals)
 					for _, r := range rentals {
 						income += r.Node.Yield / 2
 					}
@@ -196,7 +196,7 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					shareholders := make([]*ShareholdersPerCompany, 0)
 
 					shares := 0
-					tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("company_id = ?", cmp.ID).Where("owner_id != 0").Group("owner_id").Find(&shareholders)
+					tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Group("owner_id").Find(&shareholders)
 
 					for _, sh := range shareholders {
 						shares += sh.Shares

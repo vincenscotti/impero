@@ -132,13 +132,13 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		msgs := 0
-		if err := tx.Model(&Message{}).Where("read = ? and to_id = ?", false,
+		if err := tx.Model(&Message{}).Where("`read` = ? and `to_id` = ?", false,
 			p.ID).Count(&msgs); err.Error != nil {
 			panic(err.Error)
 		}
 
 		reports := 0
-		if err := tx.Model(&Report{}).Where("read = ? and player_id = ?", false,
+		if err := tx.Model(&Report{}).Where("`read` = ? and `player_id` = ?", false,
 			p.ID).Count(&reports); err.Error != nil {
 			panic(err.Error)
 		}

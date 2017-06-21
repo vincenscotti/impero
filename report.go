@@ -14,7 +14,7 @@ func ReportsPage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	reports := make([]*Report, 0)
-	if err := tx.Where("player_id = ?", header.CurrentPlayer.ID).Order("Date desc", true).Find(&reports); err.Error != nil {
+	if err := tx.Where("`player_id` = ?", header.CurrentPlayer.ID).Order("`Date` desc", true).Find(&reports); err.Error != nil {
 		panic(err.Error)
 	}
 
@@ -77,7 +77,7 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 
 	notmine := 0
 
-	if err := tx.Model(&Report{}).Where("id in (?) and player_id != ?", params.IDs, header.CurrentPlayer.ID).Count(&notmine); err.Error != nil {
+	if err := tx.Model(&Report{}).Where("`id` in (?) and `player_id` != ?", params.IDs, header.CurrentPlayer.ID).Count(&notmine); err.Error != nil {
 		panic(err.Error)
 	}
 

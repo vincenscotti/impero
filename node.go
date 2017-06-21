@@ -40,7 +40,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 'no record found' allowed
-	tx.Where("x = ? and y = ?", params.X, params.Y).First(node)
+	tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node)
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
 		session.AddFlash("Permessi insufficienti!", "error_")
@@ -68,7 +68,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// select all adjacent nodes
-	tx.Model(&Node{}).Where("x in (?) and y in (?)", adjacentx, adjacenty).Find(&adjacentnodes)
+	tx.Model(&Node{}).Where("`x` in (?) and `y` in (?)", adjacentx, adjacenty).Find(&adjacentnodes)
 
 	for _, n := range adjacentnodes {
 		if n.OwnerID == cmp.ID {
@@ -82,7 +82,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		// nop, search for rentals then
 
 		for _, n := range adjacentnodes {
-			if err := tx.Model(&Rental{}).Where("node_id = ? and tenant_id = ?", n.ID, cmp.ID).Count(&adjacentrentals); err.Error != nil {
+			if err := tx.Model(&Rental{}).Where("`node_id` = ? and `tenant_id` = ?", n.ID, cmp.ID).Count(&adjacentrentals); err.Error != nil {
 				panic(err.Error)
 			}
 
@@ -172,7 +172,7 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	tx.Where("x = ? and y = ?", params.X, params.Y).First(node)
+	tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node)
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
 		session.AddFlash("Permessi insufficienti!", "error_")

@@ -22,14 +22,14 @@ func Companies(w http.ResponseWriter, r *http.Request) {
 		nodes := make([]*Node, 0)
 		rentals := make([]*Rental, 0)
 
-		tx.Where("owner_id = ?", cmp.ID).Find(&nodes)
+		tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes)
 
 		income := 0
 		for _, n := range nodes {
 			income += n.Yield
 		}
 
-		tx.Preload("Node").Where("tenant_id = ?", cmp.ID).Find(&rentals)
+		tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals)
 		for _, r := range rentals {
 			income += r.Node.Yield / 2
 		}
@@ -59,19 +59,19 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 	canvote := 0
 
 	tx.Preload("CEO").Where(id).First(cmp)
-	tx.Model(&Share{}).Where("company_id = ?", id).Where("owner_id != 0").Count(&shares)
-	tx.Model(&Share{}).Where("company_id = ?", id).Where("owner_id = ?", header.CurrentPlayer.ID).Count(&canvote)
+	tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares)
+	tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", header.CurrentPlayer.ID).Count(&canvote)
 
 	// calcolo income
 
 	income := 0
 
-	tx.Where("owner_id = ?", cmp.ID).Find(&nodes)
+	tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes)
 	for _, n := range nodes {
 		income += n.Yield
 	}
 
-	tx.Preload("Node").Where("tenant_id = ?", cmp.ID).Find(&rentals)
+	tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals)
 	for _, r := range rentals {
 		income += r.Node.Yield / 2
 	}
@@ -82,7 +82,7 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 
 	shareholders := make([]*ShareholdersPerCompany, 0)
 
-	tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("company_id = ? and owner_id != 0", cmp.ID).Group("owner_id").Order("owner_id asc").Find(&shareholders)
+	tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ? and `owner_id` != 0", cmp.ID).Group("`owner_id`").Order("`owner_id` asc").Find(&shareholders)
 
 	for _, sh := range shareholders {
 		tx.Table("players").Where(sh.OwnerID).Find(&sh.Owner)
@@ -153,7 +153,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		panic(err.Error)
 	}
 
-	if err := tx.Where("owner_id = 0 and yield = 1").Find(&freenodes); err.Error != nil {
+	if err := tx.Where("`owner_id` = 0 and `yield` = 1").Find(&freenodes); err.Error != nil {
 		panic(err.Error)
 	}
 

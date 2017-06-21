@@ -153,7 +153,7 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		} else {
-			if err := tx.Where("x > ? and x < ? and y > ? and y < ?",
+			if err := tx.Where("`x` > ? and `x` < ? and `y` > ? and `y` < ?",
 				params.X0, params.X1, params.Y0, params.Y1).Find(&sortednodes); err.Error != nil {
 				panic(err.Error)
 			}
