@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/jinzhu/gorm"
 	. "impero/model"
 	"impero/templates"
 	"math"
@@ -218,6 +220,70 @@ out:
 	session.Save(r, w)
 
 	url, err := router.Get("gamehome").URL()
+	if err != nil {
+		panic(err)
+	}
+
+	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+func PromoteCEO(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	header := context.Get(r, "header").(*HeaderData)
+	session := GetSession(r)
+
+	cmp := &Company{}
+	myshares := 0
+	ceoshares := 0
+	sh := &Share{}
+
+	params := struct {
+		ID uint
+	}{}
+
+	if err := binder.Bind(&params, r); err != nil {
+		panic(err)
+	}
+
+	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if cmp.ID == 0 {
+		session.AddFlash("Societa' inesistente!", "error_")
+		goto out
+	}
+
+	sh.CompanyID = cmp.ID
+	sh.OwnerID = header.CurrentPlayer.ID
+
+	if err := tx.Model(sh).Where(sh).Count(&myshares).Error; err != nil {
+		panic(err)
+	}
+
+	sh.OwnerID = cmp.CEOID
+
+	if err := tx.Model(sh).Where(sh).Count(&ceoshares).Error; err != nil {
+		panic(err)
+	}
+
+	if myshares > ceoshares {
+		cmp.CEOID = header.CurrentPlayer.ID
+	} else {
+		session.AddFlash("Azioni insufficienti!", "error_")
+		goto out
+	}
+
+	if err := tx.Save(cmp).Error; err != nil {
+		panic(err)
+	}
+
+	session.AddFlash("Sei diventato amministratore!", "error_")
+
+out:
+	session.Save(r, w)
+
+	url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
 	if err != nil {
 		panic(err)
 	}

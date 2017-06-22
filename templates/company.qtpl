@@ -35,6 +35,13 @@ cmp := p.Company
 
 {% if p.IsShareHolder %}
 <p>Punti operazione: {%d cmp.ActionPoints %}</p>
+
+	{% if cmp.CEO.ID != p.CurrentPlayer.ID %}
+	<form action="/game/company/promoteceo/" method="POST">
+	<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+	<input type="submit" value="Diventa amministratore">
+	</form>
+	{% endif %}
 {% endif %}
 
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}

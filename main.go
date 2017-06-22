@@ -388,6 +388,7 @@ func main() {
 	game.HandleFunc("/company/all/", GameMiddleware(Companies)).Name("company_all")
 	game.HandleFunc("/company/{id}", GameMiddleware(GetCompany)).Name("company")
 	game.HandleFunc("/company/new/", GameMiddleware(NewCompanyPost)).Name("company_new")
+	game.HandleFunc("/company/promoteceo/", GameMiddleware(PromoteCEO)).Name("company_promoteceo")
 	game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
