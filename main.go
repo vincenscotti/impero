@@ -201,6 +201,14 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					income := 0
 					for _, n := range nodes {
 						income += n.Yield
+
+						if err := tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
+							panic(err.Error())
+						}
+
+						for _, _ = range rentals {
+							income += int(math.Ceil(float64(n.Yield) / 2.))
+						}
 					}
 
 					if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
@@ -246,11 +254,11 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 					}
 
 					cmp.ShareCapital += int(pureIncome)
+					cmp.ActionPoints = opt.CompanyActionPoints + shares
 
 					if err := tx.Save(cmp).Error; err != nil {
 						panic(err)
 					}
-
 				}
 
 				for shid, dividends := range dividendsPerPlayer {
@@ -273,10 +281,6 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 				}
 
 				if err := tx.Model(&Player{}).Update("action_points", opt.PlayerActionPoints).Error; err != nil {
-					panic(err)
-				}
-
-				if err := tx.Model(&Company{}).Update("action_points", opt.CompanyActionPoints).Error; err != nil {
 					panic(err)
 				}
 

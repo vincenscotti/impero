@@ -31,9 +31,17 @@ func Companies(w http.ResponseWriter, r *http.Request) {
 		income := 0
 		for _, n := range nodes {
 			income += n.Yield
+
+			if err := tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
+				panic(err.Error())
+			}
+
+			for _, _ = range rentals {
+				income += int(math.Ceil(float64(n.Yield) / 2.))
+			}
 		}
 
-		if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals); err != nil {
+		if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
 			panic(err)
 		}
 
@@ -85,6 +93,14 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 
 	for _, n := range nodes {
 		income += n.Yield
+
+		if err := tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
+			panic(err.Error())
+		}
+
+		for _, _ = range rentals {
+			income += int(math.Ceil(float64(n.Yield) / 2.))
+		}
 	}
 
 	if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
@@ -172,8 +188,10 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if err := tx.Create(&Share{CompanyID: cmp.ID, OwnerID: header.CurrentPlayer.ID}).Error; err != nil {
-		panic(err)
+	for i := 0; i < opt.InitialShares; i++ {
+		if err := tx.Create(&Share{CompanyID: cmp.ID, OwnerID: header.CurrentPlayer.ID}).Error; err != nil {
+			panic(err)
+		}
 	}
 
 	if err := tx.Where("`owner_id` = 0 and `yield` = 1").Find(&freenodes).Error; err != nil {

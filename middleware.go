@@ -43,7 +43,7 @@ func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}()
 
 		opt := &Options{}
-		if err := tx.First(opt).Error; err != nil {
+		if err := tx.First(opt).Error; err != nil && err != gorm.ErrRecordNotFound {
 			panic(err)
 		}
 

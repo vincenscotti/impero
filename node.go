@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/context"
 	"github.com/jinzhu/gorm"
 	. "impero/model"
+	"math"
 	"net/http"
 )
 
@@ -25,6 +26,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	node := &Node{}
+	cost := 0
 	cmp := &Company{}
 	isnodeadjacent := false
 	adjacentnodes := make([]*Node, 0, 8)
@@ -70,7 +72,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	if cmp.ShareCapital < node.Yield*opt.CostPerYield {
+	cost = int(math.Floor(float64(node.Yield) * opt.CostPerYield))
+	if cmp.ShareCapital < cost {
 		session.AddFlash("Capitale insufficiente!", "error_")
 		goto out
 	}
@@ -113,7 +116,6 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		r.NodeID = node.ID
 		r.TenantID = cmp.ID
 
-		// 'record not found' allowed
 		if err := tx.Where(r).Find(r).Error; err != nil && err != gorm.ErrRecordNotFound {
 			panic(err)
 		}
@@ -136,7 +138,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmp.ActionPoints -= 1
-	cmp.ShareCapital -= node.Yield * 2
+	cmp.ShareCapital -= cost
+
 	if err := tx.Save(cmp).Error; err != nil {
 		panic(err)
 	}

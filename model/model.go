@@ -14,8 +14,8 @@ type Options struct {
 	CompanyActionPoints int
 	PlayerBudget        int
 	NewCompanyCost      int
-	CostPerYield        int
-	CEODuration         int
+	InitialShares       int
+	CostPerYield        float64
 	Turn                int
 }
 

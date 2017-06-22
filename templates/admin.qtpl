@@ -36,12 +36,12 @@
 <input type="number" min="0" name="NewCompanyCost" value="{%d p.Options.NewCompanyCost %}">
 <br>
 
-<label for="CostPerYield">Costo per unita' di rendimento</label>
-<input type="number" min="0" name="CostPerYield" value="{%d p.Options.CostPerYield %}">
+<label for="InitialShares">Azioni iniziali</label>
+<input type="number" min="0" name="InitialShares" value="{%d p.Options.InitialShares %}">
 <br>
 
-<label for="CEODuration">Durata mandato amministratore</label>
-<input type="number" min="0" name="CEODuration" value="{%d p.Options.CEODuration %}">
+<label for="CostPerYield">Costo per unita' di rendimento</label>
+<input type="number" min="0" step="0.1" name="CostPerYield" value="{%f p.Options.CostPerYield %}">
 <br>
 
 <label for="Turn">Turno attuale</label>
