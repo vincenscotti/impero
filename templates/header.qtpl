@@ -61,7 +61,11 @@ L'orario del server e' {%s p.Now.Format("15:04:05") %}.
 <b><a href="/game/message/inbox/">Messaggi ({%d p.NewMessages %})</a></b>
 {% endif %} 
 
+{% if p.NewChatMessages == 0 %}
 <a href="/game/chat/">Chat</a>
+{% else %}
+<b><a href="/game/chat/">Chat ({%d p.NewChatMessages %})</a></b>
+{% endif %}
 
 <a href="/game/player/all/">Giocatori</a>
 

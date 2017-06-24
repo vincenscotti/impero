@@ -8,13 +8,14 @@ type AdminData struct {
 }
 
 type HeaderData struct {
-	CurrentPlayer *Player
-	Error         string
-	Success       string
-	NewMessages   int
-	NewReports    int
-	Now           time.Time
-	Options       *Options
+	CurrentPlayer   *Player
+	Error           string
+	Success         string
+	NewChatMessages int
+	NewMessages     int
+	NewReports      int
+	Now             time.Time
+	Options         *Options
 }
 
 type GameHomeData struct {

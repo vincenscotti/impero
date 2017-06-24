@@ -18,6 +18,11 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	header.CurrentPlayer.LastChatViewed = GetTime(r)
+	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
+		panic(err)
+	}
+
 	page := ChatData{HeaderData: header, Messages: msgs}
 
 	renderHTML(w, 200, templates.ChatPage(&page))

@@ -35,12 +35,13 @@ type Node struct {
 
 type Player struct {
 	gorm.Model
-	Name         string
-	Password     string
-	Budget       int
-	LastBudget   int
-	ActionPoints int
-	LastIncome   int
+	Name           string
+	Password       string
+	Budget         int
+	LastBudget     int
+	ActionPoints   int
+	LastIncome     int
+	LastChatViewed time.Time
 }
 
 type Message struct {

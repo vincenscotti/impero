@@ -137,6 +137,12 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
+		chats := 0
+		if err := tx.Model(&ChatMessage{}).Where("`date` > ? and `from_id` != ?",
+			p.LastChatViewed, p.ID).Count(&chats).Error; err != nil {
+			panic(err)
+		}
+
 		msgs := 0
 		if err := tx.Model(&Message{}).Where("`read` = ? and `to_id` = ?", false,
 			p.ID).Count(&msgs).Error; err != nil {
@@ -149,7 +155,7 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			panic(err)
 		}
 
-		header := &HeaderData{CurrentPlayer: p, NewMessages: msgs, NewReports: reports, Now: now, Options: opt}
+		header := &HeaderData{CurrentPlayer: p, NewChatMessages: chats, NewMessages: msgs, NewReports: reports, Now: now, Options: opt}
 		if s := session.Flashes("error_"); len(s) > 0 {
 			header.Error = s[0].(string)
 		}
