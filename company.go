@@ -201,7 +201,30 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(freenodes) != 0 {
-		node := freenodes[rand.Intn(len(freenodes))]
+		freeneighbours := make(map[*Node]int)
+		maxfreeneighbours := 0
+		nodepool := make([]*Node, 0, len(freenodes))
+
+		for _, n := range freenodes {
+			freeneighb := 0
+			if err := tx.Model(&Node{}).Where("`x` >= ? and `x` <= ? and `y` >= ? and `y` <= ? and `owner_id` = 0", n.X-2, n.X+2, n.Y-2, n.Y+2).Count(&freeneighb).Error; err != nil {
+				panic(err)
+			}
+
+			freeneighbours[n] = freeneighb
+
+			if freeneighb > maxfreeneighbours {
+				maxfreeneighbours = freeneighb
+			}
+		}
+
+		for n, neighb := range freeneighbours {
+			if neighb == maxfreeneighbours {
+				nodepool = append(nodepool, n)
+			}
+		}
+
+		node := nodepool[rand.Intn(len(nodepool))]
 
 		node.OwnerID = cmp.ID
 
