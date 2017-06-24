@@ -320,12 +320,14 @@ func main() {
 	debug := flag.Bool("debug", true, "turn on debug facilities")
 	addr := flag.String("addr", ":8080", "address:port to bind to")
 	flag.StringVar(&AdminPass, "pass", "admin", "administrator password")
+	dbdriver := flag.String("dbdriver", "mysql", "database driver name")
+	dbstring := flag.String("dbstring", "root:root@/testdb?parseTime=true&loc=Local", "database connection string")
 
 	flag.Parse()
 
 	var err error
 
-	db, err = gorm.Open("mysql", "root:root@/testdb?parseTime=true&loc=Local")
+	db, err = gorm.Open(*dbdriver, *dbstring)
 	if err != nil {
 		panic(err)
 	}
