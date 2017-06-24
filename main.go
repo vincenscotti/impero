@@ -1,6 +1,7 @@
 package main
 
 import (
+	//ctx "context"
 	"flag"
 	"fmt"
 	"github.com/gorilla/context"
@@ -17,7 +18,9 @@ import (
 	"net/http/httputil"
 	_ "net/http/pprof"
 	"os"
+	//"os/signal"
 	"runtime/debug"
+	//"syscall"
 	"time"
 )
 
@@ -398,5 +401,28 @@ func main() {
 	game.HandleFunc("/bid/share/", GameMiddleware(BidShare)).Name("bid_share")
 	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
 
-	logger.Println(http.ListenAndServe(*addr, router))
+	s := &http.Server{}
+	s.Addr = *addr
+	s.Handler = router
+
+	//go func() {
+	//stop := make(chan os.Signal, 1)
+
+	//signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	//<-stop
+
+	//ctx, cancel := ctx.WithTimeout(ctx.Background(), time.Minute)
+	//defer cancel()
+
+	//fmt.Println("Trying to shutdown for a minute...")
+
+	//if err := s.Shutdown(ctx); err != nil {
+	//fmt.Println(err)
+	//} else {
+	//fmt.Println("Server stopped")
+	//}
+	//}()
+
+	logger.Println(s.ListenAndServe())
 }
