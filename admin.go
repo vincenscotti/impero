@@ -10,23 +10,6 @@ import (
 	"time"
 )
 
-func randYield() int {
-	r := rand.Intn(100) + 1
-
-	switch {
-	case r <= 20:
-		return 1
-	case r > 20 && r <= 85:
-		return 2
-	case r > 85 && r <= 96:
-		return 4
-	case r > 96 && r <= 99:
-		return 6
-	default:
-		return 8
-	}
-}
-
 func Admin(w http.ResponseWriter, r *http.Request) {
 	opt := GetOptions(r)
 	session := GetSession(r)
@@ -139,11 +122,12 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 		sortednodes := make([]*Node, 0, xsize*ysize)
 
 		yields := map[int]float64{
-			1:  0.2,
-			3:  0.6,
-			6:  0.13,
-			10: 0.05,
-			20: 0.02,
+			1:  0.22,
+			3:  0.5,
+			6:  0.15,
+			12: 0.08,
+			25: 0.04,
+			50: 0.01,
 		}
 
 		if params.Generate {
