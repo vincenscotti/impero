@@ -144,7 +144,7 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 
 				cmp.ShareCapital += sa.HighestOffer
 
-				if err := tx.Save(sa.Share).Error; err != nil {
+				if err := tx.Save(&sa.Share).Error; err != nil {
 					panic(err)
 				}
 
