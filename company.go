@@ -180,7 +180,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	header.CurrentPlayer.Budget -= cmp.ShareCapital
 	header.CurrentPlayer.ActionPoints -= opt.NewCompanyCost
 	cmp.CEO = *header.CurrentPlayer
-	cmp.ActionPoints = opt.CompanyActionPoints
+	cmp.ActionPoints = opt.CompanyActionPoints + opt.InitialShares
 
 	if err := tx.Create(cmp).Error; err != nil {
 		panic(err)
