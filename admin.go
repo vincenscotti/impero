@@ -98,6 +98,19 @@ out:
 	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
+var NodeYields = []struct {
+	Yield       int
+	Prob        float64
+	UpgradeCost int
+}{
+	{1, 0.22, 1},
+	{3, 0.5, 2},
+	{6, 0.15, 5},
+	{12, 0.08, 13},
+	{25, 0.04, 30},
+	{50, 0.01, 0},
+}
+
 func GenerateMap(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	session := GetSession(r)
@@ -120,15 +133,6 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 		xsize := params.X1 - params.X0
 		ysize := params.Y1 - params.Y0
 		sortednodes := make([]*Node, 0, xsize*ysize)
-
-		yields := map[int]float64{
-			1:  0.22,
-			3:  0.5,
-			6:  0.15,
-			12: 0.08,
-			25: 0.04,
-			50: 0.01,
-		}
 
 		if params.Generate {
 			for i := params.X0; i < params.X1; i++ {
@@ -155,7 +159,10 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 		remainingnodes := totalnodes
 		maxyield := 0
 
-		for yield, prob := range yields {
+		for _, y := range NodeYields {
+			yield := y.Yield
+			prob := y.Prob
+
 			if yield > maxyield {
 				maxyield = yield
 			}

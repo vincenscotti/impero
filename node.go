@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/jinzhu/gorm"
@@ -178,6 +179,9 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 
 	node := &Node{}
 	cmp := &Company{}
+	yieldindex := 0
+	newyieldindex := 0
+	yieldfound := false
 
 	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
@@ -212,18 +216,37 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	if cmp.ShareCapital < 2 {
+	for i, y := range NodeYields {
+		if y.Yield == node.Yield {
+			yieldfound = true
+			yieldindex = i
+			break
+		}
+	}
+
+	if !yieldfound {
+		panic(errors.New("Invalid yield value"))
+	}
+
+	newyieldindex = yieldindex + 1
+
+	if newyieldindex >= len(NodeYields) {
+		session.AddFlash("Non puoi investire piu' su questo nodo!", "error_")
+		goto out
+	}
+
+	if cmp.ShareCapital < NodeYields[yieldindex].UpgradeCost {
 		session.AddFlash("Capitale insufficiente!", "error_")
 		goto out
 	}
 
 	cmp.ActionPoints -= 1
-	cmp.ShareCapital -= 2
+	cmp.ShareCapital -= NodeYields[yieldindex].UpgradeCost
 	if err := tx.Save(cmp).Error; err != nil {
 		panic(err)
 	}
 
-	node.Yield += 2
+	node.Yield = NodeYields[newyieldindex].Yield
 	if err := tx.Save(node).Error; err != nil {
 		panic(err)
 	}
