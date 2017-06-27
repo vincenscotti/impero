@@ -110,7 +110,7 @@ Clicca sul nodo sul quale investire e completa questo form.
 
 <input type="number" name="X">
 <input type="number" name="Y">
-<input type="submit" value="Acquista">
+<input type="submit" value="Migliora">
 
 </fieldset>
 </form>
