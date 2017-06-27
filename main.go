@@ -67,6 +67,7 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 
+	playerincome := 0
 	shares := make([]*SharesPerPlayer, 0)
 
 	if err := tx.Table("shares").Select("DISTINCT company_id, count(company_id) as shares").Where("`owner_id` = ?", header.CurrentPlayer.ID).Group("`company_id`").Order("`shares` desc").Find(&shares).Error; err != nil {
@@ -74,14 +75,55 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, sh := range shares {
-		if err := tx.Where(sh.CompanyID).Find(&sh.Company).Error; err != nil {
+		cmp := &sh.Company
+
+		if err := tx.Where(sh.CompanyID).Find(cmp).Error; err != nil {
 			panic(err)
 		}
+
+		nodes := make([]*Node, 0)
+		rentals := make([]*Rental, 0)
+
+		if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
+			panic(err)
+		}
+
+		income := 0
+		for _, n := range nodes {
+			income += n.Yield
+
+			if err := tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
+				panic(err.Error())
+			}
+
+			for _, _ = range rentals {
+				income += int(math.Ceil(float64(n.Yield) / 2.))
+			}
+		}
+
+		if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
+			panic(err)
+		}
+
+		for _, r := range rentals {
+			income += r.Node.Yield / 2
+		}
+
+		cmpshares := 0
+
+		if err := tx.Table("shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Count(&cmpshares).Error; err != nil {
+			panic(err)
+		}
+
+		floatIncome := float64(income)
+		pureIncome := math.Floor(floatIncome * 0.3)
+		sh.ValuePerShare = int(math.Ceil((floatIncome - pureIncome) / float64(cmpshares)))
+		playerincome += sh.Shares * sh.ValuePerShare
 	}
 
 	shareauctions := make([]*ShareAuction, 0)
 
-	if err := tx.Model(&ShareAuction{}).Preload("Share").Find(&shareauctions).Error; err != nil {
+	if err := tx.Model(&ShareAuction{}).Preload("Share").Order("`expiration`").Find(&shareauctions).Error; err != nil {
 		panic(err)
 	}
 
@@ -104,7 +146,8 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	page := &GameHomeData{HeaderData: header, SharesInfo: shares,
+	page := &GameHomeData{HeaderData: header,
+		SharesInfo: shares, PlayerIncome: playerincome,
 		ShareAuctions: shareauctions, IncomingTransfers: incomingtransfers}
 
 	renderHTML(w, 200, templates.GameHomePage(page))

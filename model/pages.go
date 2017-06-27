@@ -21,14 +21,16 @@ type HeaderData struct {
 type GameHomeData struct {
 	*HeaderData
 	SharesInfo        []*SharesPerPlayer
+	PlayerIncome      int
 	ShareAuctions     []*ShareAuction
 	IncomingTransfers []*TransferProposal
 }
 
 type SharesPerPlayer struct {
-	Company   Company
-	CompanyID uint
-	Shares    int
+	Company       Company
+	CompanyID     uint
+	Shares        int
+	ValuePerShare int
 }
 
 type PlayersData struct {
