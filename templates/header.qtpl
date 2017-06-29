@@ -31,7 +31,7 @@
 cp := p.CurrentPlayer
 %}
 
-<img src="/static/logo.jpg" alt="Impero">
+<img src="/static/logo.png" alt="Impero">
 
 <p>
 Ciao {%s cp.Name%}!
