@@ -81,7 +81,6 @@ type CompaniesData struct {
 type CompanyData struct {
 	*HeaderData
 	Company        *Company
-	Income         int
 	Shares         int
 	PureIncome     int
 	IncomePerShare int

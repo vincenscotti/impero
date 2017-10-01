@@ -1,26 +1,24 @@
 package main
 
 import (
-	//ctx "context"
+	ctx "context"
 	"flag"
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"log"
-	"math"
 	"net/http"
 	"net/http/httputil"
 	_ "net/http/pprof"
 	"os"
-	//"os/signal"
+	"os/signal"
 	"runtime/debug"
-	//"syscall"
+	"syscall"
 	"time"
 )
 
@@ -29,38 +27,8 @@ var store sessions.Store
 var logger *log.Logger
 var router *mux.Router
 
-type gorillaBinder struct {
-	decoder *schema.Decoder
-}
-
-func NewGorillaBinder() *gorillaBinder {
-	formDecoder := schema.NewDecoder()
-	formDecoder.IgnoreUnknownKeys(true)
-
-	return &gorillaBinder{formDecoder}
-}
-
-func (this *gorillaBinder) Bind(i interface{}, r *http.Request) error {
-	err := r.ParseForm()
-
-	if err != nil {
-		return err
-	}
-
-	return this.decoder.Decode(i, r.PostForm)
-}
-
-var binder *gorillaBinder
-
-func renderHTML(w http.ResponseWriter, code int, s string) (err error) {
-	w.Header().Set("Content-type", "text/html; charset=utf-8")
-	w.WriteHeader(code)
-	_, err = w.Write([]byte(s))
-	return
-}
-
 func Help(w http.ResponseWriter, r *http.Request) {
-	renderHTML(w, 200, templates.HelpPage())
+	RenderHTML(w, r, templates.HelpPage())
 }
 
 func GameHome(w http.ResponseWriter, r *http.Request) {
@@ -81,43 +49,7 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		nodes := make([]*Node, 0)
-		rentals := make([]*Rental, 0)
-
-		if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
-			panic(err)
-		}
-
-		income := 0
-		for _, n := range nodes {
-			income += n.Yield
-
-			if err := tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
-				panic(err.Error())
-			}
-
-			for _, _ = range rentals {
-				income += int(math.Ceil(float64(n.Yield) / 2.))
-			}
-		}
-
-		if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
-			panic(err)
-		}
-
-		for _, r := range rentals {
-			income += r.Node.Yield / 2
-		}
-
-		cmpshares := 0
-
-		if err := tx.Table("shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Count(&cmpshares).Error; err != nil {
-			panic(err)
-		}
-
-		floatIncome := float64(income)
-		pureIncome := math.Floor(floatIncome * 0.3)
-		sh.ValuePerShare = int(math.Ceil((floatIncome - pureIncome) / float64(cmpshares)))
+		_, sh.ValuePerShare = GetCompanyFinancials(cmp, tx)
 		playerincome += sh.Shares * sh.ValuePerShare
 	}
 
@@ -150,7 +82,7 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 		SharesInfo: shares, PlayerIncome: playerincome,
 		ShareAuctions: shareauctions, IncomingTransfers: incomingtransfers}
 
-	renderHTML(w, 200, templates.GameHomePage(page))
+	RenderHTML(w, r, templates.GameHomePage(page))
 }
 
 func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
@@ -221,8 +153,6 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 				logger.Println("end turn on ", endturn)
 
 				cmps := make([]*Company, 0)
-				nodes := make([]*Node, 0)
-				rentals := make([]*Rental, 0)
 				shareholder := &Player{}
 
 				tx.Find(&cmps)
@@ -238,32 +168,7 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 				}
 
 				for _, cmp := range cmps {
-					// company income
-
-					if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
-						panic(err)
-					}
-
-					income := 0
-					for _, n := range nodes {
-						income += n.Yield
-
-						if err := tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
-							panic(err.Error())
-						}
-
-						for _, _ = range rentals {
-							income += int(math.Ceil(float64(n.Yield) / 2.))
-						}
-					}
-
-					if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
-						panic(err)
-					}
-
-					for _, r := range rentals {
-						income += r.Node.Yield / 2
-					}
+					pureIncome, valuePerShare := GetCompanyFinancials(cmp, tx)
 
 					shareholders := make([]*ShareholdersPerCompany, 0)
 
@@ -277,10 +182,6 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 						shares += sh.Shares
 					}
 
-					floatIncome := float64(income)
-					pureIncome := math.Floor(floatIncome * 0.3)
-					valuepershare := int(math.Ceil((floatIncome - pureIncome) / float64(shares)))
-
 					for _, sh := range shareholders {
 						shareholder.ID = 0
 
@@ -288,15 +189,15 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 							panic(err)
 						}
 
-						shareholder.Budget += valuepershare * sh.Shares
-						shareholder.LastIncome += valuepershare * sh.Shares
+						shareholder.Budget += valuePerShare * sh.Shares
+						shareholder.LastIncome += valuePerShare * sh.Shares
 						shareholder.LastBudget = shareholder.Budget
 
 						if err := tx.Save(shareholder).Error; err != nil {
 							panic(err)
 						}
 
-						dividendsPerPlayer[sh.OwnerID] = append(dividendsPerPlayer[sh.OwnerID], Dividend{cmp, valuepershare * sh.Shares})
+						dividendsPerPlayer[sh.OwnerID] = append(dividendsPerPlayer[sh.OwnerID], Dividend{cmp, valuePerShare * sh.Shares})
 					}
 
 					cmp.ShareCapital += int(pureIncome)
@@ -357,7 +258,7 @@ func ErrorHandler(err error, w http.ResponseWriter, r *http.Request) {
 	}
 
 	req, _ := httputil.DumpRequest(r, true)
-	renderHTML(w, 200, templates.ErrorPage(err, string(req), pID, string(debug.Stack())))
+	RenderHTML(w, r, templates.ErrorPage(err, string(req), pID, string(debug.Stack())))
 }
 
 var AdminPass string
@@ -448,24 +349,22 @@ func main() {
 	s.Addr = *addr
 	s.Handler = router
 
-	//go func() {
-	//stop := make(chan os.Signal, 1)
+	go func() {
+		stop := make(chan os.Signal, 1)
 
-	//signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	//<-stop
+		<-stop
 
-	//ctx, cancel := ctx.WithTimeout(ctx.Background(), time.Minute)
-	//defer cancel()
+		ctx, cancel := ctx.WithTimeout(ctx.Background(), time.Minute)
+		defer cancel()
 
-	//fmt.Println("Trying to shutdown for a minute...")
+		fmt.Println("Trying to shutdown for a minute...")
 
-	//if err := s.Shutdown(ctx); err != nil {
-	//fmt.Println(err)
-	//} else {
-	//fmt.Println("Server stopped")
-	//}
-	//}()
+		if err := s.Shutdown(ctx); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	logger.Println(s.ListenAndServe())
 }

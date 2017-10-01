@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
-	. "impero/model"
+	. "github.com/vincenscotti/impero/model"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -114,23 +114,15 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		pID, ok := session.Values["playerID"].(uint)
 
 		if !ok {
-			url, err := router.Get("home").URL()
-			if err != nil {
-				panic(err)
-			}
+			Redirect(w, r, "home")
 
-			http.Redirect(w, r, url.Path, http.StatusFound)
 			return
 		}
 
 		if err := tx.Where(pID).First(p).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
-				url, err := router.Get("logout").URL()
-				if err != nil {
-					panic(err)
-				}
+				Redirect(w, r, "logout")
 
-				http.Redirect(w, r, url.Path, http.StatusFound)
 				return
 			} else {
 				panic(err)

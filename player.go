@@ -5,8 +5,8 @@ import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"math"
 	"math/rand"
 	"net/http"
@@ -25,7 +25,7 @@ func Players(w http.ResponseWriter, r *http.Request) {
 
 	page := &PlayersData{HeaderData: header, Players: players}
 
-	renderHTML(w, 200, templates.PlayersPage(page))
+	RenderHTML(w, r, templates.PlayersPage(page))
 }
 
 func GetPlayer(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +52,7 @@ func GetPlayer(w http.ResponseWriter, r *http.Request) {
 
 	session.Save(r, w)
 
-	renderHTML(w, 200, templates.PlayerPage(&page))
+	RenderHTML(w, r, templates.PlayerPage(&page))
 }
 
 func Transfer(w http.ResponseWriter, r *http.Request) {
@@ -165,12 +165,5 @@ func TransferAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 out:
-	session.Save(r, w)
-
-	url, err := router.Get("gamehome").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "gamehome")
 }

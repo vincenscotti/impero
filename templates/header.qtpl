@@ -1,4 +1,4 @@
-{% import . "impero/model" %}
+{% import . "github.com/vincenscotti/impero/model" %}
 {% import "time" %}
 
 {% func HeaderPage(p *HeaderData) %}
@@ -7,9 +7,20 @@
 
 <head>
 	<title>Impero</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<style>
+	body {
+		text-align: center;
+	}
+
+	.logo {
+		max-width: 100%;
+	}
+
 	table {
+		margin: auto;
 		text-align: center;
 		border-collapse: collapse;
 	}
@@ -27,11 +38,12 @@
 
 <body>
 
+<div class="container">
 {% code
 cp := p.CurrentPlayer
 %}
 
-<img src="/static/logo.png" alt="Impero">
+<img class="logo" src="/static/logo.png" alt="Impero">
 
 <p>
 Ciao {%s cp.Name%}!

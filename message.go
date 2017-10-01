@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"net/http"
 	"strconv"
 	"time"
@@ -21,7 +21,7 @@ func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 
 	page := MessagesInboxData{HeaderData: header, Messages: msgs}
 
-	renderHTML(w, 200, templates.MessagesInboxPage(&page))
+	RenderHTML(w, r, templates.MessagesInboxPage(&page))
 }
 
 func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +35,7 @@ func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 
 	page := MessagesOutboxData{HeaderData: header, Messages: msgs}
 
-	renderHTML(w, 200, templates.MessagesOutboxPage(&page))
+	RenderHTML(w, r, templates.MessagesOutboxPage(&page))
 }
 
 func GetMessage(w http.ResponseWriter, r *http.Request) {
@@ -57,14 +57,9 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 	if msg.FromID != header.CurrentPlayer.ID && msg.ToID != header.CurrentPlayer.ID {
 		session.AddFlash("Non puoi leggere questo messaggio!", "error_")
 
-		session.Save(r, w)
+		Redirect(w, r, "message_inbox")
 
-		url, err := router.Get("message_inbox").URL()
-		if err != nil {
-			panic(err)
-		}
-
-		http.Redirect(w, r, url.Path, http.StatusFound)
+		return
 	} else if msg.ToID == header.CurrentPlayer.ID {
 		msg.Read = true
 		if err := tx.Save(&msg).Error; err != nil {
@@ -74,7 +69,7 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 
 	page := MessageData{HeaderData: header, Message: msg}
 
-	renderHTML(w, 200, templates.MessagePage(&page))
+	RenderHTML(w, r, templates.MessagePage(&page))
 }
 
 func NewMessagePost(w http.ResponseWriter, r *http.Request) {
@@ -111,12 +106,5 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 	session.AddFlash("Messaggio inviato!", "success_")
 
 out:
-	url, err := router.Get("message_outbox").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	session.Save(r, w)
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "message_outbox")
 }

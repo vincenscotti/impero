@@ -1,9 +1,10 @@
 package main
 
 import (
+	"github.com/jinzhu/gorm"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"golang.org/x/crypto/bcrypt"
-	. "impero/model"
-	"impero/templates"
 	"net/http"
 )
 
@@ -20,9 +21,6 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if p.Name != "" && p.Password != "" {
-		p.Budget = opt.PlayerBudget
-		p.ActionPoints = opt.PlayerActionPoints
-
 		cnt := 0
 		if err := tx.Model(p).Where(&Player{Name: p.Name}).Count(&cnt).Error; err != nil {
 			panic(err)
@@ -31,6 +29,9 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		if cnt != 0 {
 			msg = "Username gia' in uso!"
 		} else {
+			p.Budget = opt.PlayerBudget
+			p.ActionPoints = opt.PlayerActionPoints
+
 			pwdhash, err := bcrypt.GenerateFromPassword([]byte(p.Password), 10)
 
 			if err != nil {
@@ -44,20 +45,14 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 			}
 
 			session.Values["playerID"] = p.ID
-			session.Save(r, w)
 
-			url, err := router.Get("gamehome").URL()
-			if err != nil {
-				panic(err)
-			}
-
-			http.Redirect(w, r, url.Path, http.StatusFound)
+			Redirect(w, r, "gamehome")
 
 			return
 		}
 	}
 
-	renderHTML(w, 200, templates.SignupPage(msg))
+	RenderHTML(w, r, templates.SignupPage(msg))
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -67,12 +62,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	_, ok := session.Values["playerID"].(uint)
 
 	if ok {
-		url, err := router.Get("gamehome").URL()
-		if err != nil {
-			panic(err)
-		}
-
-		http.Redirect(w, r, url.Path, http.StatusFound)
+		Redirect(w, r, "gamehome")
 
 		return
 	}
@@ -88,21 +78,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		hashedp := Player{}
 		hashedp.Name = p.Name
 
-		if err := tx.Where(&hashedp).FirstOrInit(&hashedp, hashedp).Error; err != nil {
+		if err := tx.Where(&hashedp).First(&hashedp).Error; err != nil && err != gorm.ErrRecordNotFound {
 			panic(err)
 		}
 
-		if hashedp.ID != 0 &&
-			bcrypt.CompareHashAndPassword([]byte(hashedp.Password), []byte(p.Password)) == nil {
+		if bcrypt.CompareHashAndPassword([]byte(hashedp.Password), []byte(p.Password)) == nil {
 			session.Values["playerID"] = hashedp.ID
-			session.Save(r, w)
 
-			url, err := router.Get("gamehome").URL()
-			if err != nil {
-				panic(err)
-			}
-
-			http.Redirect(w, r, url.Path, http.StatusFound)
+			Redirect(w, r, "gamehome")
 
 			return
 		} else {
@@ -110,19 +93,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderHTML(w, 200, templates.LoginPage(msg))
+	RenderHTML(w, r, templates.LoginPage(msg))
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 
 	delete(session.Values, "playerID")
-	session.Save(r, w)
 
-	url, err := router.Get("home").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "home")
 }

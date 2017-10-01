@@ -1,5 +1,7 @@
 {% func FooterPage() %}
 
+</div>
+
 </html>
 
 {% endfunc %}

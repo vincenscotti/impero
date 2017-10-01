@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"net/http"
 	"strconv"
 )
@@ -20,7 +20,7 @@ func ReportsPage(w http.ResponseWriter, r *http.Request) {
 
 	page := ReportsData{HeaderData: header, Reports: reports}
 
-	renderHTML(w, 200, templates.ReportsPage(&page))
+	RenderHTML(w, r, templates.ReportsPage(&page))
 }
 
 func ReportPage(w http.ResponseWriter, r *http.Request) {
@@ -42,13 +42,8 @@ func ReportPage(w http.ResponseWriter, r *http.Request) {
 	if report.PlayerID != header.CurrentPlayer.ID {
 		session.AddFlash("Non hai i permessi per vedere questo report!", "error_")
 
-		url, err := router.Get("report_all").URL()
-		if err != nil {
-			panic(err)
-		}
+		Redirect(w, r, "report_all")
 
-		session.Save(r, w)
-		http.Redirect(w, r, url.Path, http.StatusFound)
 		return
 	}
 
@@ -59,7 +54,7 @@ func ReportPage(w http.ResponseWriter, r *http.Request) {
 
 	page := ReportData{HeaderData: header, Report: report}
 
-	renderHTML(w, 200, templates.ReportPage(&page))
+	RenderHTML(w, r, templates.ReportPage(&page))
 }
 
 func DeleteReports(w http.ResponseWriter, r *http.Request) {
@@ -93,14 +88,5 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 	session.AddFlash("Report cancellati!", "success_")
 
 out:
-	session.Save(r, w)
-
-	url, err := router.Get("report_all").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
-
-	return
+	Redirect(w, r, "report_all")
 }

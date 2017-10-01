@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"math"
 	"math/rand"
 	"net/http"
@@ -19,19 +19,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 		p.Message = msg[0].(string)
 	}
 
-	session.Save(r, w)
-
-	w.WriteHeader(200)
-	w.Write([]byte(templates.AdminPage(p)))
-}
-
-type formTime time.Time
-
-func (this *formTime) UnmarshalText(text []byte) error {
-	t, err := time.Parse("2006-01-02 15:04:05-07:00", string(text))
-	*this = formTime(t)
-
-	return err
+	RenderHTML(w, r, templates.AdminPage(p))
 }
 
 type PasswordForm struct {
@@ -66,36 +54,27 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 
 	if err := validateAdmin(r); err != nil {
 		session.AddFlash(err.Error(), "message_")
-		goto out
+	} else {
+		if err := binder.Bind(newopt, r); err != nil {
+			panic(err)
+		}
+
+		if err := binder.Bind(&otheropts, r); err != nil {
+			panic(err)
+		}
+
+		newopt.ID = 1
+		newopt.LastCheckpoint = time.Time(otheropts.LastCheckpoint)
+		newopt.LastTurnCalculated = time.Time(otheropts.LastTurnCalculated)
+
+		if err := tx.Save(newopt).Error; err != nil {
+			panic(err)
+		}
+
+		session.AddFlash("Opzioni aggiornate", "message_")
 	}
 
-	if err := binder.Bind(newopt, r); err != nil {
-		panic(err)
-	}
-
-	if err := binder.Bind(&otheropts, r); err != nil {
-		panic(err)
-	}
-
-	newopt.ID = 1
-	newopt.LastCheckpoint = time.Time(otheropts.LastCheckpoint)
-	newopt.LastTurnCalculated = time.Time(otheropts.LastTurnCalculated)
-
-	if err := tx.Save(newopt).Error; err != nil {
-		panic(err)
-	}
-
-	session.AddFlash("Opzioni aggiornate", "message_")
-
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("admin").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "admin")
 }
 
 var NodeYields = []struct {
@@ -200,14 +179,7 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 		session.AddFlash("Rendimenti aggiornati", "message_")
 	}
 
-	session.Save(r, w)
-
-	url, err := router.Get("admin").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "admin")
 }
 
 func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
@@ -219,43 +191,38 @@ func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
 
 	if err := validateAdmin(r); err != nil {
 		session.AddFlash(err.Error(), "message_")
-	} else {
-		if err := binder.Bind(msg, r); err != nil {
-			panic(err)
-		}
 
-		if msg.Content == "" {
-			session.AddFlash("Non puoi inviare un messaggio vuoto!", "message_")
-
-			goto out
-		}
-
-		msg.Date = time.Now()
-		msg.Read = false
-
-		if err := tx.Find(&players).Error; err != nil {
-			panic(err)
-		}
-
-		for _, p := range players {
-			msg.ID = 0
-			msg.ToID = p.ID
-
-			if err := tx.Create(msg).Error; err != nil {
-				panic(err)
-			}
-		}
-
-		session.AddFlash("Messaggio inviato!", "message_")
+		goto out
 	}
 
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("admin").URL()
-	if err != nil {
+	if err := binder.Bind(msg, r); err != nil {
 		panic(err)
 	}
 
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	if msg.Content == "" {
+		session.AddFlash("Non puoi inviare un messaggio vuoto!", "message_")
+
+		goto out
+	}
+
+	msg.Date = time.Now()
+	msg.Read = false
+
+	if err := tx.Find(&players).Error; err != nil {
+		panic(err)
+	}
+
+	for _, p := range players {
+		msg.ID = 0
+		msg.ToID = p.ID
+
+		if err := tx.Create(msg).Error; err != nil {
+			panic(err)
+		}
+	}
+
+	session.AddFlash("Messaggio inviato!", "message_")
+
+out:
+	Redirect(w, r, "admin")
 }

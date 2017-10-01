@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/jinzhu/gorm"
-	. "impero/model"
+	. "github.com/vincenscotti/impero/model"
 	"net/http"
 	"time"
 )
@@ -166,12 +166,5 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	session.AddFlash("Puntata inserita", "success_")
 
 out:
-	session.Save(r, w)
-
-	url, err := router.Get("gamehome").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "gamehome")
 }

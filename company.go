@@ -5,93 +5,23 @@ import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"math"
 	"math/rand"
 	"net/http"
 	"strconv"
 )
 
-func Companies(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
-	header := context.Get(r, "header").(*HeaderData)
-
-	companies := make([]*Company, 0)
-	if err := tx.Order("share_capital desc").Find(&companies).Error; err != nil {
-		panic(err)
-	}
-
-	for _, cmp := range companies {
-		nodes := make([]*Node, 0)
-		rentals := make([]*Rental, 0)
-
-		if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
-			panic(err)
-		}
-
-		income := 0
-		for _, n := range nodes {
-			income += n.Yield
-
-			if err := tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
-				panic(err.Error())
-			}
-
-			for _, _ = range rentals {
-				income += int(math.Ceil(float64(n.Yield) / 2.))
-			}
-		}
-
-		if err := tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
-			panic(err)
-		}
-
-		for _, r := range rentals {
-			income += r.Node.Yield / 2
-		}
-
-		cmp.Income = income
-	}
-
-	page := CompaniesData{HeaderData: header, Companies: companies}
-
-	renderHTML(w, 200, templates.CompaniesPage(&page))
-}
-
-func GetCompany(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
-	header := context.Get(r, "header").(*HeaderData)
-
-	params := mux.Vars(r)
-	id, err := strconv.Atoi(params["id"])
-	if err != nil {
-		panic(err)
-	}
-
-	cmp := &Company{}
+func UpdateCompanyIncome(cmp *Company, tx *gorm.DB) {
 	nodes := make([]*Node, 0)
 	rentals := make([]*Rental, 0)
-	shares := 0
-	myshares := 0
-
-	if err := tx.Preload("CEO").Where(id).First(cmp).Error; err != nil {
-		panic(err)
-	}
-	if err := tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares).Error; err != nil {
-		panic(err)
-	}
-	if err := tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", header.CurrentPlayer.ID).Count(&myshares).Error; err != nil {
-		panic(err)
-	}
-
-	// calcolo income
-
-	income := 0
 
 	if err := tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
 		panic(err)
 	}
+
+	income := 0
 
 	for _, n := range nodes {
 		income += n.Yield
@@ -113,13 +43,81 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 		income += r.Node.Yield / 2
 	}
 
-	floatIncome := float64(income)
+	cmp.Income = income
+}
+
+func GetCompanyFinancials(cmp *Company, tx *gorm.DB) (pureIncome, valuePerShare int) {
+	if cmp.Income == 0 {
+		UpdateCompanyIncome(cmp, tx)
+	}
+
+	cmpshares := 0
+
+	if err := tx.Table("shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Count(&cmpshares).Error; err != nil {
+		panic(err)
+	}
+
+	floatIncome := float64(cmp.Income)
+	floatPureIncome := math.Floor(floatIncome * 0.3)
+	floatValuePerShare := int(math.Ceil((floatIncome - floatPureIncome) / float64(cmpshares)))
+
+	return int(floatPureIncome), int(floatValuePerShare)
+}
+
+func Companies(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	header := context.Get(r, "header").(*HeaderData)
+
+	companies := make([]*Company, 0)
+	if err := tx.Order("share_capital desc").Find(&companies).Error; err != nil {
+		panic(err)
+	}
+
+	for _, cmp := range companies {
+		UpdateCompanyIncome(cmp, tx)
+	}
+
+	page := CompaniesData{HeaderData: header, Companies: companies}
+
+	RenderHTML(w, r, templates.CompaniesPage(&page))
+}
+
+func GetCompany(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	header := context.Get(r, "header").(*HeaderData)
+
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		panic(err)
+	}
+
+	cmp := &Company{}
+	shares := 0
+	myshares := 0
+
+	if err := tx.Preload("CEO").Where(id).First(cmp).Error; err != nil {
+		panic(err)
+	}
+	if err := tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares).Error; err != nil {
+		panic(err)
+	}
+	if err := tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", header.CurrentPlayer.ID).Count(&myshares).Error; err != nil {
+		panic(err)
+	}
+
+	UpdateCompanyIncome(cmp, tx)
+
+	floatIncome := float64(cmp.Income)
 	pureIncome := math.Floor(floatIncome * 0.3)
 	valuepershare := int(math.Ceil((floatIncome - pureIncome) / float64(shares)))
 
 	shareholders := make([]*ShareholdersPerCompany, 0)
 
-	if err := tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ? and `owner_id` != 0", cmp.ID).Group("`owner_id`").Order("`owner_id` asc").Find(&shareholders).Error; err != nil {
+	if err := tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").
+		Where("`company_id` = ? and `owner_id` != 0", cmp.ID).
+		Group("`owner_id`").Order("`owner_id` asc").
+		Find(&shareholders).Error; err != nil {
 		panic(err)
 	}
 
@@ -129,9 +127,10 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	page := CompanyData{HeaderData: header, Company: cmp, Income: income, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome), IncomePerShare: valuepershare, IsShareHolder: myshares >= 1}
+	page := CompanyData{HeaderData: header, Company: cmp, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome),
+		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1}
 
-	renderHTML(w, 200, templates.CompanyPage(&page))
+	RenderHTML(w, r, templates.CompanyPage(&page))
 }
 
 func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
@@ -240,14 +239,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 out:
-	session.Save(r, w)
-
-	url, err := router.Get("gamehome").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "gamehome")
 }
 
 func PromoteCEO(w http.ResponseWriter, r *http.Request) {

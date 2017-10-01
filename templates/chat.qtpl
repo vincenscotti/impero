@@ -1,4 +1,4 @@
-{% import . "impero/model" %}
+{% import . "github.com/vincenscotti/impero/model" %}
 
 {% func ChatPage(p *ChatData) %}
 

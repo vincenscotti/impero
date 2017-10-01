@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/gorilla/context"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"net/http"
 )
 
@@ -62,5 +62,5 @@ func GetMap(w http.ResponseWriter, r *http.Request) {
 
 	page := MapData{HeaderData: header, Nodes: mapnodes, Rentals: rentals, CompaniesByName: companiesbyname, XMin: s.Minx, YMin: s.Miny, XMax: s.Maxx, YMax: s.Maxy}
 
-	renderHTML(w, 200, templates.MapPage(&page))
+	RenderHTML(w, r, templates.MapPage(&page))
 }

@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/gorilla/context"
-	. "impero/model"
-	"impero/templates"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"net/http"
 	"time"
 )
@@ -25,7 +25,7 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 
 	page := ChatData{HeaderData: header, Messages: msgs}
 
-	renderHTML(w, 200, templates.ChatPage(&page))
+	RenderHTML(w, r, templates.ChatPage(&page))
 }
 
 func PostChat(w http.ResponseWriter, r *http.Request) {
@@ -41,8 +41,6 @@ func PostChat(w http.ResponseWriter, r *http.Request) {
 
 	if msg.Content == "" {
 		session.AddFlash("Messaggio vuoto non valido!", "error_")
-
-		session.Save(r, w)
 	} else {
 		msg.FromID = header.CurrentPlayer.ID
 		msg.Date = time.Now()
@@ -53,10 +51,5 @@ func PostChat(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	url, err := router.Get("chat").URL()
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	Redirect(w, r, "chat")
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/jinzhu/gorm"
-	. "impero/model"
+	. "github.com/vincenscotti/impero/model"
 	"math"
 	"net/http"
 )
