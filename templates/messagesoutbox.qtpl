@@ -2,7 +2,7 @@
 
 {% func MessagesOutboxPage(p *MessagesOutboxData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 <a href="/game/message/inbox/">Ricevuti</a>
 

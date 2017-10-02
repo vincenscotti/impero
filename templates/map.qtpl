@@ -3,7 +3,7 @@
 
 {% func MapPage(p *MapData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 <table style="float: left;">
 <tr>

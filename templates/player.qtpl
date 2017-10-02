@@ -2,7 +2,7 @@
 
 {% func PlayerPage(p *PlayerData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 <b>Scrivi messaggio</b>
 

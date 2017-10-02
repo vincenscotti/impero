@@ -2,7 +2,7 @@
 
 {% func CompaniesPage(p *CompaniesData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 <table>
 <tr>

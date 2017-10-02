@@ -2,7 +2,7 @@
 
 {% func GameHomePage(p *GameHomeData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 {% if len(p.IncomingTransfers) > 0 %}
 

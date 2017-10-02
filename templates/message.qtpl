@@ -2,7 +2,7 @@
 
 {% func MessagePage(p *MessageData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 {% if p.Message.From.Name != "" %}
 	<p>Da: <a href="/game/player/{%d int(p.Message.From.ID) %}">{%s p.Message.From.Name %}</a></p>

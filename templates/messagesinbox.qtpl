@@ -2,7 +2,7 @@
 
 {% func MessagesInboxPage(p *MessagesInboxData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 Ricevuti
 

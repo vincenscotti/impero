@@ -1,5 +1,7 @@
 {% func HelpPage() %}
 
+{%= HeaderPage() %}
+
 <a href="/game/">Torna al gioco</a>.
 
 {% cat "spec.html" %}

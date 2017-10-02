@@ -1,5 +1,7 @@
 {% func SignupPage(msg string) %}
 
+{%= HeaderPage() %}
+
 Registrati o <a href="/login/">accedi</a> al gioco.
 <a href="/help/">Regolamento</a>
 <p><b>{%s msg %}</b></p>

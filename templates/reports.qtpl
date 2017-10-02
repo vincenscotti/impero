@@ -2,7 +2,7 @@
 
 {% func ReportsPage(p *ReportsData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 <script>
 function selectall() {

@@ -2,7 +2,7 @@
 
 {% func ReportPage(p *ReportData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 <p>Oggetto: {%s p.Report.Subject %}</p>
 <p>Data: {%s p.Report.Date.Format("02-01 15:04:05") %}</p>

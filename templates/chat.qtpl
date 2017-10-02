@@ -2,7 +2,7 @@
 
 {% func ChatPage(p *ChatData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 <form action="/game/chat/post/" method="POST">
 <input type="text" name="content" placeholder="Scrivi messaggio" required>

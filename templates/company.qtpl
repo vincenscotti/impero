@@ -2,7 +2,7 @@
 
 {% func CompanyPage(p *CompanyData) %}
 
-{%= HeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 {% code
 cmp := p.Company
