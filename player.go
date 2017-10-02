@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func Players(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +60,8 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
+	now := GetTime(r)
+	opt := GetOptions(r)
 
 	p := &TransferProposal{}
 
@@ -78,6 +81,7 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 
 	p.FromID = header.CurrentPlayer.ID
 	p.Risk = int(math.Floor(float64(p.Amount) / float64(header.CurrentPlayer.Budget) * 100))
+	p.Expiration = now.Add(time.Duration(opt.TurnDuration) * time.Minute)
 
 	header.CurrentPlayer.Budget -= p.Amount
 	header.CurrentPlayer.ActionPoints -= 1

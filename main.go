@@ -149,6 +149,40 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 				}
 			}
 
+			transferproposals := make([]*TransferProposal, 0)
+			if err := tx.Preload("From").Preload("To").Where("`expiration` < ?", endturn).Find(&transferproposals).Error; err != nil {
+				panic(err)
+			}
+
+			for _, tp := range transferproposals {
+				tp.From.Budget += tp.Amount
+
+				if err := tx.Save(&tp.From).Error; err != nil {
+					panic(err)
+				}
+
+				// report generation
+
+				subject := "Proposta di trasferimento denaro"
+				content := fmt.Sprintf("La proposta di trasferimento di %d$ da "+tp.From.Name+" a "+tp.To.Name+" e' scaduta", tp.Amount)
+				report := &Report{PlayerID: tp.FromID, Date: tp.Expiration, Subject: subject, Content: content}
+
+				if err := tx.Create(report).Error; err != nil {
+					panic(err)
+				}
+
+				report.ID = 0
+				report.PlayerID = tp.ToID
+
+				if err := tx.Create(report).Error; err != nil {
+					panic(err)
+				}
+
+				if err := tx.Delete(tp).Error; err != nil {
+					panic(err)
+				}
+			}
+
 			if endturn.Before(now) {
 				logger.Println("end turn on ", endturn)
 

@@ -122,10 +122,11 @@ type Rental struct {
 
 type TransferProposal struct {
 	gorm.Model
-	From   Player
-	FromID uint
-	To     Player
-	ToID   uint `schema:"to_id"`
-	Amount int
-	Risk   int
+	From       Player
+	FromID     uint
+	To         Player
+	ToID       uint `schema:"to_id"`
+	Amount     int
+	Risk       int
+	Expiration time.Time
 }
