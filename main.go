@@ -378,6 +378,7 @@ func main() {
 
 	game.HandleFunc("/bid/share/", GameMiddleware(BidShare)).Name("bid_share")
 	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
+	game.HandleFunc("/map/costs/{x}/{y}", GameMiddleware(GetCosts)).Name("map_costs")
 
 	s := &http.Server{}
 	s.Addr = *addr

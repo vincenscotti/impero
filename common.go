@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/gorilla/schema"
 	"net/http"
 	"time"
@@ -48,6 +49,23 @@ func RenderHTML(w http.ResponseWriter, r *http.Request, s string) (err error) {
 	w.Header().Set("Content-type", "text/html; charset=utf-8")
 	w.WriteHeader(200)
 	_, err = w.Write([]byte(s))
+
+	return
+}
+
+func RenderJSON(w http.ResponseWriter, r *http.Request, obj interface{}) (err error) {
+	SaveSession(w, r)
+
+	ret, err := json.Marshal(obj)
+
+	if err != nil {
+		panic(err)
+	}
+
+	w.Header().Set("Content-type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	_, err = w.Write(ret)
+
 	return
 }
 

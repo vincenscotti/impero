@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	. "github.com/vincenscotti/impero/model"
 	"math"
 	"net/http"
+	"strconv"
 )
 
 func BuyNode(w http.ResponseWriter, r *http.Request) {
@@ -266,4 +268,64 @@ out:
 
 		http.Redirect(w, r, url.Path, http.StatusFound)
 	}
+}
+
+func GetCosts(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	opt := GetOptions(r)
+
+	ret := struct {
+		BuyCost    int
+		InvestCost int
+	}{-1, -1}
+
+	params := mux.Vars(r)
+
+	x, err := strconv.Atoi(params["x"])
+	if err != nil {
+		panic(err)
+	}
+
+	y, err := strconv.Atoi(params["y"])
+	if err != nil {
+		panic(err)
+	}
+
+	node := &Node{}
+	yieldindex := 0
+	newyieldindex := 0
+	yieldfound := false
+
+	if err := tx.Where("`x` = ? and `y` = ?", x, y).First(node).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if node.ID == 0 {
+		goto out
+	}
+
+	for i, y := range NodeYields {
+		if y.Yield == node.Yield {
+			yieldfound = true
+			yieldindex = i
+			break
+		}
+	}
+
+	if !yieldfound {
+		panic(errors.New("Invalid yield value"))
+	}
+
+	newyieldindex = yieldindex + 1
+
+	if newyieldindex >= len(NodeYields) {
+		goto out
+	}
+
+	ret.InvestCost = NodeYields[yieldindex].UpgradeCost
+
+out:
+	ret.BuyCost = int(math.Floor(float64(node.Yield) * opt.CostPerYield))
+
+	RenderJSON(w, r, ret)
 }
