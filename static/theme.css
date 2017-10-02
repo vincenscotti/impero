@@ -1,0 +1,33 @@
+body {
+	text-align: center;
+}
+
+.logo {
+	max-width: 100%;
+}
+
+table {
+	margin: auto;
+	text-align: center;
+	border-collapse: collapse;
+}   
+
+th, td {
+	text-align: inherit;
+	border: 1px solid;
+	min-width: 20px;
+}   
+
+.fakenode {
+	border: none;
+}   
+
+fieldset {
+	border: 1px groove;
+	padding: 10px;
+}   
+
+legend {
+	width: auto;
+	margin: 0px;
+}
