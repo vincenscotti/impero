@@ -155,9 +155,8 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	shareauction.HighestOffer = params.Amount
 	shareauction.HighestOfferPlayerID = header.CurrentPlayer.ID
 
-	fmt.Println(shareauction.Expiration.Sub(now).Minutes())
 	if shareauction.Expiration.Sub(now).Minutes() < 1. {
-		shareauction.Expiration = shareauction.Expiration.Add(time.Minute)
+		shareauction.Expiration = now.Add(time.Minute)
 	}
 
 	if err := tx.Save(shareauction).Error; err != nil {
