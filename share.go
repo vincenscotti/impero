@@ -14,7 +14,8 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 
 	params := struct {
-		ID uint
+		ID     uint
+		Amount int
 	}{}
 
 	if err := binder.Bind(&params, r); err != nil {
@@ -57,7 +58,7 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if err := tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: 0, Expiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
+	if err := tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: params.Amount, Expiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
 		panic(err)
 	}
 

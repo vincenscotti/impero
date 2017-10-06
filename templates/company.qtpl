@@ -47,6 +47,7 @@ cmp := p.Company
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
 <form action="/game/company/addshare/" method="POST">
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<input type="number" min="0" name="amount" placeholder="Base d'asta opzionale">
 <input type="submit" value="Ricapitalizza">
 </form>
 
