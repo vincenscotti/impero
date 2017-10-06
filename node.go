@@ -12,6 +12,37 @@ import (
 	"strconv"
 )
 
+func GetCostsByYield(yield int, opt *Options) (BuyCost int, InvestCost int, NewYield int) {
+	BuyCost, InvestCost, NewYield = -1, -1, -1
+
+	yieldindex := 0
+	newyieldindex := 0
+	yieldfound := false
+
+	for i, y := range NodeYields {
+		if y.Yield == yield {
+			yieldfound = true
+			yieldindex = i
+			break
+		}
+	}
+
+	if !yieldfound {
+		panic(errors.New("Invalid yield value"))
+	}
+
+	newyieldindex = yieldindex + 1
+
+	if newyieldindex < len(NodeYields) {
+		InvestCost = NodeYields[yieldindex].UpgradeCost
+		NewYield = NodeYields[newyieldindex].Yield
+	}
+
+	BuyCost = int(math.Floor(float64(yield) * opt.CostPerYield))
+
+	return
+}
+
 func BuyNode(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
@@ -75,7 +106,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	cost = int(math.Floor(float64(node.Yield) * opt.CostPerYield))
+	cost, _, _ = GetCostsByYield(node.Yield, opt)
 	if cmp.ShareCapital < cost {
 		session.AddFlash("Capitale insufficiente!", "error_")
 		goto out
@@ -168,6 +199,7 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
+	opt := GetOptions(r)
 
 	params := struct {
 		ID uint
@@ -181,9 +213,8 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 
 	node := &Node{}
 	cmp := &Company{}
-	yieldindex := 0
-	newyieldindex := 0
-	yieldfound := false
+	cost := 0
+	newyield := 0
 
 	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
@@ -218,37 +249,20 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
-	for i, y := range NodeYields {
-		if y.Yield == node.Yield {
-			yieldfound = true
-			yieldindex = i
-			break
-		}
-	}
+	_, cost, newyield = GetCostsByYield(node.Yield, opt)
 
-	if !yieldfound {
-		panic(errors.New("Invalid yield value"))
-	}
-
-	newyieldindex = yieldindex + 1
-
-	if newyieldindex >= len(NodeYields) {
-		session.AddFlash("Non puoi investire piu' su questo nodo!", "error_")
-		goto out
-	}
-
-	if cmp.ShareCapital < NodeYields[yieldindex].UpgradeCost {
+	if cmp.ShareCapital < cost {
 		session.AddFlash("Capitale insufficiente!", "error_")
 		goto out
 	}
 
 	cmp.ActionPoints -= 1
-	cmp.ShareCapital -= NodeYields[yieldindex].UpgradeCost
+	cmp.ShareCapital -= cost
 	if err := tx.Save(cmp).Error; err != nil {
 		panic(err)
 	}
 
-	node.Yield = NodeYields[newyieldindex].Yield
+	node.Yield = newyield
 	if err := tx.Save(node).Error; err != nil {
 		panic(err)
 	}
@@ -277,7 +291,7 @@ func GetCosts(w http.ResponseWriter, r *http.Request) {
 	ret := struct {
 		BuyCost    int
 		InvestCost int
-	}{-1, -1}
+	}{}
 
 	params := mux.Vars(r)
 
@@ -292,40 +306,14 @@ func GetCosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	node := &Node{}
-	yieldindex := 0
-	newyieldindex := 0
-	yieldfound := false
 
 	if err := tx.Where("`x` = ? and `y` = ?", x, y).First(node).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
-	if node.ID == 0 {
-		goto out
+	if node.ID != 0 {
+		ret.BuyCost, ret.InvestCost, _ = GetCostsByYield(node.Yield, opt)
 	}
-
-	for i, y := range NodeYields {
-		if y.Yield == node.Yield {
-			yieldfound = true
-			yieldindex = i
-			break
-		}
-	}
-
-	if !yieldfound {
-		panic(errors.New("Invalid yield value"))
-	}
-
-	newyieldindex = yieldindex + 1
-
-	if newyieldindex >= len(NodeYields) {
-		goto out
-	}
-
-	ret.InvestCost = NodeYields[yieldindex].UpgradeCost
-
-out:
-	ret.BuyCost = int(math.Floor(float64(node.Yield) * opt.CostPerYield))
 
 	RenderJSON(w, r, ret)
 }
