@@ -86,6 +86,7 @@ type CompanyData struct {
 	IncomePerShare int
 	SharesInfo     []*ShareholdersPerCompany
 	IsShareHolder  bool
+	OwnedCompanies []*Company
 }
 
 type ShareholdersPerCompany struct {

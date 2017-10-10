@@ -127,8 +127,11 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	ownedcompanies := make([]*Company, 0)
+	tx.Where("`ceo_id` = ?", header.CurrentPlayer.ID).Find(&ownedcompanies)
+
 	page := CompanyData{HeaderData: header, Company: cmp, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome),
-		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1}
+		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1, OwnedCompanies: ownedcompanies}
 
 	RenderHTML(w, r, templates.CompanyPage(&page))
 }

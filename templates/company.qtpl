@@ -65,6 +65,27 @@ cmp := p.Company
 <input type="submit" value="Migliora cella">
 </form>
 
+{% else %}
+
+{% if len(p.OwnedCompanies) > 0 %}
+
+<form action="/game/company/partnership/" method="POST">
+<fieldset>
+<legend>Proposta di alleanza</legend>
+<input type="hidden" name="to_id" value="{%d int(cmp.ID) %}">
+<select name="from_id">
+
+{% for _, c := range p.OwnedCompanies %}
+<option value="{%d int(c.ID) %}">{%s c.Name %}</option>
+{% endfor %}
+
+</select>
+<input type="submit" value="Proponi">
+</fieldset>
+</form>
+
+{% endif %}
+
 {% endif %}
 
 {%= FooterPage() %}
