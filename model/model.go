@@ -76,7 +76,7 @@ type ChatMessage struct {
 
 type Company struct {
 	gorm.Model
-	Name         string
+	Name         string `gorm:"size:30"`
 	ShareCapital int
 	CEO          Player
 	CEOID        uint

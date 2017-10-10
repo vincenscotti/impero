@@ -1,22 +1,31 @@
 body {
-	text-align: center;
+	/*text-align: center;*/
 }
 
 .logo {
 	max-width: 100%;
 }
 
+/*.row > div {*/
+	/*overflow: auto;*/
+/*}*/
+
 table {
+	table-layout: fixed;
+	max-width: 100%;
+
 	margin: auto;
 	text-align: center;
 	border-collapse: collapse;
 }   
 
 th, td {
+	overflow: auto;
+
 	text-align: inherit;
 	border: 1px solid;
 	min-width: 20px;
-}   
+}
 
 .fakenode {
 	border: none;
@@ -31,3 +40,8 @@ legend {
 	width: auto;
 	margin: 0px;
 }
+
+input[type="number"] {
+	width: 4em;
+}
+
