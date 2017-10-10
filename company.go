@@ -141,7 +141,7 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 	partnerships := GetCompanyPartnerships(cmp, tx)
 
 	page := CompanyData{HeaderData: header, Company: cmp, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome),
-		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1, OwnedCompanies: ownedcompanies, Partnerships: partnerships}
+		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1, PossiblePartners: ownedcompanies, Partnerships: partnerships}
 
 	RenderHTML(w, r, templates.CompanyPage(&page))
 }

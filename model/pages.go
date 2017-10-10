@@ -80,14 +80,14 @@ type CompaniesData struct {
 
 type CompanyData struct {
 	*HeaderData
-	Company        *Company
-	Shares         int
-	PureIncome     int
-	IncomePerShare int
-	SharesInfo     []*ShareholdersPerCompany
-	IsShareHolder  bool
-	OwnedCompanies []*Company
-	Partnerships   []*Partnership
+	Company          *Company
+	Shares           int
+	PureIncome       int
+	IncomePerShare   int
+	SharesInfo       []*ShareholdersPerCompany
+	IsShareHolder    bool
+	PossiblePartners []*Company
+	Partnerships     []*Partnership
 }
 
 type ShareholdersPerCompany struct {

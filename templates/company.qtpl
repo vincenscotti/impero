@@ -109,15 +109,15 @@ cmp := p.Company
 
 {% else %}
 
-{% if len(p.OwnedCompanies) > 0 %}
+{% if len(p.PossiblePartners) > 0 %}
 
 <form action="/game/company/partnership/" method="POST">
 <fieldset>
-<legend>Proposta di alleanza</legend>
+<legend>Proposta di partnership</legend>
 <input type="hidden" name="to_id" value="{%d int(cmp.ID) %}">
 <select name="from_id">
 
-{% for _, c := range p.OwnedCompanies %}
+{% for _, c := range p.PossiblePartners %}
 <option value="{%d int(c.ID) %}">{%s c.Name %}</option>
 {% endfor %}
 
