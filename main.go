@@ -328,7 +328,7 @@ func main() {
 	}
 
 	db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
-		&ChatMessage{}, &Company{}, &Share{}, &Rental{},
+		&ChatMessage{}, &Company{}, &Partnership{}, &Share{}, &Rental{},
 		&ShareAuction{}, &ShareAuctionParticipation{},
 		&TransferProposal{})
 

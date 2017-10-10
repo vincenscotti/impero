@@ -85,6 +85,14 @@ type Company struct {
 	Color        int32 `gorm:"-"`
 }
 
+type Partnership struct {
+	gorm.Model
+	From   Company
+	FromID uint
+	To     Company
+	ToID   uint
+}
+
 type Share struct {
 	gorm.Model
 	Company   Company

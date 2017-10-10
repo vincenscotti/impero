@@ -64,6 +64,14 @@ func GetCompanyFinancials(cmp *Company, tx *gorm.DB) (pureIncome, valuePerShare 
 	return int(floatPureIncome), int(floatValuePerShare)
 }
 
+func GetCompanyPartnerships(cmp *Company, tx *gorm.DB) []*Partnership {
+	partnerships := make([]*Partnership, 0)
+
+	tx.Preload("To").Preload("From").Where("`from_id` = ? or `to_id` = ?", cmp.ID, cmp.ID).Find(&partnerships)
+
+	return partnerships
+}
+
 func Companies(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
@@ -130,8 +138,10 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 	ownedcompanies := make([]*Company, 0)
 	tx.Where("`ceo_id` = ?", header.CurrentPlayer.ID).Find(&ownedcompanies)
 
+	partnerships := GetCompanyPartnerships(cmp, tx)
+
 	page := CompanyData{HeaderData: header, Company: cmp, SharesInfo: shareholders, Shares: shares, PureIncome: int(pureIncome),
-		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1, OwnedCompanies: ownedcompanies}
+		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1, OwnedCompanies: ownedcompanies, Partnerships: partnerships}
 
 	RenderHTML(w, r, templates.CompanyPage(&page))
 }

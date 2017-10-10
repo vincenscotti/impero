@@ -87,6 +87,7 @@ type CompanyData struct {
 	SharesInfo     []*ShareholdersPerCompany
 	IsShareHolder  bool
 	OwnedCompanies []*Company
+	Partnerships   []*Partnership
 }
 
 type ShareholdersPerCompany struct {

@@ -44,6 +44,48 @@ cmp := p.Company
 	{% endif %}
 {% endif %}
 
+{% if len(p.Partnerships) > 0 %}
+
+<table>
+
+<thead>
+<tr>
+<th colspan="2">Partners</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for _, partner := range p.Partnerships %}
+<tr>
+<td>
+{% if partner.FromID == cmp.ID %}
+	{%s partner.To.Name %}
+{% else %}
+	{%s partner.From.Name %}
+{% endif %}
+</td>
+
+<td>
+{% if cmp.CEO.ID == p.CurrentPlayer.ID %}
+
+<form action="/game/company/partnership/delete/" method="POST">
+<input type="hidden" name="id" value="{%d int(partner.ID) %}">
+<input type="submit" value="Cancella">
+</form>
+
+{% endif %}
+</td>
+
+</tr>
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endif %}
+
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
 <form action="/game/company/addshare/" method="POST">
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
