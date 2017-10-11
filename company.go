@@ -330,6 +330,7 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	p := &Partnership{}
 	from := &Company{}
 	to := &Company{}
+	count := 0
 
 	if err := binder.Bind(p, r); err != nil {
 		panic(err)
@@ -363,10 +364,24 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 		goto out
 	}
 
+	if err := tx.Table("partnerships").Where("((`from_id` = ? and `to_id` = ?) or (`from_id` = ? and `to_id` = ?)) and `deleted_at` is null", from.ID, to.ID, to.ID, from.ID).Count(&count).Error; err != nil {
+		panic(err)
+	}
+
+	if count > 0 {
+		session.AddFlash("Partnership gia' esistente!", "error_")
+		goto out
+	}
+
 	from.ActionPoints -= 1
-	tx.Save(from)
-	tx.Create(&Partnership{FromID: from.ID, ToID: to.ID,
-		ProposalExpiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)})
+	if err := tx.Save(from).Error; err != nil {
+		panic(err)
+	}
+
+	if err := tx.Create(&Partnership{FromID: from.ID, ToID: to.ID,
+		ProposalExpiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
+		panic(err)
+	}
 
 	session.AddFlash("Proposa inviata!", "success_")
 
@@ -374,6 +389,146 @@ out:
 	session.Save(r, w)
 
 	url, err := router.Get("company").URL("id", fmt.Sprint(p.ToID))
+	if err != nil {
+		panic(err)
+	}
+
+	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	session := GetSession(r)
+	now := GetTime(r)
+	header := context.Get(r, "header").(*HeaderData)
+
+	params := struct {
+		ID uint
+	}{}
+
+	if err := binder.Bind(&params, r); err != nil {
+		panic(err)
+	}
+
+	p := &Partnership{}
+
+	if err := tx.Preload("To").Preload("From").Where(params.ID).First(p).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	subject := "Proposta di partnership confermata"
+	content := "La proposta di partnership tra " + p.From.Name + " e " + p.To.Name + " e' stata confermata"
+	report := &Report{PlayerID: p.From.CEOID, Date: now, Subject: subject, Content: content}
+
+	if p.To.CEOID != header.CurrentPlayer.ID {
+		session.AddFlash("Non sei il CEO!", "error_")
+		goto out
+	}
+
+	if p.To.ActionPoints < 1 {
+		session.AddFlash("Punti operazione insufficienti!", "error_")
+		goto out
+	}
+
+	p.To.ActionPoints -= 1
+	if err := tx.Save(&p.To).Error; err != nil {
+		panic(err)
+	}
+
+	p.ProposalExpiration = time.Time{}
+	if err := tx.Save(p).Error; err != nil {
+		panic(err)
+	}
+
+	if err := tx.Create(report).Error; err != nil {
+		panic(err)
+	}
+
+	report.ID = 0
+	report.PlayerID = p.To.CEOID
+
+	if err := tx.Create(report).Error; err != nil {
+		panic(err)
+	}
+
+	session.AddFlash("Partnership confermata!", "success_")
+
+out:
+	session.Save(r, w)
+
+	url, err := router.Get("company").URL("id", fmt.Sprint(p.ToID))
+	if err != nil {
+		panic(err)
+	}
+
+	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+func DeletePartnership(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	session := GetSession(r)
+	now := GetTime(r)
+	header := context.Get(r, "header").(*HeaderData)
+
+	params := struct {
+		ID uint
+	}{}
+
+	if err := binder.Bind(&params, r); err != nil {
+		panic(err)
+	}
+
+	p := &Partnership{}
+	var cmp *Company
+
+	if err := tx.Preload("To").Preload("From").Where(params.ID).First(p).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	subject := "Partnership cancellata"
+	content := "La partnership tra " + p.From.Name + " e " + p.To.Name + " e' stata cancellata"
+	report := &Report{PlayerID: p.From.CEOID, Date: now, Subject: subject, Content: content}
+
+	if p.To.CEOID == header.CurrentPlayer.ID {
+		cmp = &p.To
+	} else if p.From.CEOID == header.CurrentPlayer.ID {
+		cmp = &p.From
+	} else {
+		session.AddFlash("Non sei il CEO!", "error_")
+		goto out
+	}
+
+	if cmp.ActionPoints < 1 {
+		session.AddFlash("Punti operazione insufficienti!", "error_")
+		goto out
+	}
+
+	cmp.ActionPoints -= 1
+	if err := tx.Save(cmp).Error; err != nil {
+		panic(err)
+	}
+
+	if err := tx.Delete(p).Error; err != nil {
+		panic(err)
+	}
+
+	if err := tx.Create(report).Error; err != nil {
+		panic(err)
+	}
+
+	report.ID = 0
+	report.PlayerID = p.To.CEOID
+
+	if err := tx.Create(report).Error; err != nil {
+		panic(err)
+	}
+
+	session.AddFlash("Partnership cancellata!", "success_")
+
+out:
+	session.Save(r, w)
+
+	url, err := router.Get("company").URL("id", fmt.Sprint(cmp.ID))
 	if err != nil {
 		panic(err)
 	}

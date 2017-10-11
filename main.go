@@ -189,25 +189,27 @@ func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
 			}
 
 			for _, p := range partnerships {
-				// report generation
+				if !p.ProposalExpiration.IsZero() {
+					// report generation
 
-				subject := "Proposta di partnership scaduta"
-				content := "La proposta di partnership tra " + p.From.Name + " e " + p.To.Name + " e' scaduta"
-				report := &Report{PlayerID: p.From.CEOID, Date: p.ProposalExpiration, Subject: subject, Content: content}
+					subject := "Proposta di partnership scaduta"
+					content := "La proposta di partnership tra " + p.From.Name + " e " + p.To.Name + " e' scaduta"
+					report := &Report{PlayerID: p.From.CEOID, Date: p.ProposalExpiration, Subject: subject, Content: content}
 
-				if err := tx.Create(report).Error; err != nil {
-					panic(err)
-				}
+					if err := tx.Create(report).Error; err != nil {
+						panic(err)
+					}
 
-				report.ID = 0
-				report.PlayerID = p.To.CEOID
+					report.ID = 0
+					report.PlayerID = p.To.CEOID
 
-				if err := tx.Create(report).Error; err != nil {
-					panic(err)
-				}
+					if err := tx.Create(report).Error; err != nil {
+						panic(err)
+					}
 
-				if err := tx.Delete(p).Error; err != nil {
-					panic(err)
+					if err := tx.Delete(p).Error; err != nil {
+						panic(err)
+					}
 				}
 			}
 
@@ -401,6 +403,8 @@ func main() {
 	game.HandleFunc("/company/new/", GameMiddleware(NewCompanyPost)).Name("company_new")
 	game.HandleFunc("/company/promoteceo/", GameMiddleware(PromoteCEO)).Name("company_promoteceo")
 	game.HandleFunc("/company/partnership/proposal/", GameMiddleware(ProposePartnership)).Name("company_partnership_proposal")
+	game.HandleFunc("/company/partnership/confirm/", GameMiddleware(ConfirmPartnership)).Name("company_partnership_confirm")
+	game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
 	game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")

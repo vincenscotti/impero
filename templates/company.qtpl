@@ -60,7 +60,7 @@ cmp := p.Company
 <tr>
 <td>
 {% if !partner.ProposalExpiration.IsZero() %}
-<i>
+<del>
 {% endif %}
 {% if partner.FromID == cmp.ID %}
 	{%s partner.To.Name %}
@@ -68,7 +68,7 @@ cmp := p.Company
 	{%s partner.From.Name %}
 {% endif %}
 {% if !partner.ProposalExpiration.IsZero() %}
-</i>
+</del>
 {% endif %}
 </td>
 
@@ -79,7 +79,7 @@ cmp := p.Company
 
 <form action="/game/company/partnership/confirm/" method="POST">
 <input type="hidden" name="id" value="{%d int(partner.ID) %}">
-<input type="submit" value="Conferma">
+<input type="submit" value="Conferma (scade il {%s partner.ProposalExpiration.Format("02-01 15:04:05") %})">
 </form>
 
 {% else %}
@@ -102,7 +102,7 @@ cmp := p.Company
 <tfoot>
 <tr>
 <td colspan="2">
-NB: in corsivo sono gli accordi ancora non confermati
+NB: gli accordi da confermare sono sbarrati
 </td>
 </tr>
 </tfoot>
