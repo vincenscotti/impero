@@ -59,20 +59,37 @@ cmp := p.Company
 {% for _, partner := range p.Partnerships %}
 <tr>
 <td>
+{% if !partner.ProposalExpiration.IsZero() %}
+<i>
+{% endif %}
 {% if partner.FromID == cmp.ID %}
 	{%s partner.To.Name %}
 {% else %}
 	{%s partner.From.Name %}
+{% endif %}
+{% if !partner.ProposalExpiration.IsZero() %}
+</i>
 {% endif %}
 </td>
 
 <td>
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
 
+{% if !partner.ProposalExpiration.IsZero() %}
+
+<form action="/game/company/partnership/confirm/" method="POST">
+<input type="hidden" name="id" value="{%d int(partner.ID) %}">
+<input type="submit" value="Conferma">
+</form>
+
+{% else %}
+
 <form action="/game/company/partnership/delete/" method="POST">
 <input type="hidden" name="id" value="{%d int(partner.ID) %}">
 <input type="submit" value="Cancella">
 </form>
+
+{% endif %}
 
 {% endif %}
 </td>
@@ -81,6 +98,14 @@ cmp := p.Company
 {% endfor %}
 
 </tbody>
+
+<tfoot>
+<tr>
+<td colspan="2">
+NB: in corsivo sono gli accordi ancora non confermati
+</td>
+</tr>
+</tfoot>
 
 </table>
 
@@ -111,11 +136,11 @@ cmp := p.Company
 
 {% if len(p.PossiblePartners) > 0 %}
 
-<form action="/game/company/partnership/" method="POST">
+<form action="/game/company/partnership/proposal/" method="POST">
 <fieldset>
 <legend>Proposta di partnership</legend>
-<input type="hidden" name="to_id" value="{%d int(cmp.ID) %}">
-<select name="from_id">
+<input type="hidden" name="toid" value="{%d int(cmp.ID) %}">
+<select name="fromid">
 
 {% for _, c := range p.PossiblePartners %}
 <option value="{%d int(c.ID) %}">{%s c.Name %}</option>

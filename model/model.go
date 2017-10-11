@@ -87,10 +87,11 @@ type Company struct {
 
 type Partnership struct {
 	gorm.Model
-	From   Company
-	FromID uint
-	To     Company
-	ToID   uint
+	From               Company
+	FromID             uint
+	To                 Company
+	ToID               uint
+	ProposalExpiration time.Time
 }
 
 type Share struct {

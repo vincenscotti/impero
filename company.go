@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func UpdateCompanyIncome(cmp *Company, tx *gorm.DB) {
@@ -312,6 +313,67 @@ out:
 	session.Save(r, w)
 
 	url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
+	if err != nil {
+		panic(err)
+	}
+
+	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+func ProposePartnership(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+	session := GetSession(r)
+	now := GetTime(r)
+	opt := GetOptions(r)
+	header := context.Get(r, "header").(*HeaderData)
+
+	p := &Partnership{}
+	from := &Company{}
+	to := &Company{}
+
+	if err := binder.Bind(p, r); err != nil {
+		panic(err)
+	}
+
+	if err := tx.Where(p.FromID).First(from).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if err := tx.Where(p.ToID).First(to).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if from.ID == 0 || to.ID == 0 {
+		session.AddFlash("Societa' inesistente!", "error_")
+		goto out
+	}
+
+	if from.CEOID != header.CurrentPlayer.ID {
+		session.AddFlash("Non sei il CEO!", "error_")
+		goto out
+	}
+
+	if from.CEOID == to.CEOID {
+		session.AddFlash("Sei il CEO di entrambe le societa'!", "error_")
+		goto out
+	}
+
+	if from.ActionPoints < 1 {
+		session.AddFlash("Punti operazione insufficienti!", "error_")
+		goto out
+	}
+
+	from.ActionPoints -= 1
+	tx.Save(from)
+	tx.Create(&Partnership{FromID: from.ID, ToID: to.ID,
+		ProposalExpiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)})
+
+	session.AddFlash("Proposa inviata!", "success_")
+
+out:
+	session.Save(r, w)
+
+	url, err := router.Get("company").URL("id", fmt.Sprint(p.ToID))
 	if err != nil {
 		panic(err)
 	}
