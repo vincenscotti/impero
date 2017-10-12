@@ -14,21 +14,18 @@
 	<th>Da</th>
 	<th>Ammontare</th>
 	<th>Rischio pena fiscale</th>
-	<th>Scadenza</th>
-	<th>Operazioni (rifiutare non costa pt azione)</th>
+	<th>Operazioni</th>
 </tr>
 
 {% for _, t := range p.IncomingTransfers %}
 <tr>
-<form action="/game/player/transfer/action/" method="POST">
+<form action="/game/player/transfer/confirm/" method="POST">
 <input type="hidden" name="id" value="{%d int(t.ID) %}">
 	<td><a href="/game/player/{%d int(t.FromID) %}">{%s t.From.Name %}</a></td>
 	<td>{%d t.Amount %}</td>
 	<td>{%d t.Risk %}%</td>
-	<td>{%s t.Expiration.Format("02-01 15:04:05") %}</td>
 	<td>
-		<input type="submit" name="action" value="Accetta">
-		<input type="submit" name="action" value="Rifiuta">
+		<input type="submit" value="Accetta (scade il {%s t.Expiration.Format("02-01 15:04:05") %})">
 	</td>
 </form>
 </tr>

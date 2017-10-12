@@ -384,7 +384,7 @@ func main() {
 	game.HandleFunc("/player/all/", GameMiddleware(Players)).Name("player_all")
 	game.HandleFunc("/player/{id}", GameMiddleware(GetPlayer)).Name("player")
 	game.HandleFunc("/player/transfer/", GameMiddleware(Transfer)).Name("player_transfer")
-	game.HandleFunc("/player/transfer/action/", GameMiddleware(TransferAction)).Name("player_transfer_action")
+	game.HandleFunc("/player/transfer/confirm/", GameMiddleware(ConfirmTransfer)).Name("player_transfer_confirm")
 
 	game.HandleFunc("/chat/", GameMiddleware(GetChat)).Name("chat")
 	game.HandleFunc("/chat/post/", GameMiddleware(PostChat)).Name("chat_post")

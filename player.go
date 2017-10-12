@@ -106,7 +106,7 @@ out:
 	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
-func TransferAction(w http.ResponseWriter, r *http.Request) {
+func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
@@ -127,41 +127,32 @@ func TransferAction(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if r.FormValue("action") == "Accetta" {
-		if header.CurrentPlayer.ActionPoints < 1 {
-			session.AddFlash("Punti operazione insufficienti!", "error_")
-			goto out
+	if header.CurrentPlayer.ActionPoints < 1 {
+		session.AddFlash("Punti operazione insufficienti!", "error_")
+		goto out
+	}
+
+	header.CurrentPlayer.ActionPoints -= 1
+
+	if randint < p.Risk {
+		// oops
+		header.CurrentPlayer.Budget = 0
+
+		p.From.Budget = 0
+		if err := tx.Save(p.From); err.Error != nil {
+			panic(err.Error)
 		}
 
-		header.CurrentPlayer.ActionPoints -= 1
-
-		if randint < p.Risk {
-			// oops
-			header.CurrentPlayer.Budget = 0
-
-			p.From.Budget = 0
-			if err := tx.Save(p.From); err.Error != nil {
-				panic(err.Error)
-			}
-
-			session.AddFlash("CONTROLLO FISCALE! Il tuo budget e' stato sequestrato!", "error_")
-		} else {
-			// success
-			header.CurrentPlayer.Budget += p.Amount
-
-			session.AddFlash("Trasferimento completato!", "success_")
-		}
-
-		if err := tx.Save(header.CurrentPlayer).Error; err != nil {
-			panic(err)
-		}
+		session.AddFlash("CONTROLLO FISCALE! Il tuo budget e' stato sequestrato!", "error_")
 	} else {
-		p.From.Budget += p.Amount
-		if err := tx.Save(p.From).Error; err != nil {
-			panic(err)
-		}
+		// success
+		header.CurrentPlayer.Budget += p.Amount
 
-		session.AddFlash("Trasferimento rifiutato!", "success_")
+		session.AddFlash("Trasferimento completato!", "success_")
+	}
+
+	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
+		panic(err)
 	}
 
 	if err := tx.Delete(p).Error; err != nil {
