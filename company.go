@@ -344,6 +344,10 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	subject := "Proposta di partnership"
+	content := "Hai ricevuto una proposta di partnership tra " + from.Name + " e " + to.Name
+	report := &Report{PlayerID: to.CEOID, Date: now, Subject: subject, Content: content}
+
 	if from.ID == 0 || to.ID == 0 {
 		session.AddFlash("Societa' inesistente!", "error_")
 		goto out
@@ -380,6 +384,10 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 
 	if err := tx.Create(&Partnership{FromID: from.ID, ToID: to.ID,
 		ProposalExpiration: now.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
+		panic(err)
+	}
+
+	if err := tx.Create(report).Error; err != nil {
 		panic(err)
 	}
 
