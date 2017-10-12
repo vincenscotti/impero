@@ -75,7 +75,7 @@ cmp := p.Company
 <td>
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
 
-{% if !partner.ProposalExpiration.IsZero() %}
+{% if !partner.ProposalExpiration.IsZero() && cmp.ID == partner.ToID %}
 
 <form action="/game/company/partnership/confirm/" method="POST">
 <input type="hidden" name="id" value="{%d int(partner.ID) %}">
