@@ -163,8 +163,22 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+func EndGameMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		opt := GetOptions(r)
+
+		if opt.Turn > opt.EndGame {
+			EndGamePage(w, r)
+
+			return
+		}
+
+		next(w, r)
+	})
+}
+
 func GameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GlobalMiddleware(LoggerMiddleware(updateGameStatus(HeaderMiddleware(next)))).ServeHTTP(w, r)
+		GlobalMiddleware(LoggerMiddleware(updateGameStatus(HeaderMiddleware(EndGameMiddleware(next))))).ServeHTTP(w, r)
 	})
 }

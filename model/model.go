@@ -17,6 +17,7 @@ type Options struct {
 	InitialShares       int
 	CostPerYield        float64
 	Turn                int
+	EndGame             int
 }
 
 type Point struct {
@@ -40,6 +41,7 @@ type Player struct {
 	Budget         int
 	LastBudget     int
 	ActionPoints   int
+	VP             int
 	LastIncome     int
 	LastChatViewed time.Time
 }

@@ -48,6 +48,10 @@
 <input type="number" min="0" name="Turn" value="{%d p.Options.Turn %}">
 <br>
 
+<label for="EndGame">Turno finale</label>
+<input type="number" min="0" name="EndGame" value="{%d p.Options.EndGame %}">
+<br>
+
 <label for="Password">Password amministratore</label>
 <input type="password" name="Password" placeholder="Password">
 <br>

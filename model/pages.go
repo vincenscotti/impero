@@ -26,6 +26,10 @@ type GameHomeData struct {
 	IncomingTransfers []*TransferProposal
 }
 
+type EndGameData struct {
+	Players []*Player
+}
+
 type SharesPerPlayer struct {
 	Company       Company
 	CompanyID     uint

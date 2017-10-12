@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"sort"
 	"syscall"
 	"time"
 )
@@ -83,6 +84,39 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 		ShareAuctions: shareauctions, IncomingTransfers: incomingtransfers}
 
 	RenderHTML(w, r, templates.GameHomePage(page))
+}
+
+type sortablePlayers []*Player
+
+func (sp sortablePlayers) Len() int {
+	return len([]*Player(sp))
+}
+
+func (sp sortablePlayers) Less(i, j int) bool {
+	p := []*Player(sp)
+	return p[i].VP > p[j].VP
+}
+
+func (sp sortablePlayers) Swap(i, j int) {
+	p := []*Player(sp)
+
+	p[i], p[j] = p[j], p[i]
+}
+
+func EndGamePage(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+
+	players := make([]*Player, 0)
+
+	if err := tx.Find(&players).Error; err != nil {
+		panic(err)
+	}
+
+	sort.Stable(sortablePlayers(players))
+
+	page := &EndGameData{Players: players}
+
+	RenderHTML(w, r, templates.EndGamePage(page))
 }
 
 func updateGameStatus(next http.HandlerFunc) http.HandlerFunc {
