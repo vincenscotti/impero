@@ -153,6 +153,14 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	opt := GetOptions(r)
 
+	blerr := BLError{}
+
+	if target, err := router.Get("gamehome").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
+
 	cmp := &Company{}
 	freenodes := make([]*Node, 0)
 	cnt := 0
@@ -162,23 +170,23 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cmp.Name == "" {
-		session.AddFlash("Il nome non puo' essere vuoto!", "error_")
-		goto out
+		blerr.Message = "Il nome non puo' essere vuoto!"
+		panic(blerr)
 	}
 
 	if cmp.ShareCapital < 1 {
-		session.AddFlash("Il budget deve essere almeno 1!", "error_")
-		goto out
+		blerr.Message = "Il budget deve essere almeno 1!"
+		panic(blerr)
 	}
 
 	if cmp.ShareCapital > header.CurrentPlayer.Budget {
-		session.AddFlash("Budget insufficiente!", "error_")
-		goto out
+		blerr.Message = "Budget insufficiente!"
+		panic(blerr)
 	}
 
 	if header.CurrentPlayer.ActionPoints < opt.NewCompanyCost {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	if err := tx.Model(cmp).Where(&Company{Name: cmp.Name}).Count(&cnt).Error; err != nil {
@@ -186,8 +194,8 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cnt != 0 {
-		session.AddFlash("Societa' gia' esistente!", "error_")
-		goto out
+		blerr.Message = "Societa' gia' esistente!"
+		panic(blerr)
 	}
 
 	header.CurrentPlayer.Budget -= cmp.ShareCapital
@@ -247,19 +255,19 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 
 		session.AddFlash("Societa' creata", "success_")
 	} else {
-		session.AddFlash("Nessuna cella disponibile!", "error_")
-
-		tx.Rollback()
+		blerr.Message = "Nessuna cella disponibile!"
+		panic(blerr)
 	}
 
-out:
-	Redirect(w, r, "gamehome")
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
+
+	blerr := BLError{}
 
 	cmp := &Company{}
 	myshares := 0
@@ -274,13 +282,19 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	if target, err := router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
+
 	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
 	if cmp.ID == 0 {
-		session.AddFlash("Societa' inesistente!", "error_")
-		goto out
+		blerr.Message = "Societa' inesistente!"
+		panic(blerr)
 	}
 
 	sh.CompanyID = cmp.ID
@@ -299,8 +313,8 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 	if myshares > ceoshares {
 		cmp.CEOID = header.CurrentPlayer.ID
 	} else {
-		session.AddFlash("Azioni insufficienti!", "error_")
-		goto out
+		blerr.Message = "Azioni insufficienti!"
+		panic(blerr)
 	}
 
 	if err := tx.Save(cmp).Error; err != nil {
@@ -309,15 +323,7 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Sei diventato amministratore!", "error_")
 
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func ProposePartnership(w http.ResponseWriter, r *http.Request) {
@@ -327,6 +333,8 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	opt := GetOptions(r)
 	header := context.Get(r, "header").(*HeaderData)
 
+	blerr := BLError{}
+
 	p := &Partnership{}
 	from := &Company{}
 	to := &Company{}
@@ -334,6 +342,12 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 
 	if err := binder.Bind(p, r); err != nil {
 		panic(err)
+	}
+
+	if target, err := router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
 	}
 
 	if err := tx.Where(p.FromID).First(from).Error; err != nil && err != gorm.ErrRecordNotFound {
@@ -349,23 +363,23 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	report := &Report{PlayerID: to.CEOID, Date: now, Subject: subject, Content: content}
 
 	if from.ID == 0 || to.ID == 0 {
-		session.AddFlash("Societa' inesistente!", "error_")
-		goto out
+		blerr.Message = "Societa' inesistente!"
+		panic(blerr)
 	}
 
 	if from.CEOID != header.CurrentPlayer.ID {
-		session.AddFlash("Non sei il CEO!", "error_")
-		goto out
+		blerr.Message = "Non sei il CEO!"
+		panic(blerr)
 	}
 
 	if from.CEOID == to.CEOID {
-		session.AddFlash("Sei il CEO di entrambe le societa'!", "error_")
-		goto out
+		blerr.Message = "Sei il CEO di entrambe le societa'!"
+		panic(blerr)
 	}
 
 	if from.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	if err := tx.Table("partnerships").Where("((`from_id` = ? and `to_id` = ?) or (`from_id` = ? and `to_id` = ?)) and `deleted_at` is null", from.ID, to.ID, to.ID, from.ID).Count(&count).Error; err != nil {
@@ -373,8 +387,8 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if count > 0 {
-		session.AddFlash("Partnership gia' esistente!", "error_")
-		goto out
+		blerr.Message = "Partnership gia' esistente!"
+		panic(blerr)
 	}
 
 	from.ActionPoints -= 1
@@ -393,15 +407,7 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Proposa inviata!", "success_")
 
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("company").URL("id", fmt.Sprint(p.ToID))
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
@@ -409,6 +415,8 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	now := GetTime(r)
 	header := context.Get(r, "header").(*HeaderData)
+
+	blerr := BLError{}
 
 	params := struct {
 		ID uint
@@ -424,18 +432,20 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	subject := "Proposta di partnership confermata"
-	content := "La proposta di partnership tra " + p.From.Name + " e " + p.To.Name + " e' stata confermata"
-	report := &Report{PlayerID: p.From.CEOID, Date: now, Subject: subject, Content: content}
+	if target, err := router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
 
 	if p.To.CEOID != header.CurrentPlayer.ID {
-		session.AddFlash("Non sei il CEO!", "error_")
-		goto out
+		blerr.Message = "Non sei il CEO!"
+		panic(blerr)
 	}
 
 	if p.To.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	p.To.ActionPoints -= 1
@@ -447,6 +457,10 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Save(p).Error; err != nil {
 		panic(err)
 	}
+
+	subject := "Proposta di partnership confermata"
+	content := "La proposta di partnership tra " + p.From.Name + " e " + p.To.Name + " e' stata confermata"
+	report := &Report{PlayerID: p.From.CEOID, Date: now, Subject: subject, Content: content}
 
 	if err := tx.Create(report).Error; err != nil {
 		panic(err)
@@ -461,15 +475,7 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Partnership confermata!", "success_")
 
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("company").URL("id", fmt.Sprint(p.ToID))
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func DeletePartnership(w http.ResponseWriter, r *http.Request) {
@@ -477,6 +483,8 @@ func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	now := GetTime(r)
 	header := context.Get(r, "header").(*HeaderData)
+
+	blerr := BLError{}
 
 	params := struct {
 		ID uint
@@ -493,22 +501,24 @@ func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	subject := "Partnership cancellata"
-	content := "La partnership tra " + p.From.Name + " e " + p.To.Name + " e' stata cancellata"
-	report := &Report{PlayerID: p.From.CEOID, Date: now, Subject: subject, Content: content}
+	if target, err := router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
 
 	if p.To.CEOID == header.CurrentPlayer.ID {
 		cmp = &p.To
 	} else if p.From.CEOID == header.CurrentPlayer.ID {
 		cmp = &p.From
 	} else {
-		session.AddFlash("Non sei il CEO!", "error_")
-		goto out
+		blerr.Message = "Non sei il CEO!"
+		panic(blerr)
 	}
 
 	if cmp.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	cmp.ActionPoints -= 1
@@ -519,6 +529,10 @@ func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Delete(p).Error; err != nil {
 		panic(err)
 	}
+
+	subject := "Partnership cancellata"
+	content := "La partnership tra " + p.From.Name + " e " + p.To.Name + " e' stata cancellata"
+	report := &Report{PlayerID: p.From.CEOID, Date: now, Subject: subject, Content: content}
 
 	if err := tx.Create(report).Error; err != nil {
 		panic(err)
@@ -533,13 +547,5 @@ func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Partnership cancellata!", "success_")
 
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("company").URL("id", fmt.Sprint(cmp.ID))
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	RedirectToURL(w, r, blerr.Redirect)
 }

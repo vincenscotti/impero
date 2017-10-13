@@ -63,20 +63,28 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 	now := GetTime(r)
 	opt := GetOptions(r)
 
+	blerr := BLError{}
+
 	p := &TransferProposal{}
 
 	if err := binder.Bind(p, r); err != nil {
 		panic(err)
 	}
 
+	if target, err := router.Get("player").URL("id", fmt.Sprint(p.ToID)); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
+
 	if p.Amount > header.CurrentPlayer.Budget {
-		session.AddFlash("Budget insufficiente!", "error_")
-		goto out
+		blerr.Message = "Budget insufficiente!"
+		panic(blerr)
 	}
 
 	if header.CurrentPlayer.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	p.FromID = header.CurrentPlayer.ID
@@ -95,21 +103,21 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Proposta inviata!", "success_")
 
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("player").URL("id", fmt.Sprint(p.ToID))
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
+
+	blerr := BLError{}
+
+	if target, err := router.Get("gamehome").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
 
 	params := struct {
 		ID uint
@@ -128,8 +136,8 @@ func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if header.CurrentPlayer.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	header.CurrentPlayer.ActionPoints -= 1
@@ -159,6 +167,5 @@ func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-out:
-	Redirect(w, r, "gamehome")
+	RedirectToURL(w, r, blerr.Redirect)
 }

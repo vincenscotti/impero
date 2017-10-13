@@ -13,6 +13,8 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 
+	blerr := BLError{}
+
 	params := struct {
 		ID     uint
 		Amount int
@@ -20,6 +22,12 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 
 	if err := binder.Bind(&params, r); err != nil {
 		panic(err)
+	}
+
+	if target, err := router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
 	}
 
 	session := GetSession(r)
@@ -34,18 +42,18 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cmp.ID == 0 {
-		session.AddFlash("Societa' inesistente!", "error_")
-		goto out
+		blerr.Message = "Societa' inesistente!"
+		panic(blerr)
 	}
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
-		session.AddFlash("Permessi insufficienti!", "error_")
-		goto out
+		blerr.Message = "Permessi insufficienti!"
+		panic(blerr)
 	}
 
 	if cmp.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	cmp.ActionPoints -= 1
@@ -64,15 +72,7 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Asta creata", "success_")
 
-out:
-	session.Save(r, w)
-
-	url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
-	if err != nil {
-		panic(err)
-	}
-
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func BidShare(w http.ResponseWriter, r *http.Request) {
@@ -80,6 +80,14 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	now := GetTime(r)
+
+	blerr := BLError{}
+
+	if target, err := router.Get("gamehome").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
 
 	params := struct {
 		Auction uint
@@ -105,13 +113,13 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if shareauction.ID == 0 {
-		session.AddFlash("L'asta non esiste!", "error_")
-		goto out
+		blerr.Message = "L'asta non esiste!"
+		panic(blerr)
 	}
 
 	if shareauction.HighestOffer >= params.Amount {
-		session.AddFlash("Puntata troppo bassa!", "error_")
-		goto out
+		blerr.Message = "Puntata troppo bassa!"
+		panic(blerr)
 	}
 
 	if (shareauction.HighestOfferPlayerID != header.CurrentPlayer.ID &&
@@ -119,14 +127,14 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 		(shareauction.HighestOfferPlayerID == header.CurrentPlayer.ID &&
 			params.Amount > header.CurrentPlayer.Budget+
 				shareauction.HighestOffer) {
-		session.AddFlash("Budget insufficiente!", "error_")
-		goto out
+		blerr.Message = "Budget insufficiente!"
+		panic(blerr)
 	}
 
 	if participation.ID == 0 {
 		if header.CurrentPlayer.ActionPoints < 1 {
-			session.AddFlash("Punti operazione insufficienti!", "error_")
-			goto out
+			blerr.Message = "Punti operazione insufficienti!"
+			panic(blerr)
 		}
 
 		if err := tx.Save(participation).Error; err != nil {
@@ -165,6 +173,5 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Puntata inserita", "success_")
 
-out:
-	Redirect(w, r, "gamehome")
+	RedirectToURL(w, r, blerr.Redirect)
 }

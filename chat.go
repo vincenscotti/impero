@@ -31,7 +31,14 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 func PostChat(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
-	session := GetSession(r)
+
+	blerr := BLError{}
+
+	if target, err := router.Get("chat").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
 
 	msg := &ChatMessage{}
 
@@ -40,16 +47,16 @@ func PostChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if msg.Content == "" {
-		session.AddFlash("Messaggio vuoto non valido!", "error_")
-	} else {
-		msg.FromID = header.CurrentPlayer.ID
-		msg.Date = time.Now()
-
-		if err := tx.Create(msg).Error; err != nil {
-			panic(err)
-		}
-
+		blerr.Message = "Messaggio vuoto non valido!"
+		panic(blerr)
 	}
 
-	Redirect(w, r, "chat")
+	msg.FromID = header.CurrentPlayer.ID
+	msg.Date = time.Now()
+
+	if err := tx.Create(msg).Error; err != nil {
+		panic(err)
+	}
+
+	RedirectToURL(w, r, blerr.Redirect)
 }

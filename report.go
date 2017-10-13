@@ -26,7 +26,14 @@ func ReportsPage(w http.ResponseWriter, r *http.Request) {
 func ReportPage(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
-	session := GetSession(r)
+
+	blerr := BLError{}
+
+	if target, err := router.Get("report_all").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
 
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -40,11 +47,8 @@ func ReportPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if report.PlayerID != header.CurrentPlayer.ID {
-		session.AddFlash("Non hai i permessi per vedere questo report!", "error_")
-
-		Redirect(w, r, "report_all")
-
-		return
+		blerr.Message = "Non hai i permessi per vedere questo report!"
+		panic(blerr)
 	}
 
 	report.Read = true
@@ -62,6 +66,14 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 
+	blerr := BLError{}
+
+	if target, err := router.Get("report_all").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
+
 	params := struct {
 		IDs []uint
 	}{}
@@ -77,8 +89,8 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if notmine > 0 {
-		session.AddFlash("Non hai i permessi per cancellare questi report!", "error_")
-		goto out
+		blerr.Message = "Non hai i permessi per cancellare questi report!"
+		panic(blerr)
 	}
 
 	if err := tx.Delete(&Report{}, "id in (?)", params.IDs).Error; err != nil {
@@ -87,6 +99,5 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Report cancellati!", "success_")
 
-out:
-	Redirect(w, r, "report_all")
+	RedirectToURL(w, r, blerr.Redirect)
 }

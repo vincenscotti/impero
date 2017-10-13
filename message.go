@@ -41,7 +41,14 @@ func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 func GetMessage(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
-	session := GetSession(r)
+
+	blerr := BLError{}
+
+	if target, err := router.Get("message_inbox").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
 
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -55,11 +62,8 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if msg.FromID != header.CurrentPlayer.ID && msg.ToID != header.CurrentPlayer.ID {
-		session.AddFlash("Non puoi leggere questo messaggio!", "error_")
-
-		Redirect(w, r, "message_inbox")
-
-		return
+		blerr.Message = "Non puoi leggere questo messaggio!"
+		panic(blerr)
 	} else if msg.ToID == header.CurrentPlayer.ID {
 		msg.Read = true
 		if err := tx.Save(&msg).Error; err != nil {
@@ -77,6 +81,14 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 
+	blerr := BLError{}
+
+	if target, err := router.Get("message_outbox").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
+
 	msg := &Message{}
 
 	if err := binder.Bind(msg, r); err != nil {
@@ -84,15 +96,13 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if msg.Content == "" {
-		session.AddFlash("Non puoi inviare un messaggio vuoto!", "error_")
-
-		goto out
+		blerr.Message = "Non puoi inviare un messaggio vuoto!"
+		panic(blerr)
 	}
 
 	if msg.ToID == 0 {
-		session.AddFlash("Destinatario non valido!", "error_")
-
-		goto out
+		blerr.Message = "Destinatario non valido!"
+		panic(blerr)
 	}
 
 	msg.FromID = header.CurrentPlayer.ID
@@ -105,6 +115,5 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Messaggio inviato!", "success_")
 
-out:
-	Redirect(w, r, "message_outbox")
+	RedirectToURL(w, r, blerr.Redirect)
 }

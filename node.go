@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -49,6 +48,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	opt := GetOptions(r)
 	session := GetSession(r)
 
+	blerr := BLError{}
+
 	params := struct {
 		ID uint
 		X  int
@@ -57,6 +58,12 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 
 	if err := binder.Bind(&params, r); err != nil {
 		panic(err)
+	}
+
+	if target, err := router.Get("map").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
 	}
 
 	node := &Node{}
@@ -73,8 +80,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cmp.ID == 0 {
-		session.AddFlash("Societa' inesistente!", "error_")
-		goto out
+		blerr.Message = "Societa' inesistente!"
+		panic(blerr)
 	}
 
 	if err := tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node).Error; err != nil && err != gorm.ErrRecordNotFound {
@@ -82,34 +89,34 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if node.ID == 0 {
-		session.AddFlash("Cella inesistente!", "error_")
-		goto out
+		blerr.Message = "Cella inesistente!"
+		panic(blerr)
 	}
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
-		session.AddFlash("Permessi insufficienti!", "error_")
-		goto out
+		blerr.Message = "Permessi insufficienti!"
+		panic(blerr)
 	}
 
 	if cmp.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	if node.ID == 0 {
-		session.AddFlash("Cella inesistente!", "error_")
-		goto out
+		blerr.Message = "Cella inesistente!"
+		panic(blerr)
 	}
 
 	if node.OwnerID == cmp.ID {
-		session.AddFlash("Cella gia' posseduta!", "error_")
-		goto out
+		blerr.Message = "Cella gia' posseduta!"
+		panic(blerr)
 	}
 
 	cost, _, _ = GetCostsByYield(node.Yield, opt)
 	if cmp.ShareCapital < cost {
-		session.AddFlash("Capitale insufficiente!", "error_")
-		goto out
+		blerr.Message = "Capitale insufficiente!"
+		panic(blerr)
 	}
 
 	// select all adjacent nodes
@@ -141,8 +148,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isnodeadjacent {
-		session.AddFlash("Cella non adiacente!", "error_")
-		goto out
+		blerr.Message = "Cella non adiacente!"
+		panic(blerr)
 	}
 
 	if node.OwnerID != 0 {
@@ -155,9 +162,8 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if node.OwnerID == cmp.ID || r.ID != 0 {
-			session.AddFlash("Cella gia' acquistata!", "error_")
-
-			goto out
+			blerr.Message = "Cella gia' acquistata!"
+			panic(blerr)
 		} else {
 			if err := tx.Create(r).Error; err != nil {
 				panic(err)
@@ -180,19 +186,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Cella acquistata!", "success_")
 
-out:
-	session.Save(r, w)
-
-	if ref := r.Referer(); ref != "" {
-		http.Redirect(w, r, ref, http.StatusFound)
-	} else {
-		url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
-		if err != nil {
-			panic(err)
-		}
-
-		http.Redirect(w, r, url.Path, http.StatusFound)
-	}
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func InvestNode(w http.ResponseWriter, r *http.Request) {
@@ -200,6 +194,8 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	opt := GetOptions(r)
+
+	blerr := BLError{}
 
 	params := struct {
 		ID uint
@@ -209,6 +205,12 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 
 	if err := binder.Bind(&params, r); err != nil {
 		panic(err)
+	}
+
+	if target, err := router.Get("map").URL(); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
 	}
 
 	node := &Node{}
@@ -221,8 +223,8 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cmp.ID == 0 {
-		session.AddFlash("Societa' inesistente!", "error_")
-		goto out
+		blerr.Message = "Societa' inesistente!"
+		panic(blerr)
 	}
 
 	if err := tx.Where("`x` = ? and `y` = ?", params.X, params.Y).First(node).Error; err != nil && err != gorm.ErrRecordNotFound {
@@ -230,30 +232,30 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cmp.CEOID != header.CurrentPlayer.ID {
-		session.AddFlash("Permessi insufficienti!", "error_")
-		goto out
+		blerr.Message = "Permessi insufficienti!"
+		panic(blerr)
 	}
 
 	if cmp.ActionPoints < 1 {
-		session.AddFlash("Punti operazione insufficienti!", "error_")
-		goto out
+		blerr.Message = "Punti operazione insufficienti!"
+		panic(blerr)
 	}
 
 	if node.ID == 0 {
-		session.AddFlash("Cella inesistente!", "error_")
-		goto out
+		blerr.Message = "Cella inesistente!"
+		panic(blerr)
 	}
 
 	if node.OwnerID != cmp.ID {
-		session.AddFlash("Cella non posseduta!", "error_")
-		goto out
+		blerr.Message = "Cella non posseduta!"
+		panic(blerr)
 	}
 
 	_, cost, newyield = GetCostsByYield(node.Yield, opt)
 
 	if cmp.ShareCapital < cost {
-		session.AddFlash("Capitale insufficiente!", "error_")
-		goto out
+		blerr.Message = "Capitale insufficiente!"
+		panic(blerr)
 	}
 
 	cmp.ActionPoints -= 1
@@ -269,19 +271,7 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 
 	session.AddFlash("Cella migliorata!", "success_")
 
-out:
-	session.Save(r, w)
-
-	if ref := r.Referer(); ref != "" {
-		http.Redirect(w, r, ref, http.StatusFound)
-	} else {
-		url, err := router.Get("company").URL("id", fmt.Sprint(params.ID))
-		if err != nil {
-			panic(err)
-		}
-
-		http.Redirect(w, r, url.Path, http.StatusFound)
-	}
+	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func GetCosts(w http.ResponseWriter, r *http.Request) {

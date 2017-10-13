@@ -22,18 +22,22 @@ func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
 func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tx := db.Begin()
+		var session *sessions.Session
+		var err error
 
 		defer func() {
 			errstruct := recover()
 			if errstruct != nil {
 				tx.Rollback()
 
-				if err, ok := errstruct.(error); ok {
+				if blerr, ok := errstruct.(BLError); ok {
+					session.AddFlash(blerr.Message, "error_")
+					session.Save(r, w)
+					http.Redirect(w, r, blerr.Redirect.Path, http.StatusFound)
+				} else if err, ok := errstruct.(error); ok {
 					ErrorHandler(err, w, r)
-					return
 				} else if err, ok := errstruct.(string); ok {
 					ErrorHandler(errors.New(err), w, r)
-					return
 				} else {
 					panic(errstruct)
 				}
@@ -47,9 +51,7 @@ func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			panic(err)
 		}
 
-		session, err := store.Get(r, "sess")
-
-		if err != nil {
+		if session, err = store.Get(r, "sess"); err != nil {
 			panic(err)
 		}
 

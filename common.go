@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/schema"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -70,12 +71,16 @@ func RenderJSON(w http.ResponseWriter, r *http.Request, obj interface{}) (err er
 }
 
 func Redirect(w http.ResponseWriter, r *http.Request, to string) {
-	SaveSession(w, r)
-
-	url, err := router.Get(to).URL()
+	u, err := router.Get(to).URL()
 	if err != nil {
 		panic(err)
 	}
 
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	RedirectToURL(w, r, u)
+}
+
+func RedirectToURL(w http.ResponseWriter, r *http.Request, to *url.URL) {
+	SaveSession(w, r)
+
+	http.Redirect(w, r, to.Path, http.StatusFound)
 }
