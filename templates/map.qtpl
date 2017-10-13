@@ -59,9 +59,9 @@
 	<td style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}"></td>
 	<td>
 	{% if c.CEOID == p.CurrentPlayer.ID %}
-		<b><a href="/game/company/{%d int(c.ID) %}">{%s c.Name %}</a></b>
+		<b><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.ID)) %}">{%s c.Name %}</a></b>
 	{% else %}
-		<a href="/game/company/{%d int(c.ID) %}">{%s c.Name %}</a>
+		<a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.ID)) %}">{%s c.Name %}</a>
 	{% endif %}
 	</td>
 </tr>
@@ -69,7 +69,7 @@
 
 </table>
 
-<form action="/game/company/buy/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
 
 <fieldset>
 <legend>Acquisto rapido</legend>
@@ -93,7 +93,7 @@ Clicca sul nodo da acquistare e completa questo form.
 </fieldset>
 </form>
 
-<form action="/game/company/invest/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_invest") %}" method="POST">
 
 <fieldset>
 <legend>Investimento rapido</legend>

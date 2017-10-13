@@ -1,16 +1,17 @@
 {% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
 
 {% func MessagePage(p *MessageData) %}
 
 {%= GameHeaderPage(p.HeaderData) %}
 
 {% if p.Message.From.Name != "" %}
-	<p>Da: <a href="/game/player/{%d int(p.Message.From.ID) %}">{%s p.Message.From.Name %}</a></p>
+	<p>Da: <a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(p.Message.From.ID)) %}">{%s p.Message.From.Name %}</a></p>
 {% else %}
 	<p>Da: admin</p>
 {% endif %}
 
-<p>A: <a href="/game/player/{%d int(p.Message.To.ID) %}">{%s p.Message.To.Name %}</a></p>
+<p>A: <a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(p.Message.To.ID)) %}">{%s p.Message.To.Name %}</a></p>
 <p>Oggetto: {%s p.Message.Subject %}</p>
 <p>Data: {%s p.Message.Date.Format("02-01 15:04:05") %}</p>
 <p>{%s= p.Message.Content %}</p>

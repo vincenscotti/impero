@@ -1,14 +1,19 @@
 package model
 
-import "time"
+import (
+	"github.com/gorilla/mux"
+	"time"
+)
 
 type AdminData struct {
+	Router  *mux.Router
 	Options *Options
 	Message string
 }
 
 type HeaderData struct {
 	CurrentPlayer   *Player
+	Router          *mux.Router
 	Error           string
 	Success         string
 	NewChatMessages int

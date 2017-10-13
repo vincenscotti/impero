@@ -1,4 +1,5 @@
 {% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
 
 {% func CompaniesPage(p *CompaniesData) %}
 
@@ -15,7 +16,7 @@
 {% for i, cmp := range p.Companies %}
 <tr>
 	<td>{%d i+1 %}</i>
-	<td><a href="/game/company/{%d int(cmp.ID) %}">{%s cmp.Name %}</a></td>
+	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(cmp.ID)) %}">{%s cmp.Name %}</a></td>
 	<td>{%d cmp.ShareCapital %}</td>
 	<td>{%d cmp.Income %}</td>
 </tr>

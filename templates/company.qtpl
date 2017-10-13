@@ -1,4 +1,5 @@
 {% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
 
 {% func CompanyPage(p *CompanyData) %}
 
@@ -26,7 +27,7 @@ cmp := p.Company
 
 {% for _, sh := range p.SharesInfo %}
 <tr>
-	<td><a href="/game/player/{%d int(sh.Owner.ID) %}">{%s sh.Owner.Name %}</a></td>
+	<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(sh.Owner.ID)) %}">{%s sh.Owner.Name %}</a></td>
 	<td>{%d sh.Shares %}</td>
 </tr>
 {% endfor %}
@@ -37,7 +38,7 @@ cmp := p.Company
 <p>Punti operazione: {%d cmp.ActionPoints %}</p>
 
 	{% if cmp.CEO.ID != p.CurrentPlayer.ID %}
-	<form action="/game/company/promoteceo/" method="POST">
+	<form action="{%s quickURL(p.HeaderData, "company_promoteceo") %}" method="POST">
 	<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
 	<input type="submit" value="Diventa amministratore">
 	</form>
@@ -77,14 +78,14 @@ cmp := p.Company
 
 {% if !partner.ProposalExpiration.IsZero() && cmp.ID == partner.ToID %}
 
-<form action="/game/company/partnership/confirm/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_partnership_confirm") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(partner.ID) %}">
 <input type="submit" value="Conferma (scade il {%s partner.ProposalExpiration.Format("02-01 15:04:05") %})">
 </form>
 
 {% else %}
 
-<form action="/game/company/partnership/delete/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_partnership_delete") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(partner.ID) %}">
 <input type="submit" value="Cancella">
 </form>
@@ -112,20 +113,20 @@ NB: gli accordi da confermare sono sbarrati
 {% endif %}
 
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
-<form action="/game/company/addshare/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_addshare") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
 <input type="number" min="0" name="amount" placeholder="Base d'asta opzionale">
 <input type="submit" value="Ricapitalizza">
 </form>
 
-<form action="/game/company/buy/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
 <input type="number" name="x" placeholder="X">
 <input type="number" name="y" placeholder="Y">
 <input type="submit" value="Compra cella">
 </form>
 
-<form action="/game/company/invest/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_invest") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
 <input type="number" name="x" placeholder="X">
 <input type="number" name="y" placeholder="Y">
@@ -136,7 +137,7 @@ NB: gli accordi da confermare sono sbarrati
 
 {% if len(p.PossiblePartners) > 0 %}
 
-<form action="/game/company/partnership/proposal/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_partnership_proposal") %}" method="POST">
 <fieldset>
 <legend>Proposta di partnership</legend>
 <input type="hidden" name="toid" value="{%d int(cmp.ID) %}">

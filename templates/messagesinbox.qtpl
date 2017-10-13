@@ -1,4 +1,5 @@
 {% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
 
 {% func MessagesInboxPage(p *MessagesInboxData) %}
 
@@ -6,7 +7,7 @@
 
 Ricevuti
 
-<a href="/game/message/outbox/">Inviati</a>
+<a href="{%s quickURL(p.HeaderData, "message_outbox") %}">Inviati</a>
 
 {% if len(p.Messages) > 0 %}
 <table>
@@ -19,7 +20,7 @@ Ricevuti
 	{% for _, m := range p.Messages %}
 <tr>
 	{% if m.From.Name != "" %}
-		<td><a href="/game/player/{%d int(m.From.ID) %}">{%s m.From.Name %}</a></td>
+		<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(m.From.ID)) %}">{%s m.From.Name %}</a></td>
 	{% else %}
 		<td>admin</td>
 	{% endif %}
@@ -28,7 +29,7 @@ Ricevuti
 	{% if !m.Read %}
 	<b>
 	{% endif %}
-	<a href="/game/message/{%d int(m.ID) %}">{%s m.Subject %}</a>
+	<a href="{%s quickURL(p.HeaderData, "message", "id", fmt.Sprint(m.ID)) %}">{%s m.Subject %}</a>
 	{% if !m.Read %}
 	</b>
 	{% endif %}

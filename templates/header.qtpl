@@ -1,3 +1,5 @@
+{% import . "github.com/vincenscotti/impero/model" %}
+
 {% func HeaderPage() %}
 
 <!DOCTYPE html>
@@ -15,3 +17,15 @@
 <div class="container">
 
 {% endfunc %}
+
+{% code
+
+func quickURL(h *HeaderData, name string, args ...string) string {
+	if target, err := h.Router.Get(name).URL(args...); err != nil {
+		panic(err)
+	} else {
+		return target.Path
+	}
+}
+
+%}

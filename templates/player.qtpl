@@ -6,7 +6,7 @@
 
 <b>Scrivi messaggio</b>
 
-<form action="/game/message/new/" method="post">
+<form action="{%s quickURL(p.HeaderData, "message_new") %}" method="post">
 <p>A: {%s p.Player.Name %}</p>
 <input type="text" name="subject" placeholder="Oggetto" required>
 <textarea name="content" placeholder="Messaggio" required>
@@ -17,7 +17,7 @@
 
 <b>Trasferisci denaro</b>
 
-<form action="/game/player/transfer/" method="post">
+<form action="{%s quickURL(p.HeaderData, "player_transfer") %}" method="post">
 <input type="number" name="amount" placeholder="Capitale" required>
 <input type="hidden" name="to_id" value="{%d int(p.Player.ID) %}">
 <input type="submit" value="Trasferisci">

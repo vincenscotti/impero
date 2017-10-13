@@ -149,7 +149,7 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			panic(err)
 		}
 
-		header := &HeaderData{CurrentPlayer: p, NewChatMessages: chats, NewMessages: msgs, NewReports: reports, Now: now, Options: opt}
+		header := &HeaderData{CurrentPlayer: p, Router: router, NewChatMessages: chats, NewMessages: msgs, NewReports: reports, Now: now, Options: opt}
 		if s := session.Flashes("error_"); len(s) > 0 {
 			header.Error = s[0].(string)
 		}

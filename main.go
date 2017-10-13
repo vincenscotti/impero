@@ -430,7 +430,7 @@ func main() {
 
 	game.HandleFunc("/report/all/", GameMiddleware(ReportsPage)).Name("report_all")
 	game.HandleFunc("/report/{id}", GameMiddleware(ReportPage)).Name("report")
-	game.HandleFunc("/report/delete/", GameMiddleware(DeleteReports)).Name("report")
+	game.HandleFunc("/report/delete/", GameMiddleware(DeleteReports)).Name("report_delete")
 
 	game.HandleFunc("/company/all/", GameMiddleware(Companies)).Name("company_all")
 	game.HandleFunc("/company/{id}", GameMiddleware(GetCompany)).Name("company")

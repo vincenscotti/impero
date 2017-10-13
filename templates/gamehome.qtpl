@@ -1,4 +1,5 @@
 {% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
 
 {% func GameHomePage(p *GameHomeData) %}
 
@@ -19,9 +20,9 @@
 
 {% for _, t := range p.IncomingTransfers %}
 <tr>
-<form action="/game/player/transfer/confirm/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "player_trasfer_confirm") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(t.ID) %}">
-	<td><a href="/game/player/{%d int(t.FromID) %}">{%s t.From.Name %}</a></td>
+	<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(t.FromID)) %}">{%s t.From.Name %}</a></td>
 	<td>{%d t.Amount %}</td>
 	<td>{%d t.Risk %}%</td>
 	<td>
@@ -58,9 +59,9 @@
 <tr>
 	<td>
 	{% if c.Company.CEOID == p.CurrentPlayer.ID %}
-		<b><a href="/game/company/{%d int(c.CompanyID) %}">{%s c.Company.Name %}</a></b>
+		<b><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.CompanyID)) %}">{%s c.Company.Name %}</a></b>
 	{% else %}
-		<a href="/game/company/{%d int(c.CompanyID) %}">{%s c.Company.Name %}</a>
+		<a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.CompanyID)) %}">{%s c.Company.Name %}</a>
 	{% endif %}
 	</td>
 	<td>{%d c.Shares %}</td>
@@ -82,7 +83,7 @@
 
 <div class="col-md-6 col-xs-12">
 
-<form action="/game/company/new/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_new") %}" method="POST">
 <fieldset>
 <legend>Crea societa' (<b>costa {%d p.Options.NewCompanyCost %} punti operazione!</b>)</legend>
 <input type="text" name="name" placeholder="Nome" maxlength="30" required>
@@ -113,10 +114,10 @@
 {% for _, sa := range p.ShareAuctions %}
 <tr>
 
-<form action="/game/bid/share/" method="POST">
+<form action="{%s quickURL(p.HeaderData, "bid_share") %}" method="POST">
 <input type="hidden" name="auction" value="{%d int(sa.ID) %}">
 
-	<td><a href="/game/company/{%d int(sa.Share.CompanyID) %}">{%s sa.Share.Company.Name %}</a></td>
+	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(sa.Share.CompanyID)) %}">{%s sa.Share.Company.Name %}</a></td>
 
 	<td>{%d sa.HighestOffer %}</td>
 
