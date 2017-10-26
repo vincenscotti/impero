@@ -33,6 +33,7 @@ type GameHomeData struct {
 
 type EndGameData struct {
 	Players []*Player
+	Winners []*Player
 }
 
 type SharesPerPlayer struct {

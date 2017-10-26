@@ -1,0 +1,43 @@
+{% import . "github.com/vincenscotti/impero/model" %}
+
+{% func EndGamePage(p *EndGameData) %}
+
+{%= HeaderPage() %}
+
+{% if len(p.Winners) > 1 %}
+<h1 style="text-align: center">And the winners are...</h1>
+{% else %}
+<h1 style="text-align: center">And the winner is...</h1>
+{% endif %}
+
+{% for _, p := range p.Winners %}
+<h1 style="text-align: center; color: red">{%s p.Name %}</h1>
+{% endfor %}
+
+<table>
+	<thead>
+		<tr>
+			<th>#</th>
+			<th>Nome</th>
+			<th>Capitale</th>
+			<th>Punti vittoria</th>
+		</tr>
+	</thead>
+
+	<tbody>
+
+{% for i, pl := range p.Players %}
+		<tr>
+			<td>{%d i+1 %}</td>
+			<td>{%s pl.Name %}</td>
+			<td>{%d pl.Budget %}</td>
+			<td>{%d pl.VP %}</td>
+		</tr>
+{% endfor %}
+
+	</tbody>
+</table>
+
+{%= FooterPage() %}
+
+{% endfunc %}

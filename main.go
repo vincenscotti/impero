@@ -107,14 +107,24 @@ func EndGamePage(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 
 	players := make([]*Player, 0)
+	winners := make([]*Player, 0)
 
 	if err := tx.Find(&players).Error; err != nil {
 		panic(err)
 	}
 
-	sort.Stable(sortablePlayers(players))
+	if len(players) > 0 {
+		sort.Stable(sortablePlayers(players))
+		max := players[0].VP
 
-	page := &EndGameData{Players: players}
+		for _, p := range players {
+			if p.VP == max {
+				winners = append(winners, p)
+			}
+		}
+	}
+
+	page := &EndGameData{Players: players, Winners: winners}
 
 	RenderHTML(w, r, templates.EndGamePage(page))
 }
