@@ -1,0 +1,59 @@
+{% import . "github.com/vincenscotti/impero/model" %}
+{% import "time" %}
+
+{% func GameHeaderPage(p *HeaderData) %}
+
+{%= HeaderPage() %}
+
+{% code
+cp := p.CurrentPlayer
+%}
+
+<img class="logo" src="/static/logo.png" alt="Impero">
+
+<p>
+Ciao {%s cp.Name%}!
+Hai {%d cp.Budget %}$ e {%d cp.ActionPoints %} punti operazione.
+Siamo al turno {%d p.Options.Turn %}.
+Il prossimo turno iniziera' alle {%s p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Format("15:04") %}.
+L'orario del server e' {%s p.Now.Format("15:04:05") %}.
+</p>
+
+<nav>
+
+<a href="{%s quickURL(p, "gamehome") %}">Home</a>
+
+<a href="{%s quickURL(p, "help") %}">Regolamento</a>
+
+<a href="{%s quickURL(p, "map") %}">Mappa</a>
+
+{% if p.NewReports == 0 %}
+<a href="{%s quickURL(p, "report_all") %}">Report</a>
+{% else %}
+<b><a href="{%s quickURL(p, "report_all") %}">Report ({%d p.NewReports %})</a></b>
+{% endif %} 
+
+{% if p.NewMessages == 0 %}
+<a href="{%s quickURL(p, "message_inbox") %}">Messaggi</a>
+{% else %}
+<b><a href="{%s quickURL(p, "message_inbox") %}">Messaggi ({%d p.NewMessages %})</a></b>
+{% endif %} 
+
+{% if p.NewChatMessages == 0 %}
+<a href="{%s quickURL(p, "chat") %}">Chat</a>
+{% else %}
+<b><a href="{%s quickURL(p, "chat") %}">Chat ({%d p.NewChatMessages %})</a></b>
+{% endif %}
+
+<a href="{%s quickURL(p, "player_all") %}">Giocatori</a>
+
+<a href="{%s quickURL(p, "company_all") %}">Societa'</a>
+
+<a href="{%s quickURL(p, "logout") %}">Esci</a>
+
+</nav>
+
+<p class="text-danger">{%s p.Error %}</p>
+<p class="text-success">{%s p.Success %}</p>
+
+{% endfunc %}
