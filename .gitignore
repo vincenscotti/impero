@@ -1,0 +1,4 @@
+impero
+vendor/*
+templates/*.qtpl.go
+templates/spec.html
