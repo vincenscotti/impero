@@ -1,7 +1,6 @@
 FROM golang:latest as builder
 COPY . /go/src/github.com/vincenscotti/impero/
 WORKDIR /go/src/github.com/vincenscotti/impero/
-RUN go get -u github.com/valyala/quicktemplate && go get -u github.com/valyala/quicktemplate/qtc
 RUN go build
 
 FROM debian:stable
