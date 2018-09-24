@@ -406,6 +406,23 @@ func main() {
 		&ShareAuction{}, &ShareAuctionParticipation{},
 		&TransferProposal{})
 
+	opt := &Options{}
+	if err := db.First(opt).Error; err == gorm.ErrRecordNotFound {
+		// insert sane default options
+		opt.CompanyActionPoints = 5
+		opt.CostPerYield = 1
+		opt.EndGame = 24
+		opt.InitialShares = 3
+		opt.LastCheckpoint = time.Now()
+		opt.LastTurnCalculated = time.Now()
+		opt.NewCompanyCost = 5
+		opt.PlayerActionPoints = 5
+		opt.PlayerBudget = 100
+		opt.TurnDuration = 60
+
+		db.Create(opt)
+	}
+
 	binder = NewGorillaBinder()
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
