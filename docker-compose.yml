@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  mysql:
+    image: mysql:5.5
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_USER=impero
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=impero
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - MYSQL_CNX_STRING=impero:password@tcp(mysql)/impero?parseTime=true
+    command: /root/impero -pass=password -debug=true
+    restart: on-failure
+    depends_on:
+      - mysql
