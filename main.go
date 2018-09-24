@@ -376,7 +376,7 @@ func main() {
 	addr := flag.String("addr", ":8080", "address:port to bind to")
 	flag.StringVar(&AdminPass, "pass", "admin", "administrator password")
 	dbdriver := flag.String("dbdriver", "mysql", "database driver name")
-	dbstring := flag.String("dbstring", "root:root@/testdb?parseTime=true&loc=Local", "database connection string")
+	dbstring := flag.String("dbstring", os.Getenv("MYSQL_CNX_STRING"), "database connection string")
 
 	flag.Parse()
 
