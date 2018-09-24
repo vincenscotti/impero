@@ -372,6 +372,8 @@ func ErrorHandler(err error, w http.ResponseWriter, r *http.Request) {
 
 var AdminPass string
 
+var gameEngine *engine.Engine
+
 func main() {
 	debug := flag.Bool("debug", true, "turn on debug facilities")
 	addr := flag.String("addr", ":8080", "address:port to bind to")
