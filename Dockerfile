@@ -10,3 +10,4 @@ FROM debian:stable
 WORKDIR /root/
 EXPOSE 8080
 COPY --from=builder /go/src/github.com/vincenscotti/impero/impero .
+COPY --from=builder /go/src/github.com/vincenscotti/impero/static/ ./static/
