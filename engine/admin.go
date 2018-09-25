@@ -12,3 +12,11 @@ func (es *EngineSession) GetOptions() (err error, opt Options) {
 
 	return
 }
+
+func (es *EngineSession) SaveOptions(opt Options) error {
+	if err := es.tx.Save(&opt).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	return nil
+}
