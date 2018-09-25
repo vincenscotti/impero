@@ -34,51 +34,16 @@ func Help(w http.ResponseWriter, r *http.Request) {
 }
 
 func GameHome(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 
-	playerincome := 0
-	shares := make([]*SharesPerPlayer, 0)
+	tx := gameEngine.OpenSession()
+	defer tx.Close()
 
-	if err := tx.Table("shares").Select("DISTINCT company_id, count(company_id) as shares").Where("`owner_id` = ?", header.CurrentPlayer.ID).Group("`company_id`").Order("`shares` desc").Find(&shares).Error; err != nil {
-		panic(err)
-	}
-
-	for _, sh := range shares {
-		cmp := &sh.Company
-
-		if err := tx.Where(sh.CompanyID).Find(cmp).Error; err != nil {
-			panic(err)
-		}
-
-		_, sh.ValuePerShare = GetCompanyFinancials(cmp, tx)
-		playerincome += sh.Shares * sh.ValuePerShare
-	}
-
-	shareauctions := make([]*ShareAuction, 0)
-
-	if err := tx.Model(&ShareAuction{}).Preload("Share").Order("`expiration`").Find(&shareauctions).Error; err != nil {
-		panic(err)
-	}
-
-	for _, sa := range shareauctions {
-		if err := tx.Where(sa.Share.CompanyID).Find(&sa.Share.Company).Error; err != nil {
-			panic(err)
-		}
-
-		participations := make([]*ShareAuctionParticipation, 0)
-		if err := tx.Where("`share_auction_id` = ? and `player_id` = ?", sa.ID, header.CurrentPlayer.ID).Find(&participations).Error; err != nil {
-			panic(err)
-		}
-
-		sa.Participations = participations
-	}
-
-	incomingtransfers := make([]*TransferProposal, 0)
-
-	if err := tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Find(&incomingtransfers).Error; err != nil {
-		panic(err)
-	}
+	// TODO: handle errors
+	_, shares := tx.GetSharesForPlayer(header.CurrentPlayer)
+	_, playerincome := tx.CalculateSharesIncome(shares)
+	_, shareauctions := tx.GetShareAuctionsWithPlayerParticipation(header.CurrentPlayer)
+	_, incomingtransfers := tx.GetIncomingTransfers(header.CurrentPlayer)
 
 	page := &GameHomeData{HeaderData: header,
 		SharesInfo: shares, PlayerIncome: playerincome,
@@ -433,49 +398,49 @@ func main() {
 	router.HandleFunc("/", GlobalMiddleware(Login)).Name("home")
 	router.HandleFunc("/signup/", GlobalMiddleware(Signup)).Name("signup")
 	router.HandleFunc("/login/", GlobalMiddleware(Login)).Name("login")
-	//router.HandleFunc("/logout/", GlobalMiddleware(Logout)).Name("logout")
-	//router.HandleFunc("/help/", GlobalMiddleware(Help)).Name("help")
+	router.HandleFunc("/logout/", GlobalMiddleware(Logout)).Name("logout")
+	router.HandleFunc("/help/", GlobalMiddleware(Help)).Name("help")
 
 	//router.HandleFunc("/admin/", GlobalMiddleware(Admin)).Name("admin")
 	//router.HandleFunc("/admin/options/", GlobalMiddleware(UpdateOptions)).Name("admin_options")
 	//router.HandleFunc("/admin/map/", GlobalMiddleware(GenerateMap)).Name("admin_map")
 	//router.HandleFunc("/admin/broadcast/", GlobalMiddleware(BroadcastMessage)).Name("admin_broadcast")
 
-	//game := router.PathPrefix("/game").Subrouter()
+	game := router.PathPrefix("/game").Subrouter()
 
-	//game.HandleFunc("/", GameMiddleware(GameHome)).Name("gamehome")
+	game.HandleFunc("/", GameMiddleware(GameHome)).Name("gamehome")
 
-	//game.HandleFunc("/player/all/", GameMiddleware(Players)).Name("player_all")
-	//game.HandleFunc("/player/{id}", GameMiddleware(GetPlayer)).Name("player")
-	//game.HandleFunc("/player/transfer/", GameMiddleware(Transfer)).Name("player_transfer")
-	//game.HandleFunc("/player/transfer/confirm/", GameMiddleware(ConfirmTransfer)).Name("player_transfer_confirm")
+	game.HandleFunc("/player/all/", GameMiddleware(Players)).Name("player_all")
+	game.HandleFunc("/player/{id}", GameMiddleware(GetPlayer)).Name("player")
+	game.HandleFunc("/player/transfer/", GameMiddleware(Transfer)).Name("player_transfer")
+	game.HandleFunc("/player/transfer/confirm/", GameMiddleware(ConfirmTransfer)).Name("player_transfer_confirm")
 
-	//game.HandleFunc("/chat/", GameMiddleware(GetChat)).Name("chat")
-	//game.HandleFunc("/chat/post/", GameMiddleware(PostChat)).Name("chat_post")
+	game.HandleFunc("/chat/", GameMiddleware(GetChat)).Name("chat")
+	game.HandleFunc("/chat/post/", GameMiddleware(PostChat)).Name("chat_post")
 
-	//game.HandleFunc("/message/inbox/", GameMiddleware(MessagesInbox)).Name("message_inbox")
-	//game.HandleFunc("/message/outbox/", GameMiddleware(MessagesOutbox)).Name("message_outbox")
-	//game.HandleFunc("/message/{id}", GameMiddleware(GetMessage)).Name("message")
-	//game.HandleFunc("/message/new/", GameMiddleware(NewMessagePost)).Name("message_new")
+	game.HandleFunc("/message/inbox/", GameMiddleware(MessagesInbox)).Name("message_inbox")
+	game.HandleFunc("/message/outbox/", GameMiddleware(MessagesOutbox)).Name("message_outbox")
+	game.HandleFunc("/message/{id}", GameMiddleware(GetMessage)).Name("message")
+	game.HandleFunc("/message/new/", GameMiddleware(NewMessagePost)).Name("message_new")
 
-	//game.HandleFunc("/report/all/", GameMiddleware(ReportsPage)).Name("report_all")
-	//game.HandleFunc("/report/{id}", GameMiddleware(ReportPage)).Name("report")
-	//game.HandleFunc("/report/delete/", GameMiddleware(DeleteReports)).Name("report_delete")
+	game.HandleFunc("/report/all/", GameMiddleware(ReportsPage)).Name("report_all")
+	game.HandleFunc("/report/{id}", GameMiddleware(ReportPage)).Name("report")
+	game.HandleFunc("/report/delete/", GameMiddleware(DeleteReports)).Name("report_delete")
 
-	//game.HandleFunc("/company/all/", GameMiddleware(Companies)).Name("company_all")
-	//game.HandleFunc("/company/{id}", GameMiddleware(GetCompany)).Name("company")
-	//game.HandleFunc("/company/new/", GameMiddleware(NewCompanyPost)).Name("company_new")
-	//game.HandleFunc("/company/promoteceo/", GameMiddleware(PromoteCEO)).Name("company_promoteceo")
-	//game.HandleFunc("/company/partnership/proposal/", GameMiddleware(ProposePartnership)).Name("company_partnership_proposal")
-	//game.HandleFunc("/company/partnership/confirm/", GameMiddleware(ConfirmPartnership)).Name("company_partnership_confirm")
-	//game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
-	//game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
-	//game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
-	//game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
+	game.HandleFunc("/company/all/", GameMiddleware(Companies)).Name("company_all")
+	game.HandleFunc("/company/{id}", GameMiddleware(GetCompany)).Name("company")
+	game.HandleFunc("/company/new/", GameMiddleware(NewCompanyPost)).Name("company_new")
+	game.HandleFunc("/company/promoteceo/", GameMiddleware(PromoteCEO)).Name("company_promoteceo")
+	game.HandleFunc("/company/partnership/proposal/", GameMiddleware(ProposePartnership)).Name("company_partnership_proposal")
+	game.HandleFunc("/company/partnership/confirm/", GameMiddleware(ConfirmPartnership)).Name("company_partnership_confirm")
+	game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
+	game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
+	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
+	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
 
-	//game.HandleFunc("/bid/share/", GameMiddleware(BidShare)).Name("bid_share")
-	//game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
-	//game.HandleFunc("/map/costs/{x}/{y}", GameMiddleware(GetCosts)).Name("map_costs")
+	game.HandleFunc("/bid/share/", GameMiddleware(BidShare)).Name("bid_share")
+	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
+	game.HandleFunc("/map/costs/{x}/{y}", GameMiddleware(GetCosts)).Name("map_costs")
 
 	gameEngine = engine.NewEngine(db)
 
