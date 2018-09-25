@@ -2,36 +2,53 @@ package engine
 
 import (
 	"github.com/jinzhu/gorm"
+	"log"
 	"time"
 )
 
 type Engine struct {
-	db *gorm.DB
-	et *eventThread
+	db     *gorm.DB
+	et     *eventThread
+	logger *log.Logger
 }
 
 type EngineSession struct {
 	timestamp time.Time
+	logger    *log.Logger
 	tx        *gorm.DB
 	toCommit  bool
 }
 
-func NewEngine(db *gorm.DB) *Engine {
-	e := &Engine{db: db}
+func NewEngine(db *gorm.DB, logger *log.Logger) *Engine {
+	e := &Engine{db: db, logger: logger}
 
 	e.et = NewEventThread(e)
 
-	e.processEvents()
+	tx := e.openSessionUnsafe()
+	defer tx.Close()
+	if nextEventValid, nextEventTs := tx.processEvents(); nextEventValid {
+		e.et.RegisterEvent(nextEventTs)
+	}
+	tx.Commit()
 
 	return e
 }
 
 func (e *Engine) OpenSession() *EngineSession {
-	es := &EngineSession{}
+	es := &EngineSession{logger: e.logger}
 
 	es.timestamp = time.Now()
 	e.et.RequestToken(es.timestamp)
 
+	es.tx = e.db.Begin()
+
+	return es
+}
+
+func (e *Engine) openSessionUnsafe() *EngineSession {
+	es := &EngineSession{logger: e.logger}
+
+	es.timestamp = time.Now()
 	es.tx = e.db.Begin()
 
 	return es
@@ -51,12 +68,4 @@ func (es *EngineSession) Close() {
 	} else {
 		es.tx.Rollback()
 	}
-}
-
-func (e *Engine) processEvents() (bool, time.Time) {
-	// query db
-	// for each pending event
-	//   handle it
-
-	return true, time.Now() //nextOne.timestamp
 }

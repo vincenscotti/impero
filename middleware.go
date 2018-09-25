@@ -181,6 +181,6 @@ func EndGameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func GameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GlobalMiddleware(LoggerMiddleware(updateGameStatus(HeaderMiddleware(EndGameMiddleware(next))))).ServeHTTP(w, r)
+		GlobalMiddleware(LoggerMiddleware(HeaderMiddleware(EndGameMiddleware(next)))).ServeHTTP(w, r)
 	})
 }
