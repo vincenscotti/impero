@@ -10,13 +10,12 @@ import (
 )
 
 func ReportsPage(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 
-	reports := make([]*Report, 0)
-	if err := tx.Where("`player_id` = ?", header.CurrentPlayer.ID).Order("`Date` desc", true).Find(&reports).Error; err != nil {
-		panic(err)
-	}
+	tx := gameEngine.OpenSession()
+	defer tx.Close()
+
+	_, reports := tx.GetReports(header.CurrentPlayer)
 
 	page := ReportsData{HeaderData: header, Reports: reports}
 
@@ -24,8 +23,10 @@ func ReportsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReportPage(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+
+	tx := gameEngine.OpenSession()
+	defer tx.Close()
 
 	blerr := BLError{}
 
@@ -41,29 +42,26 @@ func ReportPage(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	report := &Report{}
-	if err := tx.Where(id).First(report).Error; err != nil {
-		panic(err)
-	}
+	err, report := tx.GetReport(header.CurrentPlayer, id)
 
-	if report.PlayerID != header.CurrentPlayer.ID {
-		blerr.Message = "Non hai i permessi per vedere questo report!"
+	if err != nil {
+		blerr.Message = err.Error()
 		panic(blerr)
 	}
 
-	report.Read = true
-	if err := tx.Save(&report).Error; err != nil {
-		panic(err)
-	}
-
 	page := ReportData{HeaderData: header, Report: report}
+
+	tx.Commit()
 
 	RenderHTML(w, r, templates.ReportPage(&page))
 }
 
 func DeleteReports(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+
+	tx := gameEngine.OpenSession()
+	defer tx.Close()
+
 	session := GetSession(r)
 
 	blerr := BLError{}
@@ -75,29 +73,23 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := struct {
-		IDs []uint
+		IDs []int
 	}{}
 
 	if err := binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	notmine := 0
+	err := tx.DeleteReports(header.CurrentPlayer, params.IDs)
 
-	if err := tx.Model(&Report{}).Where("`id` in (?) and `player_id` != ?", params.IDs, header.CurrentPlayer.ID).Count(&notmine).Error; err != nil {
-		panic(err)
-	}
-
-	if notmine > 0 {
-		blerr.Message = "Non hai i permessi per cancellare questi report!"
+	if err != nil {
+		blerr.Message = err.Error()
 		panic(blerr)
 	}
 
-	if err := tx.Delete(&Report{}, "id in (?)", params.IDs).Error; err != nil {
-		panic(err)
-	}
-
 	session.AddFlash("Report cancellati!", "success_")
+
+	tx.Commit()
 
 	RedirectToURL(w, r, blerr.Redirect)
 }
