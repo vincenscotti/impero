@@ -8,7 +8,6 @@ import (
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
 	"math"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -47,24 +46,6 @@ func UpdateCompanyIncome(cmp *Company, tx *gorm.DB) {
 	cmp.Income = income
 }
 
-func GetCompanyFinancials(cmp *Company, tx *gorm.DB) (pureIncome, valuePerShare int) {
-	if cmp.Income == 0 {
-		UpdateCompanyIncome(cmp, tx)
-	}
-
-	cmpshares := 0
-
-	if err := tx.Table("shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Count(&cmpshares).Error; err != nil {
-		panic(err)
-	}
-
-	floatIncome := float64(cmp.Income)
-	floatPureIncome := math.Floor(floatIncome * 0.3)
-	floatValuePerShare := int(math.Ceil((floatIncome - floatPureIncome) / float64(cmpshares)))
-
-	return int(floatPureIncome), int(floatValuePerShare)
-}
-
 func GetCompanyPartnerships(cmp *Company, tx *gorm.DB) []*Partnership {
 	partnerships := make([]*Partnership, 0)
 
@@ -74,17 +55,12 @@ func GetCompanyPartnerships(cmp *Company, tx *gorm.DB) []*Partnership {
 }
 
 func Companies(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 
-	companies := make([]*Company, 0)
-	if err := tx.Order("share_capital desc").Find(&companies).Error; err != nil {
-		panic(err)
-	}
+	tx := gameEngine.OpenSession()
+	defer tx.Close()
 
-	for _, cmp := range companies {
-		UpdateCompanyIncome(cmp, tx)
-	}
+	_, companies := tx.GetCompanies()
 
 	page := CompaniesData{HeaderData: header, Companies: companies}
 
@@ -148,10 +124,11 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-	opt := GetOptions(r)
+
+	tx := gameEngine.OpenSession()
+	defer tx.Close()
 
 	blerr := BLError{}
 
@@ -162,117 +139,33 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmp := &Company{}
-	freenodes := make([]*Node, 0)
-	cnt := 0
 
 	if err := binder.Bind(cmp, r); err != nil {
 		panic(err)
 	}
 
-	if cmp.Name == "" {
-		blerr.Message = "Il nome non puo' essere vuoto!"
+	if err := tx.NewCompany(header.CurrentPlayer, cmp.Name, cmp.ShareCapital); err != nil {
+		blerr.Message = err.Error()
 		panic(blerr)
-	}
-
-	if cmp.ShareCapital < 1 {
-		blerr.Message = "Il budget deve essere almeno 1!"
-		panic(blerr)
-	}
-
-	if cmp.ShareCapital > header.CurrentPlayer.Budget {
-		blerr.Message = "Budget insufficiente!"
-		panic(blerr)
-	}
-
-	if header.CurrentPlayer.ActionPoints < opt.NewCompanyCost {
-		blerr.Message = "Punti operazione insufficienti!"
-		panic(blerr)
-	}
-
-	if err := tx.Model(cmp).Where(&Company{Name: cmp.Name}).Count(&cnt).Error; err != nil {
-		panic(err)
-	}
-
-	if cnt != 0 {
-		blerr.Message = "Societa' gia' esistente!"
-		panic(blerr)
-	}
-
-	header.CurrentPlayer.Budget -= cmp.ShareCapital
-	header.CurrentPlayer.ActionPoints -= opt.NewCompanyCost
-	cmp.CEO = *header.CurrentPlayer
-	cmp.ActionPoints = opt.CompanyActionPoints + opt.InitialShares
-
-	if err := tx.Create(cmp).Error; err != nil {
-		panic(err)
-	}
-
-	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
-		panic(err)
-	}
-
-	for i := 0; i < opt.InitialShares; i++ {
-		if err := tx.Create(&Share{CompanyID: cmp.ID, OwnerID: header.CurrentPlayer.ID}).Error; err != nil {
-			panic(err)
-		}
-	}
-
-	if err := tx.Where("`owner_id` = 0 and `yield` = 1").Find(&freenodes).Error; err != nil {
-		panic(err)
-	}
-
-	if len(freenodes) != 0 {
-		freeneighbours := make(map[*Node]int)
-		maxfreeneighbours := 0
-		nodepool := make([]*Node, 0, len(freenodes))
-
-		for _, n := range freenodes {
-			freeneighb := 0
-			if err := tx.Model(&Node{}).Where("`x` >= ? and `x` <= ? and `y` >= ? and `y` <= ? and `owner_id` = 0", n.X-2, n.X+2, n.Y-2, n.Y+2).Count(&freeneighb).Error; err != nil {
-				panic(err)
-			}
-
-			freeneighbours[n] = freeneighb
-
-			if freeneighb > maxfreeneighbours {
-				maxfreeneighbours = freeneighb
-			}
-		}
-
-		for n, neighb := range freeneighbours {
-			if neighb == maxfreeneighbours {
-				nodepool = append(nodepool, n)
-			}
-		}
-
-		node := nodepool[rand.Intn(len(nodepool))]
-
-		node.OwnerID = cmp.ID
-
-		if err := tx.Save(node).Error; err != nil {
-			panic(err)
-		}
-
-		session.AddFlash("Societa' creata", "success_")
 	} else {
-		blerr.Message = "Nessuna cella disponibile!"
-		panic(blerr)
+		session.AddFlash("Societa' creata", "success_")
+		tx.Commit()
 	}
 
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func PromoteCEO(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
+
+	tx := gameEngine.OpenSession()
+	defer tx.Close()
 
 	blerr := BLError{}
 
 	cmp := &Company{}
-	myshares := 0
-	ceoshares := 0
-	sh := &Share{}
+	newceo := &Player{}
 
 	params := struct {
 		ID uint
@@ -282,46 +175,22 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	cmp.ID = params.ID
+	newceo.ID = header.CurrentPlayer.ID
+
 	if target, err := router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
 	}
 
-	if err := tx.Where(params.ID).First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
-		panic(err)
-	}
-
-	if cmp.ID == 0 {
-		blerr.Message = "Societa' inesistente!"
+	if err := tx.PromoteCEO(cmp, newceo); err != nil {
+		blerr.Message = err.Error()
 		panic(blerr)
-	}
-
-	sh.CompanyID = cmp.ID
-	sh.OwnerID = header.CurrentPlayer.ID
-
-	if err := tx.Model(sh).Where(sh).Count(&myshares).Error; err != nil {
-		panic(err)
-	}
-
-	sh.OwnerID = cmp.CEOID
-
-	if err := tx.Model(sh).Where(sh).Count(&ceoshares).Error; err != nil {
-		panic(err)
-	}
-
-	if myshares > ceoshares {
-		cmp.CEOID = header.CurrentPlayer.ID
-	} else {
-		blerr.Message = "Azioni insufficienti!"
-		panic(blerr)
-	}
-
-	if err := tx.Save(cmp).Error; err != nil {
-		panic(err)
 	}
 
 	session.AddFlash("Sei diventato amministratore!", "error_")
+	tx.Commit()
 
 	RedirectToURL(w, r, blerr.Redirect)
 }
