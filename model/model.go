@@ -93,6 +93,7 @@ type Partnership struct {
 	FromID             uint
 	To                 Company
 	ToID               uint
+	ProposalAccepted   bool
 	ProposalExpiration time.Time
 }
 

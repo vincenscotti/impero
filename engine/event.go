@@ -118,7 +118,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		}
 
 		for _, p := range partnerships {
-			if !p.ProposalExpiration.IsZero() {
+			if !p.ProposalAccepted {
 				// report generation
 
 				subject := "Proposta di partnership scaduta"
@@ -269,17 +269,16 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		nextEvent = transferproposal.Expiration
 	}
 
-	// TODO complete partnerships handling
 	// ... then we check company partnerships...
-	//partnership := Partnership{}
+	partnership := Partnership{}
 
-	//if err := es.tx.Order("`expiration`").First(&transferproposal).Error; err != nil && err != gorm.ErrRecordNotFound {
-	//	panic(err)
-	//}
+	if err := es.tx.Where("`proposal_accepted` = false").Order("`proposal_expiration`").First(&partnership).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
 
-	//if transferproposal.Expiration.Before(nextEvent) {
-	//	nextEvent = transferproposal.Expiration
-	//}
+	if !partnership.ProposalExpiration.IsZero() && partnership.ProposalExpiration.Before(nextEvent) {
+		nextEvent = transferproposal.Expiration
+	}
 
 	return
 }
