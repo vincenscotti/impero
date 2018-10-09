@@ -92,19 +92,6 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	Redirect(w, r, "admin")
 }
 
-var NodeYields = []struct {
-	Yield       int
-	Prob        float64
-	UpgradeCost int
-}{
-	{1, 0.22, 1},
-	{3, 0.5, 2},
-	{6, 0.15, 5},
-	{12, 0.08, 13},
-	{25, 0.04, 30},
-	{50, 0.01, 0},
-}
-
 func GenerateMap(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 
