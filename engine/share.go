@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"errors"
+	"github.com/jinzhu/gorm"
 	. "github.com/vincenscotti/impero/model"
+	"time"
 )
 
 func (es *EngineSession) GetSharesForPlayer(p *Player) (err error, shares []*SharesPerPlayer) {
@@ -55,4 +58,112 @@ func (es *EngineSession) GetShareAuctionsWithPlayerParticipation(p *Player) (err
 	}
 
 	return
+}
+
+func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error {
+	_, opt := es.GetOptions()
+
+	share := &Share{}
+
+	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if cmp.ID == 0 {
+		return errors.New("Societa' inesistente!")
+	}
+
+	if cmp.CEOID != p.ID {
+		return errors.New("Permessi insufficienti!")
+	}
+
+	if cmp.ActionPoints < 1 {
+		return errors.New("Punti operazione insufficienti!")
+	}
+
+	cmp.ActionPoints -= 1
+	if err := es.tx.Save(cmp).Error; err != nil {
+		panic(err)
+	}
+
+	share.CompanyID = uint(cmp.ID)
+	if err := es.tx.Create(share).Error; err != nil {
+		panic(err)
+	}
+
+	if err := es.tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
+		panic(err)
+	}
+
+	return nil
+}
+
+func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amount int) error {
+	oldp := &Player{}
+	participation := &ShareAuctionParticipation{}
+	participation.ShareAuctionID = shareauction.ID
+	participation.PlayerID = p.ID
+
+	if err := es.tx.Where(participation).Find(participation).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if err := es.tx.First(shareauction).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if shareauction.ID == 0 {
+		return errors.New("L'asta non esiste!")
+	}
+
+	if shareauction.HighestOffer >= amount {
+		return errors.New("Puntata troppo bassa!")
+	}
+
+	if (shareauction.HighestOfferPlayerID != p.ID && amount > p.Budget) ||
+		(shareauction.HighestOfferPlayerID == p.ID &&
+			amount > p.Budget+shareauction.HighestOffer) {
+		return errors.New("Budget insufficiente!")
+	}
+
+	if participation.ID == 0 {
+		if p.ActionPoints < 1 {
+			return errors.New("Punti operazione insufficienti!")
+		}
+
+		if err := es.tx.Save(participation).Error; err != nil {
+			panic(err)
+		}
+
+		p.ActionPoints -= 1
+	}
+
+	p.Budget -= amount
+	if err := es.tx.Save(p).Error; err != nil {
+		panic(err)
+	}
+
+	if err := es.tx.Where(shareauction.HighestOfferPlayerID).Find(oldp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if oldp.ID != 0 {
+		oldp.Budget += shareauction.HighestOffer
+		if err := es.tx.Save(oldp).Error; err != nil {
+			panic(err)
+		}
+	}
+
+	shareauction.HighestOffer = amount
+	shareauction.HighestOfferPlayerID = p.ID
+
+	if shareauction.Expiration.Sub(es.timestamp).Minutes() < 1. {
+		shareauction.Expiration = es.timestamp.Add(time.Minute)
+	}
+
+	if err := es.tx.Save(shareauction).Error; err != nil {
+		panic(err)
+	}
+
+	return nil
 }
