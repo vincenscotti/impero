@@ -19,7 +19,7 @@
 	{% for x := p.XMin; x <= p.XMax; x++ %}
 
 		{% code
-		node, ok := p.Nodes[Point{X: x, Y: y}]
+		node, ok := p.Nodes[Coord{X: x, Y: y}]
 		%}
 
 		{% if ok %}

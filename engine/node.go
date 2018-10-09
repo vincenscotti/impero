@@ -7,11 +7,6 @@ import (
 	"math"
 )
 
-type Coord struct {
-	X int
-	Y int
-}
-
 var NodeYields = []struct {
 	Yield       int
 	Prob        float64

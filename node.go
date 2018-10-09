@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"github.com/vincenscotti/impero/engine"
 	. "github.com/vincenscotti/impero/model"
 	"net/http"
 	"strconv"
@@ -37,7 +36,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	cmp := &Company{}
 	cmp.ID = params.ID
 
-	if err := tx.BuyNode(header.CurrentPlayer, cmp, engine.Coord{X: params.X, Y: params.Y}); err != nil {
+	if err := tx.BuyNode(header.CurrentPlayer, cmp, Coord{X: params.X, Y: params.Y}); err != nil {
 		session.AddFlash(err.Error(), "error_")
 	} else {
 		tx.Commit()
@@ -76,7 +75,7 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 	cmp := &Company{}
 	cmp.ID = params.ID
 
-	if err := tx.InvestNode(header.CurrentPlayer, cmp, engine.Coord{X: params.X, Y: params.Y}); err != nil {
+	if err := tx.InvestNode(header.CurrentPlayer, cmp, Coord{X: params.X, Y: params.Y}); err != nil {
 		session.AddFlash(err.Error(), "error_")
 	} else {
 		tx.Commit()
@@ -108,7 +107,7 @@ func GetCosts(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	_, ret.BuyCost, ret.InvestCost = tx.GetNodeCosts(engine.Coord{X: x, Y: y})
+	_, ret.BuyCost, ret.InvestCost = tx.GetNodeCosts(Coord{X: x, Y: y})
 
 	RenderJSON(w, r, ret)
 }

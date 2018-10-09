@@ -20,7 +20,7 @@ type Options struct {
 	EndGame             int
 }
 
-type Point struct {
+type Coord struct {
 	X int
 	Y int
 }
