@@ -32,6 +32,20 @@ func (es *EngineSession) GetPlayer(id int) (err error, p *Player) {
 	return
 }
 
+func (es *EngineSession) GetPlayerNotifications(id int) (err error, newchats, newmsgs, newreports int) {
+	var p *Player
+
+	if err, p = es.GetPlayer(id); err != nil {
+		panic(err)
+	}
+
+	if p.ID == 0 {
+		err = errors.New("Giocatore inesistente!")
+	}
+
+	return
+}
+
 func (es *EngineSession) GetIncomingTransfers(p *Player) (err error, incomingTransfers []*TransferProposal) {
 	incomingTransfers = make([]*TransferProposal, 0)
 

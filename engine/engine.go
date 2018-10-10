@@ -69,3 +69,7 @@ func (es *EngineSession) Close() {
 		es.tx.Rollback()
 	}
 }
+
+func (es *EngineSession) GetTimestamp() time.Time {
+	return es.timestamp
+}

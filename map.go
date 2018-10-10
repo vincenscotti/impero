@@ -9,9 +9,7 @@ import (
 
 func GetMap(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	_, mapnodes, rentals, companiesbyname, p1, p2 := tx.GetMapInfo()
 

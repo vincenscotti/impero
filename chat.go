@@ -9,9 +9,7 @@ import (
 
 func GetChat(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	_, msgs := tx.GetChatMessages(header.CurrentPlayer)
 
@@ -22,9 +20,7 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 
 func PostChat(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 

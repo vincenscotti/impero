@@ -35,9 +35,7 @@ func Help(w http.ResponseWriter, r *http.Request) {
 
 func GameHome(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	// TODO: handle errors
 	_, shares := tx.GetSharesForPlayer(header.CurrentPlayer)
@@ -72,10 +70,10 @@ func (sp sortablePlayers) Swap(i, j int) {
 func EndGamePage(w http.ResponseWriter, r *http.Request) {
 	tx := GetTx(r)
 
-	players := make([]*Player, 0)
 	winners := make([]*Player, 0)
 
-	if err := tx.Find(&players).Error; err != nil {
+	err, players := tx.GetPlayers()
+	if err != nil {
 		panic(err)
 	}
 

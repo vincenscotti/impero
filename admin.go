@@ -10,9 +10,7 @@ import (
 
 func Admin(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	err, opt := tx.GetOptions()
 
@@ -48,9 +46,7 @@ func validateAdmin(r *http.Request) (err error) {
 
 func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	newopt := Options{}
 	err, oldopt := tx.GetOptions()
@@ -94,9 +90,7 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 
 func GenerateMap(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	params := struct {
 		X0       int
@@ -127,9 +121,7 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 
 func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	msg := &Message{}
 

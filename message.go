@@ -12,9 +12,7 @@ import (
 
 func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	_, msgs := tx.GetInbox(header.CurrentPlayer)
 
@@ -25,9 +23,7 @@ func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 
 func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	_, msgs := tx.GetOutbox(header.CurrentPlayer)
 
@@ -38,9 +34,7 @@ func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 
 func GetMessage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -72,9 +66,7 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 
 func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	session := GetSession(r)
 

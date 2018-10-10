@@ -4,11 +4,10 @@ import (
 	"errors"
 	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
-	"github.com/jinzhu/gorm"
+	"github.com/vincenscotti/impero/engine"
 	. "github.com/vincenscotti/impero/model"
 	"net/http"
 	"net/http/httputil"
-	"time"
 )
 
 func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -21,7 +20,9 @@ func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tx := db.Begin()
+		tx := gameEngine.OpenSession()
+		defer tx.Close()
+
 		var session *sessions.Session
 		var err error
 
@@ -46,52 +47,25 @@ func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}()
 
-		opt := &Options{}
-		if err := tx.First(opt).Error; err != nil && err != gorm.ErrRecordNotFound {
-			panic(err)
-		}
-
 		if session, err = store.Get(r, "sess"); err != nil {
 			panic(err)
 		}
 
-		context.Set(r, "now", time.Now())
 		context.Set(r, "tx", tx)
-		context.Set(r, "options", opt)
 		context.Set(r, "session", session)
 
 		next.ServeHTTP(w, r)
 	})
 }
 
-func GetTime(r *http.Request) time.Time {
-	now, ok := context.Get(r, "now").(time.Time)
-
-	if !ok {
-		panic("orario non valido")
-	}
-
-	return now
-}
-
-func GetTx(r *http.Request) *gorm.DB {
-	tx, ok := context.Get(r, "tx").(*gorm.DB)
+func GetTx(r *http.Request) *engine.EngineSession {
+	tx, ok := context.Get(r, "tx").(*engine.EngineSession)
 
 	if !ok {
 		panic("transazione non valida")
 	}
 
 	return tx
-}
-
-func GetOptions(r *http.Request) *Options {
-	opt, ok := context.Get(r, "options").(*Options)
-
-	if !ok {
-		panic("opzioni di gioco non valide")
-	}
-
-	return opt
 }
 
 func GetSession(r *http.Request) *sessions.Session {
@@ -107,11 +81,9 @@ func GetSession(r *http.Request) *sessions.Session {
 func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tx := GetTx(r)
-		opt := GetOptions(r)
+		_, opt := tx.GetOptions()
 		session := GetSession(r)
-		now := GetTime(r)
-
-		p := &Player{}
+		now := tx.GetTimestamp()
 
 		pID, ok := session.Values["playerID"].(uint)
 
@@ -121,8 +93,9 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if err := tx.Where(pID).First(p).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
+		err, p := tx.GetPlayer(int(pID))
+		if err != nil {
+			if p.ID == 0 {
 				Redirect(w, r, "logout")
 
 				return
@@ -131,25 +104,9 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		chats := 0
-		if err := tx.Model(&ChatMessage{}).Where("`date` > ? and `from_id` != ?",
-			p.LastChatViewed, p.ID).Count(&chats).Error; err != nil {
-			panic(err)
-		}
+		_, chats, msgs, reports := tx.GetPlayerNotifications(int(p.ID))
 
-		msgs := 0
-		if err := tx.Model(&Message{}).Where("`read` = ? and `to_id` = ?", false,
-			p.ID).Count(&msgs).Error; err != nil {
-			panic(err)
-		}
-
-		reports := 0
-		if err := tx.Model(&Report{}).Where("`read` = ? and `player_id` = ?", false,
-			p.ID).Count(&reports).Error; err != nil {
-			panic(err)
-		}
-
-		header := &HeaderData{CurrentPlayer: p, Router: router, NewChatMessages: chats, NewMessages: msgs, NewReports: reports, Now: now, Options: opt}
+		header := &HeaderData{CurrentPlayer: p, Router: router, NewChatMessages: chats, NewMessages: msgs, NewReports: reports, Now: now, Options: &opt}
 		if s := session.Flashes("error_"); len(s) > 0 {
 			header.Error = s[0].(string)
 		}
@@ -167,7 +124,8 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func EndGameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		opt := GetOptions(r)
+		tx := GetTx(r)
+		_, opt := tx.GetOptions()
 
 		if opt.Turn > opt.EndGame {
 			EndGamePage(w, r)
@@ -181,6 +139,6 @@ func EndGameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func GameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		GlobalMiddleware(LoggerMiddleware(HeaderMiddleware(EndGameMiddleware(next)))).ServeHTTP(w, r)
+		LoggerMiddleware(GlobalMiddleware(HeaderMiddleware(EndGameMiddleware(next)))).ServeHTTP(w, r)
 	})
 }

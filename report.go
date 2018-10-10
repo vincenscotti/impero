@@ -11,9 +11,7 @@ import (
 
 func ReportsPage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	_, reports := tx.GetReports(header.CurrentPlayer)
 
@@ -24,9 +22,7 @@ func ReportsPage(w http.ResponseWriter, r *http.Request) {
 
 func ReportPage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -58,9 +54,7 @@ func ReportPage(w http.ResponseWriter, r *http.Request) {
 
 func DeleteReports(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	session := GetSession(r)
 

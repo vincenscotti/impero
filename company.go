@@ -12,9 +12,7 @@ import (
 
 func Companies(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	_, companies := tx.GetCompanies()
 
@@ -25,9 +23,7 @@ func Companies(w http.ResponseWriter, r *http.Request) {
 
 func GetCompany(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -59,9 +55,7 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -91,9 +85,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -131,9 +123,7 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -168,9 +158,7 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -206,9 +194,7 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 

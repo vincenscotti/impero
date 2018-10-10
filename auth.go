@@ -8,9 +8,7 @@ import (
 
 func Signup(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	p := Player{}
 	msg := ""
@@ -40,9 +38,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	_, ok := session.Values["playerID"].(uint)
 

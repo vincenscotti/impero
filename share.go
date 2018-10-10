@@ -9,9 +9,7 @@ import (
 
 func AddShare(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -51,9 +49,7 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 func BidShare(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 

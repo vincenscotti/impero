@@ -12,9 +12,7 @@ import (
 
 func Players(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	err, players := tx.GetPlayers()
 
@@ -30,9 +28,7 @@ func Players(w http.ResponseWriter, r *http.Request) {
 func GetPlayer(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -56,9 +52,7 @@ func GetPlayer(w http.ResponseWriter, r *http.Request) {
 func Transfer(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -90,9 +84,7 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 
 func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 

@@ -11,9 +11,7 @@ import (
 func BuyNode(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -50,9 +48,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 func InvestNode(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -87,8 +83,7 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetCosts(w http.ResponseWriter, r *http.Request) {
-	tx := gameEngine.OpenSession()
-	defer tx.Close()
+	tx := GetTx(r)
 
 	ret := struct {
 		BuyCost    int
