@@ -103,6 +103,87 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 	return nil
 }
 
+func (es *EngineSession) GetCompany(p *Player, id int) (err error, cmp *Company, shareholders []*ShareholdersPerCompany, pureincome, valuepershare int) {
+	cmp = &Company{}
+	shares := 0
+	myshares := 0
+
+	if err := es.tx.Preload("CEO").Where(id).First(cmp).Error; err != nil {
+		panic(err)
+	}
+	if err := es.tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares).Error; err != nil {
+		panic(err)
+	}
+	if err := es.tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", p.ID).Count(&myshares).Error; err != nil {
+		panic(err)
+	}
+
+	es.updateCompanyIncome(cmp)
+
+	floatIncome := float64(cmp.Income)
+	pureIncomeFloat := math.Floor(floatIncome * 0.3)
+	pureincome = int(pureIncomeFloat)
+	valuepershare = int(math.Ceil((floatIncome - pureIncomeFloat) / float64(shares)))
+
+	shareholders = make([]*ShareholdersPerCompany, 0)
+
+	if err := es.tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").
+		Where("`company_id` = ? and `owner_id` != 0", cmp.ID).
+		Group("`owner_id`").Order("`owner_id` asc").
+		Find(&shareholders).Error; err != nil {
+		panic(err)
+	}
+
+	for _, sh := range shareholders {
+		if err := es.tx.Table("players").Where(sh.OwnerID).Find(&sh.Owner).Error; err != nil {
+			panic(err)
+		}
+	}
+
+	return
+}
+
+func (es *EngineSession) GetCompanyPartnerships(cmp *Company) (err error, partnerships []*Partnership) {
+	partnerships = make([]*Partnership, 0)
+
+	es.tx.Preload("To").Preload("From").Where("`from_id` = ? or `to_id` = ?", cmp.ID, cmp.ID).Find(&partnerships)
+
+	return nil, partnerships
+}
+
+func (es *EngineSession) updateCompanyIncome(cmp *Company) {
+	nodes := make([]*Node, 0)
+	rentals := make([]*Rental, 0)
+
+	if err := es.tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
+		panic(err)
+	}
+
+	income := 0
+
+	for _, n := range nodes {
+		income += n.Yield
+
+		if err := es.tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
+			panic(err.Error())
+		}
+
+		for _, _ = range rentals {
+			income += int(math.Ceil(float64(n.Yield) / 2.))
+		}
+	}
+
+	if err := es.tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
+		panic(err)
+	}
+
+	for _, r := range rentals {
+		income += r.Node.Yield / 2
+	}
+
+	cmp.Income = income
+}
+
 func (es *EngineSession) GetCompanies() (err error, companies []*Company) {
 	companies = make([]*Company, 0)
 	if err := es.tx.Order("share_capital desc").Find(&companies).Error; err != nil {
@@ -112,6 +193,14 @@ func (es *EngineSession) GetCompanies() (err error, companies []*Company) {
 	for _, cmp := range companies {
 		es.GetCompanyIncome(cmp)
 	}
+
+	return
+}
+
+func (es *EngineSession) GetOwnedCompanies(p *Player) (err error, companies []*Company) {
+	companies = make([]*Company, 0)
+
+	es.tx.Where("`ceo_id` = ?", p.ID).Find(&companies)
 
 	return
 }
