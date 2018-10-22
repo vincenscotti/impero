@@ -26,7 +26,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 
 	es.logger.Println("first endturn is ", endturn)
 
-	for lastcheckpoint.Before(now) {
+	for lastcheckpoint.Before(now) && opt.Turn <= opt.EndGame {
 		if now.Before(endturn) {
 			endturn = now
 		}
@@ -279,6 +279,9 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 	if !partnership.ProposalExpiration.IsZero() && partnership.ProposalExpiration.Before(nextEvent) {
 		nextEvent = transferproposal.Expiration
 	}
+
+	// if the game is over, we invalidate the next event
+	nextEventValid = false
 
 	return
 }
