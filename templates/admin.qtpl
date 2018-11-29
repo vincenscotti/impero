@@ -28,6 +28,10 @@
 <input type="number" min="0" name="CompanyActionPoints" value="{%d p.Options.CompanyActionPoints %}">
 <br>
 
+<label for="CompanyPureIncomePercentage">Percentuale di rendimento che resta alle societa'</label>
+<input type="number" min="0" max="100" name="CompanyPureIncomePercentage" value="{%d p.Options.CompanyPureIncomePercentage %}">
+<br>
+
 <label for="PlayerBudget">Budget iniziale giocatori</label>
 <input type="number" min="0" name="PlayerBudget" value="{%d p.Options.PlayerBudget %}">
 <br>

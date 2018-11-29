@@ -149,6 +149,7 @@ func main() {
 	if err := db.First(opt).Error; err == gorm.ErrRecordNotFound {
 		// insert sane default options
 		opt.CompanyActionPoints = 5
+		opt.CompanyPureIncomePercentage = 30
 		opt.CostPerYield = 1
 		opt.EndGame = 24
 		opt.InitialShares = 3
@@ -205,6 +206,7 @@ func main() {
 	game.HandleFunc("/company/partnership/proposal/", GameMiddleware(ProposePartnership)).Name("company_partnership_proposal")
 	game.HandleFunc("/company/partnership/confirm/", GameMiddleware(ConfirmPartnership)).Name("company_partnership_confirm")
 	game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
+	game.HandleFunc("/company/pureincome/", GameMiddleware(ModifyCompanyPureIncome)).Name("company_pureincome")
 	game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")

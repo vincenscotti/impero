@@ -6,18 +6,19 @@ import (
 )
 
 type Options struct {
-	ID                  uint
-	LastCheckpoint      time.Time `schema:"-"`
-	LastTurnCalculated  time.Time `schema:"-"`
-	TurnDuration        int
-	PlayerActionPoints  int
-	CompanyActionPoints int
-	PlayerBudget        int
-	NewCompanyCost      int
-	InitialShares       int
-	CostPerYield        float64
-	Turn                int
-	EndGame             int
+	ID                          uint
+	LastCheckpoint              time.Time `schema:"-"`
+	LastTurnCalculated          time.Time `schema:"-"`
+	TurnDuration                int
+	PlayerActionPoints          int
+	CompanyActionPoints         int
+	CompanyPureIncomePercentage int
+	PlayerBudget                int
+	NewCompanyCost              int
+	InitialShares               int
+	CostPerYield                float64
+	Turn                        int
+	EndGame                     int
 }
 
 type Coord struct {
@@ -78,13 +79,14 @@ type ChatMessage struct {
 
 type Company struct {
 	gorm.Model
-	Name         string `gorm:"size:30"`
-	ShareCapital int
-	CEO          Player
-	CEOID        uint
-	ActionPoints int
-	Income       int   `gorm:"-"`
-	Color        int32 `gorm:"-"`
+	Name                 string `gorm:"size:30"`
+	ShareCapital         int
+	CEO                  Player
+	CEOID                uint
+	ActionPoints         int
+	Income               int `gorm:"-"`
+	PureIncomePercentage int
+	Color                int32 `gorm:"-"`
 }
 
 type Partnership struct {

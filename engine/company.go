@@ -46,6 +46,7 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 	p.ActionPoints -= opt.NewCompanyCost
 	cmp.CEO = *p
 	cmp.ActionPoints = opt.CompanyActionPoints + opt.InitialShares
+	cmp.PureIncomePercentage = opt.CompanyPureIncomePercentage
 
 	if err := es.tx.Create(cmp).Error; err != nil {
 		panic(err)
@@ -120,10 +121,10 @@ func (es *EngineSession) GetCompany(p *Player, id int) (err error, cmp *Company,
 
 	es.updateCompanyIncome(cmp)
 
-	floatIncome := float64(cmp.Income)
-	pureIncomeFloat := math.Floor(floatIncome * 0.3)
-	pureincome = int(pureIncomeFloat)
-	valuepershare = int(math.Ceil((floatIncome - pureIncomeFloat) / float64(shares)))
+	err, pureincome, valuepershare = es.GetCompanyFinancials(cmp)
+	if err != nil {
+		return
+	}
 
 	shareholders = make([]*ShareholdersPerCompany, 0)
 
@@ -291,8 +292,45 @@ func (es *EngineSession) GetCompanyFinancials(cmp *Company) (err error, pureInco
 	}
 
 	floatIncome := float64(cmp.Income)
-	floatPureIncome := math.Floor(floatIncome * 0.3)
+	floatPureIncome := math.Floor(floatIncome * (float64(cmp.PureIncomePercentage) / 100.0))
 	floatValuePerShare := int(math.Ceil((floatIncome - floatPureIncome) / float64(cmpshares)))
 
 	return nil, int(floatPureIncome), int(floatValuePerShare)
+}
+
+func (es *EngineSession) ModifyCompanyPureIncome(p *Player, cmp *Company, increase bool) error {
+	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if cmp.ID == 0 {
+		return errors.New("Societa' inesistente!")
+	}
+
+	if cmp.CEOID != p.ID {
+		return errors.New("Permessi insufficienti!")
+	}
+
+	if cmp.ActionPoints < 1 {
+		return errors.New("Punti operazione insufficienti!")
+	}
+
+	if increase && cmp.PureIncomePercentage == 100 {
+		return errors.New("Non puoi incrementare ulteriormente la percentuale!")
+	} else if !increase && cmp.PureIncomePercentage == 0 {
+		return errors.New("Non puoi decrementare ulteriormente la percentuale!")
+	}
+
+	cmp.ActionPoints -= 1
+	if increase {
+		cmp.PureIncomePercentage += 10
+	} else {
+		cmp.PureIncomePercentage -= 10
+	}
+
+	if err := es.tx.Save(cmp).Error; err != nil {
+		panic(err)
+	}
+
+	return nil
 }

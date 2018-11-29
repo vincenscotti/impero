@@ -12,7 +12,17 @@ cmp := p.Company
 <p><b>{%s cmp.Name %}</b></p>
 <p>Amministratore: {%s cmp.CEO.Name %}</p>
 <p>Capitale: {%d cmp.ShareCapital %}</p>
-<p>Entrate: {%d cmp.Income %} (di cui {%d p.PureIncome %} vanno alla societa' e {%d cmp.Income - p.PureIncome %} agli azionisti)</p>
+<p>Entrate: {%d cmp.Income %}</p>
+<p>Entrate che restano alla societa': {%d cmp.PureIncomePercentage %} &percnt; ({%d p.PureIncome %}$ alla societa' e {%d cmp.Income - p.PureIncome %}$ agli azionisti)</p>
+
+{% if cmp.CEO.ID == p.CurrentPlayer.ID %}
+<form action="{%s quickURL(p.HeaderData, "company_pureincome") %}" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<button name="Action" type="submit" value="inc">+10&percnt;</button>
+<button name="Action" type="submit" value="dec">-10&percnt;</button>
+</form>
+{% endif %}
+
 <p>Azioni: {%d p.Shares %}</p>
 <p>Guadagno azionisti per azione: {%d p.IncomePerShare %}</p>
 

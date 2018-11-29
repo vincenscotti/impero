@@ -225,3 +225,47 @@ func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 
 	RedirectToURL(w, r, blerr.Redirect)
 }
+
+func ModifyCompanyPureIncome(w http.ResponseWriter, r *http.Request) {
+	session := GetSession(r)
+	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
+
+	blerr := BLError{}
+
+	cmp := &Company{}
+
+	params := struct {
+		ID     uint
+		Action string
+	}{}
+
+	if err := binder.Bind(&params, r); err != nil {
+		panic(err)
+	}
+
+	cmp.ID = params.ID
+
+	if target, err := router.Get("company").URL("id", fmt.Sprint(cmp.ID)); err != nil {
+		panic(err)
+	} else {
+		blerr.Redirect = target
+	}
+
+	var err error
+
+	if params.Action != "inc" && params.Action != "dec" {
+		blerr.Message = "Azione non riconosciuta!"
+		panic(blerr)
+	}
+
+	if err = tx.ModifyCompanyPureIncome(header.CurrentPlayer, cmp, params.Action == "inc"); err != nil {
+		blerr.Message = err.Error()
+		panic(blerr)
+	}
+
+	session.AddFlash("Percentuale modificata!", "success_")
+	tx.Commit()
+
+	RedirectToURL(w, r, blerr.Redirect)
+}
