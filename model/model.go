@@ -26,13 +26,20 @@ type Coord struct {
 	Y int
 }
 
+const (
+	PowerOK = iota
+	PowerOff
+	PowerOffNeighbour
+)
+
 type Node struct {
 	gorm.Model
-	X       int
-	Y       int
-	Yield   int
-	Owner   Company
-	OwnerID uint
+	X           int
+	Y           int
+	Yield       int
+	PowerSupply int
+	Owner       Company
+	OwnerID     uint
 }
 
 type Player struct {

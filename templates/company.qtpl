@@ -20,9 +20,11 @@ cmp := p.Company
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
 <button name="Action" type="submit" value="inc">+10&percnt;</button>
 <button name="Action" type="submit" value="dec">-10&percnt;</button>
+(costa 1 pt. operazione)
 </form>
 {% endif %}
 
+<br>
 <p>Azioni: {%d p.Shares %}</p>
 <p>Guadagno azionisti per azione: {%d p.IncomePerShare %}</p>
 

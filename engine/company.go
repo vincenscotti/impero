@@ -254,14 +254,15 @@ func (es *EngineSession) GetCompanyIncome(cmp *Company) (err error, income int) 
 	}
 
 	for _, n := range nodes {
-		income += n.Yield
+		yield := effectiveYield(n)
+		income += yield
 
 		if err := es.tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
 			panic(err)
 		}
 
 		for _, _ = range rentals {
-			income += int(math.Ceil(float64(n.Yield) / 2.))
+			income += int(math.Ceil(float64(yield) / 2.))
 		}
 	}
 
@@ -270,7 +271,7 @@ func (es *EngineSession) GetCompanyIncome(cmp *Company) (err error, income int) 
 	}
 
 	for _, r := range rentals {
-		income += r.Node.Yield / 2
+		income += effectiveYield(&r.Node) / 2
 	}
 
 	return

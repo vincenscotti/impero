@@ -5,6 +5,8 @@
 
 {%= GameHeaderPage(p.HeaderData) %}
 
+Le celle in <s><b>blackout</s></b> hanno reso 0 all'ultimo turno, le celle <s>adiacenti</s> hanno reso la meta'.
+
 <table style="float: left;">
 <tr>
 <th>Y/X</th>
@@ -29,7 +31,19 @@
 				<td title="({%d x %}, {%d y %})" data-x="{%d x %}" data-y="{%d y %}">
 			{% endif %}
 
+			{% if node.PowerSupply == PowerOff %}
+				<s><b>
+			{% elseif node.PowerSupply == PowerOffNeighbour %}
+				<s>
+			{% endif %}
+
 			{%d node.Yield %}
+
+			{% if node.PowerSupply == PowerOff %}
+				</b></s>
+			{% elseif node.PowerSupply == PowerOffNeighbour %}
+				</s>
+			{% endif %}
 		{% else %}
 		<td class="fakenode">
 		{% endif %}
@@ -40,7 +54,6 @@
 				</div>
 			{% endif %}
 		{% endfor %}
-			</div>
 	</td>
 	{% endfor %}
 </tr>

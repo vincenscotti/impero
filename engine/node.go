@@ -20,6 +20,16 @@ var NodeYields = []struct {
 	{50, 0.01, 0},
 }
 
+var PowerSupplyScale = map[int]float64{
+	PowerOK:           1.0,
+	PowerOff:          0.0,
+	PowerOffNeighbour: 0.5,
+}
+
+func effectiveYield(n *Node) int {
+	return int(math.Ceil(float64(n.Yield) * PowerSupplyScale[n.PowerSupply]))
+}
+
 func (es *EngineSession) GetCostsByYield(yield int) (BuyCost int, InvestCost int, NewYield int) {
 	_, opt := es.GetOptions()
 	BuyCost, InvestCost, NewYield = -1, -1, -1

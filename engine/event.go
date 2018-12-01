@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	. "github.com/vincenscotti/impero/model"
+	"math/rand"
 	"time"
 )
 
-func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Time) {
-	//fmt.Println("SLEEPING FOR 10secs")
-	//time.Sleep(10 * time.Second)
-	//fmt.Println("NEXT EVENT IN 10secs")
-	//return true, time.Now().Add(10 * time.Second) //nextOne.timestamp
+func init() {
+	rand.Seed(time.Now().Unix())
+}
 
+func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Time) {
 	now := es.timestamp
 
 	err, opt := es.GetOptions()
@@ -145,6 +145,48 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		if endturn.Before(now) {
 			es.logger.Println("end turn on ", endturn)
 
+			// UPDATE POWER SUPPLIES
+			nodesByCoord := make(map[Coord]*Node)
+			nodesUpdated := make([]*Node, 0)
+			nodes := make([]*Node, 0)
+
+			if err := es.tx.Model(&Node{}).Update("power_supply", PowerOK).Error; err != nil {
+				panic(err)
+			}
+
+			es.tx.Find(&nodes)
+
+			for _, n := range nodes {
+				nodesByCoord[Coord{X: n.X, Y: n.Y}] = n
+
+				if randEvent(0.001 * float64(n.Yield)) {
+					n.PowerSupply = PowerOff
+					nodesUpdated = append(nodesUpdated, n)
+				}
+			}
+
+			for _, n := range nodesUpdated {
+				adjacentx := []int{n.X - 1, n.X, n.X + 1}
+				adjacenty := []int{n.Y - 1, n.Y, n.Y + 1}
+
+				for _, x := range adjacentx {
+					for _, y := range adjacenty {
+						if x != n.X || y != n.Y {
+							if neighbour, ok := nodesByCoord[Coord{X: x, Y: y}]; ok {
+								if neighbour.PowerSupply != PowerOff {
+									neighbour.PowerSupply = PowerOffNeighbour
+
+									es.tx.Save(neighbour)
+								}
+							}
+						}
+					}
+				}
+
+				es.tx.Save(n)
+			}
+
+			// NOW COMPANY INCOMES
 			cmps := make([]*Company, 0)
 			shareholder := &Player{}
 
@@ -284,4 +326,11 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 	nextEventValid = false
 
 	return
+}
+
+func randEvent(p float64) bool {
+	randint := rand.Intn(1000) + 1
+	randf := float64(randint) / 1000.0
+
+	return randf < p
 }
