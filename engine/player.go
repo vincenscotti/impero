@@ -43,6 +43,21 @@ func (es *EngineSession) GetPlayerNotifications(id int) (err error, newchats, ne
 		err = errors.New("Giocatore inesistente!")
 	}
 
+	if err := es.tx.Model(&ChatMessage{}).Where("`date` > ? and `from_id` != ?",
+		p.LastChatViewed, p.ID).Count(&newchats).Error; err != nil {
+		panic(err)
+	}
+
+	if err := es.tx.Model(&Message{}).Where("`read` = ? and `to_id` = ?", false,
+		p.ID).Count(&newmsgs).Error; err != nil {
+		panic(err)
+	}
+
+	if err := es.tx.Model(&Report{}).Where("`read` = ? and `player_id` = ?", false,
+		p.ID).Count(&newreports).Error; err != nil {
+		panic(err)
+	}
+
 	return
 }
 
