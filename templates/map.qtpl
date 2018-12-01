@@ -32,15 +32,15 @@ Le celle in <s><b>blackout</s></b> hanno reso 0 all'ultimo turno, le celle <s>ad
 			{% endif %}
 
 			{% if node.PowerSupply == PowerOff %}
-				<s><b>
+				<b><s data-x="{%d x %}" data-y="{%d y %}">
 			{% elseif node.PowerSupply == PowerOffNeighbour %}
-				<s>
+				<s data-x="{%d x %}" data-y="{%d y %}">
 			{% endif %}
 
 			{%d node.Yield %}
 
 			{% if node.PowerSupply == PowerOff %}
-				</b></s>
+				</s></b>
 			{% elseif node.PowerSupply == PowerOffNeighbour %}
 				</s>
 			{% endif %}
