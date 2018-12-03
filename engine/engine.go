@@ -15,6 +15,7 @@ type Engine struct {
 type EngineSession struct {
 	timestamp time.Time
 	logger    *log.Logger
+	et        *eventThread
 	tx        *gorm.DB
 	toCommit  bool
 }
@@ -35,7 +36,7 @@ func NewEngine(db *gorm.DB, logger *log.Logger) *Engine {
 }
 
 func (e *Engine) OpenSession() *EngineSession {
-	es := &EngineSession{logger: e.logger}
+	es := &EngineSession{logger: e.logger, et: e.et}
 
 	es.timestamp = time.Now()
 	e.et.RequestToken(es.timestamp)
@@ -72,4 +73,8 @@ func (es *EngineSession) Close() {
 
 func (es *EngineSession) GetTimestamp() time.Time {
 	return es.timestamp
+}
+
+func (es *EngineSession) ForceEventProcessing() {
+	es.et.RegisterEvent(time.Now())
 }

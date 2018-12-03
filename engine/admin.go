@@ -18,5 +18,7 @@ func (es *EngineSession) SaveOptions(opt Options) error {
 		panic(err)
 	}
 
+	es.ForceEventProcessing()
+
 	return nil
 }
