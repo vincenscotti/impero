@@ -17,9 +17,9 @@ func (es *EngineSession) SignupPlayer(p *Player) (error, *Player) {
 		if cnt != 0 {
 			return errors.New("Username gia' in uso!"), nil
 		} else {
-			//p.Budget = opt.PlayerBudget
-			//p.ActionPoints = opt.PlayerActionPoints
-			p.Budget, p.ActionPoints = 10, 10 // FIXME: this should depend on the game options
+			_, opt := es.GetOptions()
+			p.Budget = opt.PlayerBudget
+			p.ActionPoints = opt.PlayerActionPoints
 
 			pwdhash, err := bcrypt.GenerateFromPassword([]byte(p.Password), 10)
 
