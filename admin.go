@@ -56,7 +56,6 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	otheropts := struct {
-		LastCheckpoint     formTime
 		LastTurnCalculated formTime
 		Action             string
 	}{}
@@ -73,7 +72,6 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 		}
 
 		newopt.ID = oldopt.ID
-		newopt.LastCheckpoint = time.Time(otheropts.LastCheckpoint)
 		newopt.LastTurnCalculated = time.Time(otheropts.LastTurnCalculated)
 
 		if err := tx.SaveOptions(newopt); err != nil {

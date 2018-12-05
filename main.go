@@ -153,7 +153,6 @@ func main() {
 		opt.CostPerYield = 1
 		opt.EndGame = 24
 		opt.InitialShares = 3
-		opt.LastCheckpoint = time.Now()
 		opt.LastTurnCalculated = time.Now()
 		opt.NewCompanyCost = 5
 		opt.PlayerActionPoints = 5

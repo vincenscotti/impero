@@ -20,18 +20,17 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		panic(err)
 	}
 
-	lastcheckpoint := opt.LastCheckpoint
-
-	endturn := opt.LastTurnCalculated.Add(time.Duration(opt.TurnDuration) * time.Minute)
+	lastturn := opt.LastTurnCalculated
+	endturn := lastturn.Add(time.Duration(opt.TurnDuration) * time.Minute)
 
 	es.logger.Println("first endturn is ", endturn)
 
-	for lastcheckpoint.Before(now) && opt.Turn <= opt.EndGame {
+	for lastturn.Before(now) && opt.Turn <= opt.EndGame {
 		if now.Before(endturn) {
 			endturn = now
 		}
 
-		es.logger.Println("doing everything between ", lastcheckpoint, " and ", endturn)
+		es.logger.Println("doing everything between ", lastturn, " and ", endturn)
 
 		shareauctions := make([]*ShareAuction, 0)
 		if err := es.tx.Preload("Share").Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions).Error; err != nil {
@@ -273,11 +272,10 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			opt.Turn += 1
 		}
 
-		lastcheckpoint = endturn
+		lastturn = endturn
 		endturn = endturn.Add(time.Duration(opt.TurnDuration) * time.Minute)
 	}
 
-	opt.LastCheckpoint = now
 	if err := es.tx.Save(&opt).Error; err != nil {
 		panic(err)
 	}
@@ -323,7 +321,9 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 	}
 
 	// if the game is over, we invalidate the next event
-	nextEventValid = false
+	if opt.Turn > opt.EndGame {
+		nextEventValid = false
+	}
 
 	return
 }

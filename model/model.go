@@ -7,7 +7,6 @@ import (
 
 type Options struct {
 	ID                          uint
-	LastCheckpoint              time.Time `schema:"-"`
 	LastTurnCalculated          time.Time `schema:"-"`
 	TurnDuration                int
 	PlayerActionPoints          int

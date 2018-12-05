@@ -8,10 +8,6 @@
 <fieldset>
 <legend>Opzioni</legend>
 
-<label for="LastCheckpoint">Ultimo checkpoint</label>
-<input type="text" name="LastCheckpoint" value="{%s= p.Options.LastCheckpoint.Format("2006-01-02 15:04:05-07:00") %}">
-<br>
-
 <label for="LastTurnCalculated">Ultimo turno calcolato</label>
 <input type="text" name="LastTurnCalculated" value="{%s= p.Options.LastTurnCalculated.Format("2006-01-02 15:04:05-07:00") %}">
 <br>
