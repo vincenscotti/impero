@@ -56,6 +56,7 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	otheropts := struct {
+		GameStart          formTime
 		LastTurnCalculated formTime
 		Action             string
 	}{}
@@ -72,6 +73,7 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 		}
 
 		newopt.ID = oldopt.ID
+		newopt.GameStart = time.Time(otheropts.GameStart)
 		newopt.LastTurnCalculated = time.Time(otheropts.LastTurnCalculated)
 
 		if err := tx.SaveOptions(newopt); err != nil {

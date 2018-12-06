@@ -8,6 +8,10 @@
 <fieldset>
 <legend>Opzioni</legend>
 
+<label for="GameStart">Data di inizio</label>
+<input type="text" name="GameStart" value="{%s= p.Options.GameStart.Format("2006-01-02 15:04:05-07:00") %}">
+<br>
+
 <label for="LastTurnCalculated">Ultimo turno calcolato</label>
 <input type="text" name="LastTurnCalculated" value="{%s= p.Options.LastTurnCalculated.Format("2006-01-02 15:04:05-07:00") %}">
 <br>

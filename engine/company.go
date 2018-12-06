@@ -18,6 +18,10 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 
 	_, opt := es.GetOptions()
 
+	if es.timestamp.Before(opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
+
 	if cmp.Name == "" {
 		return errors.New("Il nome non puo' essere vuoto!")
 	}
@@ -211,6 +215,12 @@ func (es *EngineSession) PromoteCEO(cmp *Company, newceo *Player) error {
 	oldceoshares := 0
 	sh := &Share{}
 
+	_, opt := es.GetOptions()
+
+	if es.timestamp.Before(opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
+
 	if err := es.tx.First(cmp).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return errors.New("Societa' inesistente!")
@@ -300,6 +310,12 @@ func (es *EngineSession) GetCompanyFinancials(cmp *Company) (err error, pureInco
 }
 
 func (es *EngineSession) ModifyCompanyPureIncome(p *Player, cmp *Company, increase bool) error {
+	_, opt := es.GetOptions()
+
+	if es.timestamp.Before(opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
+
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}

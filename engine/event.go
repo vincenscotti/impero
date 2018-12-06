@@ -280,8 +280,13 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		panic(err)
 	}
 
-	// calculate next event timestamp; by default it is the turn end...
-	nextEventValid, nextEvent = true, opt.LastTurnCalculated.Add(time.Duration(opt.TurnDuration)*time.Minute)
+	// calculate next event timestamp; by default it is the game start...
+	nextEventValid, nextEvent = true, opt.GameStart
+
+	// ... then we check the turn end...
+	if opt.GameStart.Before(now) {
+		nextEventValid, nextEvent = true, opt.LastTurnCalculated.Add(time.Duration(opt.TurnDuration)*time.Minute)
+	}
 
 	// ... then we check auctions...
 	shareauction := ShareAuction{}

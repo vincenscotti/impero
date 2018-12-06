@@ -89,6 +89,12 @@ func (es *EngineSession) BuyNode(p *Player, cmp *Company, coord Coord) error {
 	adjacentx := []int{coord.X - 1, coord.X, coord.X + 1}
 	adjacenty := []int{coord.Y - 1, coord.Y, coord.Y + 1}
 
+	_, opt := es.GetOptions()
+
+	if es.timestamp.Before(opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
+
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
@@ -196,6 +202,12 @@ func (es *EngineSession) InvestNode(p *Player, cmp *Company, coord Coord) error 
 	node := &Node{}
 	cost := 0
 	newyield := 0
+
+	_, opt := es.GetOptions()
+
+	if es.timestamp.Before(opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
 
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)

@@ -63,6 +63,10 @@ func (es *EngineSession) GetShareAuctionsWithPlayerParticipation(p *Player) (err
 func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error {
 	_, opt := es.GetOptions()
 
+	if es.timestamp.Before(opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
+
 	share := &Share{}
 
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
@@ -103,6 +107,12 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 	participation := &ShareAuctionParticipation{}
 	participation.ShareAuctionID = shareauction.ID
 	participation.PlayerID = p.ID
+
+	_, opt := es.GetOptions()
+
+	if es.timestamp.Before(opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
 
 	if err := es.tx.Where(participation).Find(participation).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)

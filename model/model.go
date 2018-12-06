@@ -7,6 +7,7 @@ import (
 
 type Options struct {
 	ID                          uint
+	GameStart                   time.Time `schema:"-"`
 	LastTurnCalculated          time.Time `schema:"-"`
 	TurnDuration                int
 	PlayerActionPoints          int
