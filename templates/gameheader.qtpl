@@ -21,6 +21,7 @@ Ciao {%s cp.Name%}!
 	Il prossimo turno iniziera' alle {%s p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Format("15:04") %}.
 	L'orario del server e' {%s p.Now.Format("15:04:05") %}.
 {% endif %}
+<br><b>Per ricevere le notifiche su telegram, clicca <a href="http://t.me/ImperoTGBot">qui</a>!</b>
 </p>
 
 <nav>

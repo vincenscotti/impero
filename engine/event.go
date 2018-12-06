@@ -18,14 +18,14 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 	lastturn := es.opt.LastTurnCalculated
 	endturn := lastturn.Add(time.Duration(es.opt.TurnDuration) * time.Minute)
 
-	es.logger.Println("first endturn is ", endturn)
+	es.e.logger.Println("first endturn is ", endturn)
 
 	for lastturn.Before(now) && es.opt.Turn <= es.opt.EndGame {
 		if now.Before(endturn) {
 			endturn = now
 		}
 
-		es.logger.Println("doing everything between ", lastturn, " and ", endturn)
+		es.e.logger.Println("doing everything between ", lastturn, " and ", endturn)
 
 		shareauctions := make([]*ShareAuction, 0)
 		if err := es.tx.Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions).Error; err != nil {
@@ -147,7 +147,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		}
 
 		if endturn.Before(now) {
-			es.logger.Println("end turn on ", endturn)
+			es.e.logger.Println("end turn on ", endturn)
 
 			// UPDATE POWER SUPPLIES
 			nodesByCoord := make(map[Coord]*Node)
@@ -275,6 +275,8 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 
 			es.opt.LastTurnCalculated = endturn
 			es.opt.Turn += 1
+
+			es.e.notificator.NotifyEndTurn()
 		}
 
 		lastturn = endturn

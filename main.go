@@ -12,6 +12,7 @@ import (
 	"github.com/vincenscotti/impero/engine"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
+	"github.com/vincenscotti/impero/tgui"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -118,6 +119,8 @@ func main() {
 	flag.StringVar(&AdminPass, "pass", "admin", "administrator password")
 	dbdriver := flag.String("dbdriver", "mysql", "database driver name")
 	dbstring := flag.String("dbstring", os.Getenv("MYSQL_CNX_STRING"), "database connection string")
+	tgtoken := flag.String("tgtoken", os.Getenv("TGUI_TOKEN"), "telegram bot connection token")
+	weburl := flag.String("weburl", os.Getenv("WEB_ROOT"), "URL where the web UI is deployed")
 
 	flag.Parse()
 
@@ -227,22 +230,35 @@ func main() {
 	s.Addr = *addr
 	s.Handler = router
 
+	tgui := tgui.New(gameEngine, *tgtoken, *weburl)
+
+	gameEngine.RegisterNotificator(tgui)
+	gameEngine.Boot()
+
 	go func() {
-		stop := make(chan os.Signal, 1)
-
-		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-
-		<-stop
-
-		ctx, cancel := ctx.WithTimeout(ctx.Background(), time.Minute)
-		defer cancel()
-
-		fmt.Println("Trying to shutdown for a minute...")
-
-		if err := s.Shutdown(ctx); err != nil {
-			fmt.Println(err)
-		}
+		fmt.Println(s.ListenAndServe())
 	}()
 
-	logger.Println(s.ListenAndServe())
+	go func() {
+		fmt.Println(tgui.Run(*debug))
+	}()
+
+	stop := make(chan os.Signal, 1)
+
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	<-stop
+
+	timeoutctx, cancel := ctx.WithTimeout(ctx.Background(), time.Minute)
+	defer cancel()
+
+	fmt.Println("Trying to shutdown for a minute...")
+
+	if err := s.Shutdown(timeoutctx); err != nil {
+		fmt.Println(err)
+	}
+
+	if err := tgui.Shutdown(timeoutctx); err != nil {
+		fmt.Println(err)
+	}
 }

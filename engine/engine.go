@@ -8,15 +8,15 @@ import (
 )
 
 type Engine struct {
-	db     *gorm.DB
-	et     *eventThread
-	logger *log.Logger
+	db          *gorm.DB
+	et          *eventThread
+	logger      *log.Logger
+	notificator Notificator
 }
 
 type EngineSession struct {
+	e         *Engine
 	timestamp time.Time
-	logger    *log.Logger
-	et        *eventThread
 	tx        *gorm.DB
 	opt       Options
 	toCommit  bool
@@ -27,18 +27,20 @@ func NewEngine(db *gorm.DB, logger *log.Logger) *Engine {
 
 	e.et = NewEventThread(e)
 
+	return e
+}
+
+func (e *Engine) Boot() {
 	tx := e.openSessionUnsafe()
 	defer tx.Close()
 	if nextEventValid, nextEventTs := tx.processEvents(); nextEventValid {
 		e.et.RegisterEvent(nextEventTs)
 	}
 	tx.Commit()
-
-	return e
 }
 
 func (e *Engine) OpenSession() *EngineSession {
-	es := &EngineSession{logger: e.logger, et: e.et}
+	es := &EngineSession{e: e}
 
 	es.timestamp = time.Now()
 	e.et.RequestToken(es.timestamp)
@@ -50,7 +52,7 @@ func (e *Engine) OpenSession() *EngineSession {
 }
 
 func (e *Engine) openSessionUnsafe() *EngineSession {
-	es := &EngineSession{logger: e.logger}
+	es := &EngineSession{e: e}
 
 	es.timestamp = time.Now()
 	es.tx = e.db.Begin()
@@ -80,5 +82,5 @@ func (es *EngineSession) GetTimestamp() time.Time {
 }
 
 func (es *EngineSession) ForceEventProcessing() {
-	es.et.RegisterEvent(time.Now())
+	es.e.et.RegisterEvent(time.Now())
 }

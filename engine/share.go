@@ -226,6 +226,8 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 		panic(err)
 	}
 
+	es.e.notificator.NotifyAuctionRaise(nil, shareauction, nil)
+
 	return nil
 }
 
