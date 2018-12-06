@@ -158,6 +158,7 @@ func main() {
 		opt.PlayerActionPoints = 5
 		opt.PlayerBudget = 100
 		opt.TurnDuration = 60
+		opt.Turn = 1
 
 		db.Create(opt)
 	}
