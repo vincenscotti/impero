@@ -15,17 +15,12 @@ func init() {
 func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Time) {
 	now := es.timestamp
 
-	err, opt := es.GetOptions()
-	if err != nil {
-		panic(err)
-	}
-
-	lastturn := opt.LastTurnCalculated
-	endturn := lastturn.Add(time.Duration(opt.TurnDuration) * time.Minute)
+	lastturn := es.opt.LastTurnCalculated
+	endturn := lastturn.Add(time.Duration(es.opt.TurnDuration) * time.Minute)
 
 	es.logger.Println("first endturn is ", endturn)
 
-	for lastturn.Before(now) && opt.Turn <= opt.EndGame {
+	for lastturn.Before(now) && es.opt.Turn <= es.opt.EndGame {
 		if now.Before(endturn) {
 			endturn = now
 		}
@@ -238,7 +233,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 				}
 
 				cmp.ShareCapital += int(pureIncome)
-				cmp.ActionPoints = opt.CompanyActionPoints + shares
+				cmp.ActionPoints = es.opt.CompanyActionPoints + shares
 
 				if err := es.tx.Save(cmp).Error; err != nil {
 					panic(err)
@@ -246,7 +241,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			}
 
 			for shid, dividends := range dividendsPerPlayer {
-				subject := fmt.Sprintf("Dividendi turno %d", opt.Turn)
+				subject := fmt.Sprintf("Dividendi turno %d", es.opt.Turn)
 				content := fmt.Sprintf("I dividendi per questo turno sono i seguenti.<br>")
 
 				totalincome := 0
@@ -264,36 +259,34 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 				}
 			}
 
-			if err := es.tx.Model(&Player{}).Update("action_points", opt.PlayerActionPoints).Error; err != nil {
+			if err := es.tx.Model(&Player{}).Update("action_points", es.opt.PlayerActionPoints).Error; err != nil {
 				panic(err)
 			}
 
-			opt.LastTurnCalculated = endturn
-			opt.Turn += 1
+			es.opt.LastTurnCalculated = endturn
+			es.opt.Turn += 1
 		}
 
 		lastturn = endturn
-		endturn = endturn.Add(time.Duration(opt.TurnDuration) * time.Minute)
+		endturn = endturn.Add(time.Duration(es.opt.TurnDuration) * time.Minute)
 	}
 
-	if err := es.tx.Save(&opt).Error; err != nil {
+	if err := es.tx.Save(&es.opt).Error; err != nil {
 		panic(err)
 	}
 
 	// calculate next event timestamp; by default it is the game start...
-	nextEventValid, nextEvent = true, opt.GameStart
+	nextEventValid, nextEvent = true, es.opt.GameStart
 
 	// ... then we check the turn end...
-	if opt.GameStart.Before(now) {
-		nextEventValid, nextEvent = true, opt.LastTurnCalculated.Add(time.Duration(opt.TurnDuration)*time.Minute)
+	if es.opt.GameStart.Before(now) {
+		nextEventValid, nextEvent = true, es.opt.LastTurnCalculated.Add(time.Duration(es.opt.TurnDuration)*time.Minute)
 	}
 
 	// ... then we check auctions...
 	shareauction := ShareAuction{}
 
-	err = es.tx.Order("`expiration`").First(&shareauction).Error
-
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err := es.tx.Order("`expiration`").First(&shareauction).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
@@ -304,9 +297,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 	// ... then we check transfer proposals...
 	transferproposal := TransferProposal{}
 
-	err = es.tx.Order("`expiration`").First(&transferproposal).Error
-
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err := es.tx.Order("`expiration`").First(&transferproposal).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
@@ -326,7 +317,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 	}
 
 	// if the game is over, we invalidate the next event
-	if opt.Turn > opt.EndGame {
+	if es.opt.Turn > es.opt.EndGame {
 		nextEventValid = false
 	}
 

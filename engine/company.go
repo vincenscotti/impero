@@ -16,9 +16,7 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 	cmp.Name = name
 	cmp.ShareCapital = capital
 
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
@@ -34,7 +32,7 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 		return errors.New("Budget insufficiente!")
 	}
 
-	if p.ActionPoints < opt.NewCompanyCost {
+	if p.ActionPoints < es.opt.NewCompanyCost {
 		return errors.New("Punti operazione insufficienti!")
 	}
 
@@ -47,10 +45,10 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 	}
 
 	p.Budget -= cmp.ShareCapital
-	p.ActionPoints -= opt.NewCompanyCost
+	p.ActionPoints -= es.opt.NewCompanyCost
 	cmp.CEO = *p
-	cmp.ActionPoints = opt.CompanyActionPoints + opt.InitialShares
-	cmp.PureIncomePercentage = opt.CompanyPureIncomePercentage
+	cmp.ActionPoints = es.opt.CompanyActionPoints + es.opt.InitialShares
+	cmp.PureIncomePercentage = es.opt.CompanyPureIncomePercentage
 
 	if err := es.tx.Create(cmp).Error; err != nil {
 		panic(err)
@@ -60,7 +58,7 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 		panic(err)
 	}
 
-	for i := 0; i < opt.InitialShares; i++ {
+	for i := 0; i < es.opt.InitialShares; i++ {
 		if err := es.tx.Create(&Share{CompanyID: cmp.ID, OwnerID: p.ID}).Error; err != nil {
 			panic(err)
 		}
@@ -215,9 +213,7 @@ func (es *EngineSession) PromoteCEO(cmp *Company, newceo *Player) error {
 	oldceoshares := 0
 	sh := &Share{}
 
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
@@ -310,9 +306,7 @@ func (es *EngineSession) GetCompanyFinancials(cmp *Company) (err error, pureInco
 }
 
 func (es *EngineSession) ModifyCompanyPureIncome(p *Player, cmp *Company, increase bool) error {
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 

@@ -61,9 +61,7 @@ func (es *EngineSession) GetShareAuctionsWithPlayerParticipation(p *Player) (err
 }
 
 func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error {
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
@@ -95,7 +93,7 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error
 		panic(err)
 	}
 
-	if err := es.tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
+	if err := es.tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
 		panic(err)
 	}
 
@@ -108,9 +106,7 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 	participation.ShareAuctionID = shareauction.ID
 	participation.PlayerID = p.ID
 
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 

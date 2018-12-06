@@ -31,7 +31,6 @@ func effectiveYield(n *Node) int {
 }
 
 func (es *EngineSession) GetCostsByYield(yield int) (BuyCost int, InvestCost int, NewYield int) {
-	_, opt := es.GetOptions()
 	BuyCost, InvestCost, NewYield = -1, -1, -1
 
 	yieldindex := 0
@@ -57,7 +56,7 @@ func (es *EngineSession) GetCostsByYield(yield int) (BuyCost int, InvestCost int
 		NewYield = NodeYields[newyieldindex].Yield
 	}
 
-	BuyCost = int(math.Floor(float64(yield) * opt.CostPerYield))
+	BuyCost = int(math.Floor(float64(yield) * es.opt.CostPerYield))
 
 	return
 }
@@ -89,9 +88,7 @@ func (es *EngineSession) BuyNode(p *Player, cmp *Company, coord Coord) error {
 	adjacentx := []int{coord.X - 1, coord.X, coord.X + 1}
 	adjacenty := []int{coord.Y - 1, coord.Y, coord.Y + 1}
 
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
@@ -203,9 +200,7 @@ func (es *EngineSession) InvestNode(p *Player, cmp *Company, coord Coord) error 
 	cost := 0
 	newyield := 0
 
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 

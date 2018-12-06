@@ -8,9 +8,7 @@ import (
 )
 
 func (es *EngineSession) ProposePartnership(ceo *Player, cmp1 *Company, cmp2 *Company) error {
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
@@ -64,7 +62,7 @@ func (es *EngineSession) ProposePartnership(ceo *Player, cmp1 *Company, cmp2 *Co
 	}
 
 	if err := es.tx.Create(&Partnership{FromID: from.ID, ToID: to.ID,
-		ProposalExpiration: es.timestamp.Add(time.Duration(opt.TurnDuration) * time.Minute)}).Error; err != nil {
+		ProposalExpiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
 		panic(err)
 	}
 
@@ -76,9 +74,7 @@ func (es *EngineSession) ProposePartnership(ceo *Player, cmp1 *Company, cmp2 *Co
 }
 
 func (es *EngineSession) ConfirmPartnership(ceo *Player, p *Partnership) error {
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
@@ -126,9 +122,7 @@ func (es *EngineSession) ConfirmPartnership(ceo *Player, p *Partnership) error {
 func (es *EngineSession) DeletePartnership(ceo *Player, p *Partnership) error {
 	var cmp *Company
 
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 

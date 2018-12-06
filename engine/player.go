@@ -73,13 +73,8 @@ func (es *EngineSession) GetIncomingTransfers(p *Player) (err error, incomingTra
 
 func (es *EngineSession) CreateTransferProposal(from, to *Player, amount int) (err error, proposal *TransferProposal) {
 	proposal = &TransferProposal{FromID: from.ID, ToID: to.ID, Amount: amount}
-	err, opt := es.GetOptions()
 
-	if err != nil {
-		return err, nil
-	}
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!"), nil
 	}
 
@@ -92,7 +87,7 @@ func (es *EngineSession) CreateTransferProposal(from, to *Player, amount int) (e
 	}
 
 	proposal.Risk = int(math.Floor(float64(proposal.Amount) / float64(from.Budget) * 100))
-	proposal.Expiration = es.timestamp.Add(time.Duration(opt.TurnDuration) * time.Minute)
+	proposal.Expiration = es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)
 
 	from.Budget -= proposal.Amount
 	from.ActionPoints -= 1
@@ -110,9 +105,7 @@ func (es *EngineSession) CreateTransferProposal(from, to *Player, amount int) (e
 func (es *EngineSession) ConfirmTransferProposal(proposal *TransferProposal) (err error, fiscalCheck bool) {
 	p := &TransferProposal{}
 
-	_, opt := es.GetOptions()
-
-	if es.timestamp.Before(opt.GameStart) {
+	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!"), false
 	}
 

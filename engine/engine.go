@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/jinzhu/gorm"
+	. "github.com/vincenscotti/impero/model"
 	"log"
 	"time"
 )
@@ -17,6 +18,7 @@ type EngineSession struct {
 	logger    *log.Logger
 	et        *eventThread
 	tx        *gorm.DB
+	opt       Options
 	toCommit  bool
 }
 
@@ -42,6 +44,7 @@ func (e *Engine) OpenSession() *EngineSession {
 	e.et.RequestToken(es.timestamp)
 
 	es.tx = e.db.Begin()
+	_, es.opt = es.GetOptions()
 
 	return es
 }
@@ -51,6 +54,7 @@ func (e *Engine) openSessionUnsafe() *EngineSession {
 
 	es.timestamp = time.Now()
 	es.tx = e.db.Begin()
+	_, es.opt = es.GetOptions()
 
 	return es
 }
