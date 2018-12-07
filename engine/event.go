@@ -233,7 +233,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 				}
 
 				cmp.ShareCapital += int(pureIncome)
-				cmp.ActionPoints = es.opt.CompanyActionPoints + shares
+				cmp.ActionPoints = es.opt.CompanyActionPoints + len(shareholders)
 
 				if err := es.tx.Save(cmp).Error; err != nil {
 					panic(err)
