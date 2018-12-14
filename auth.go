@@ -1,17 +1,14 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
 func Signup(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	session := GetSession(r)
-	opt := GetOptions(r)
+	tx := GetTx(r)
 
 	p := Player{}
 	msg := ""
@@ -20,44 +17,28 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if p.Name != "" && p.Password != "" {
-		cnt := 0
-		if err := tx.Model(p).Where(&Player{Name: p.Name}).Count(&cnt).Error; err != nil {
-			panic(err)
-		}
+	if r.Method == "POST" {
+		err, newp := tx.SignupPlayer(&p)
 
-		if cnt != 0 {
-			msg = "Username gia' in uso!"
-		} else {
-			p.Budget = opt.PlayerBudget
-			p.ActionPoints = opt.PlayerActionPoints
+		if err == nil {
+			tx.Commit()
 
-			pwdhash, err := bcrypt.GenerateFromPassword([]byte(p.Password), 10)
-
-			if err != nil {
-				panic(err)
-			}
-
-			p.Password = string(pwdhash)
-
-			if err := tx.Create(&p).Error; err != nil {
-				panic(err)
-			}
-
-			session.Values["playerID"] = p.ID
+			session.Values["playerID"] = newp.ID
 
 			Redirect(w, r, "gamehome")
 
 			return
 		}
+
+		msg = err.Error()
 	}
 
 	RenderHTML(w, r, templates.SignupPage(msg))
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	session := GetSession(r)
+	tx := GetTx(r)
 
 	_, ok := session.Values["playerID"].(uint)
 
@@ -75,21 +56,16 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if p.Name != "" && p.Password != "" {
-		hashedp := Player{}
-		hashedp.Name = p.Name
+		err, newp := tx.LoginPlayer(&p)
 
-		if err := tx.Where(&hashedp).First(&hashedp).Error; err != nil && err != gorm.ErrRecordNotFound {
-			panic(err)
-		}
-
-		if bcrypt.CompareHashAndPassword([]byte(hashedp.Password), []byte(p.Password)) == nil {
-			session.Values["playerID"] = hashedp.ID
+		if err == nil {
+			session.Values["playerID"] = newp.ID
 
 			Redirect(w, r, "gamehome")
 
 			return
 		} else {
-			msg = "Login fallito!"
+			msg = err.Error()
 		}
 	}
 

@@ -13,7 +13,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - MYSQL_CNX_STRING=impero:password@tcp(mysql)/impero?parseTime=true
+      - TZ=Europe/Rome
+      - MYSQL_CNX_STRING=impero:password@tcp(mysql)/impero?parseTime=true&loc=Local
     command: /root/impero -pass=password -debug=true
     restart: on-failure
     depends_on:

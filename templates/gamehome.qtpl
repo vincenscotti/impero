@@ -20,7 +20,7 @@
 
 {% for _, t := range p.IncomingTransfers %}
 <tr>
-<form action="{%s quickURL(p.HeaderData, "player_trasfer_confirm") %}" method="POST">
+<form action="{%s quickURL(p.HeaderData, "player_transfer_confirm") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(t.ID) %}">
 	<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(t.FromID)) %}">{%s t.From.Name %}</a></td>
 	<td>{%d t.Amount %}</td>

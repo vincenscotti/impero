@@ -6,32 +6,40 @@ import (
 )
 
 type Options struct {
-	ID                  uint
-	LastCheckpoint      time.Time `schema:"-"`
-	LastTurnCalculated  time.Time `schema:"-"`
-	TurnDuration        int
-	PlayerActionPoints  int
-	CompanyActionPoints int
-	PlayerBudget        int
-	NewCompanyCost      int
-	InitialShares       int
-	CostPerYield        float64
-	Turn                int
-	EndGame             int
+	ID                          uint
+	GameStart                   time.Time `schema:"-"`
+	LastTurnCalculated          time.Time `schema:"-"`
+	TurnDuration                int
+	PlayerActionPoints          int
+	CompanyActionPoints         int
+	CompanyPureIncomePercentage int
+	PlayerBudget                int
+	NewCompanyCost              int
+	InitialShares               int
+	CostPerYield                float64
+	Turn                        int
+	EndGame                     int
 }
 
-type Point struct {
+type Coord struct {
 	X int
 	Y int
 }
 
+const (
+	PowerOK = iota
+	PowerOff
+	PowerOffNeighbour
+)
+
 type Node struct {
 	gorm.Model
-	X       int
-	Y       int
-	Yield   int
-	Owner   Company
-	OwnerID uint
+	X           int
+	Y           int
+	Yield       int
+	PowerSupply int
+	Owner       Company
+	OwnerID     uint
 }
 
 type Player struct {
@@ -78,13 +86,14 @@ type ChatMessage struct {
 
 type Company struct {
 	gorm.Model
-	Name         string `gorm:"size:30"`
-	ShareCapital int
-	CEO          Player
-	CEOID        uint
-	ActionPoints int
-	Income       int   `gorm:"-"`
-	Color        int32 `gorm:"-"`
+	Name                 string `gorm:"size:30"`
+	ShareCapital         int
+	CEO                  Player
+	CEOID                uint
+	ActionPoints         int
+	Income               int `gorm:"-"`
+	PureIncomePercentage int
+	Color                int32 `gorm:"-"`
 }
 
 type Partnership struct {
@@ -93,6 +102,7 @@ type Partnership struct {
 	FromID             uint
 	To                 Company
 	ToID               uint
+	ProposalAccepted   bool
 	ProposalExpiration time.Time
 }
 

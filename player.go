@@ -4,23 +4,19 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"math"
-	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func Players(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
 
-	players := make([]*Player, 0)
+	err, players := tx.GetPlayers()
 
-	if err := tx.Order("last_budget desc").Find(&players).Error; err != nil {
+	if err != nil {
 		panic(err)
 	}
 
@@ -30,9 +26,9 @@ func Players(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPlayer(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
+	tx := GetTx(r)
 
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
@@ -40,13 +36,10 @@ func GetPlayer(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	p := &Player{}
-	if err := tx.Where(id).First(p).Error; err != nil && err != gorm.ErrRecordNotFound {
-		panic(err)
-	}
+	err, p := tx.GetPlayer(id)
 
-	if p.ID == 0 {
-		session.AddFlash("Giocatore inesistente!", "error_")
+	if err != nil {
+		session.AddFlash(err.Error(), "error_")
 	}
 
 	page := PlayerData{HeaderData: header, Player: p}
@@ -57,11 +50,9 @@ func GetPlayer(w http.ResponseWriter, r *http.Request) {
 }
 
 func Transfer(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
-	now := GetTime(r)
-	opt := GetOptions(r)
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -77,39 +68,23 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 		blerr.Redirect = target
 	}
 
-	if p.Amount > header.CurrentPlayer.Budget {
-		blerr.Message = "Budget insufficiente!"
-		panic(blerr)
+	to := &Player{}
+	to.ID = p.ToID
+
+	if err, _ := tx.CreateTransferProposal(header.CurrentPlayer, to, p.Amount); err != nil {
+		session.AddFlash(err.Error(), "error_")
+	} else {
+		session.AddFlash("Proposta inviata!", "success_")
+
+		tx.Commit()
 	}
-
-	if header.CurrentPlayer.ActionPoints < 1 {
-		blerr.Message = "Punti operazione insufficienti!"
-		panic(blerr)
-	}
-
-	p.FromID = header.CurrentPlayer.ID
-	p.Risk = int(math.Floor(float64(p.Amount) / float64(header.CurrentPlayer.Budget) * 100))
-	p.Expiration = now.Add(time.Duration(opt.TurnDuration) * time.Minute)
-
-	header.CurrentPlayer.Budget -= p.Amount
-	header.CurrentPlayer.ActionPoints -= 1
-	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
-		panic(err)
-	}
-
-	if err := tx.Create(p).Error; err != nil {
-		panic(err)
-	}
-
-	session.AddFlash("Proposta inviata!", "success_")
 
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
 func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
-	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -128,43 +103,20 @@ func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := &TransferProposal{}
+	p.ID = params.ID
 
-	randint := rand.Intn(100) + 1
+	err, fiscalCheck := tx.ConfirmTransferProposal(p)
 
-	if err := tx.Where(params.ID).Preload("From").Preload("To").Find(p).Error; err != nil {
-		panic(err)
-	}
-
-	if header.CurrentPlayer.ActionPoints < 1 {
-		blerr.Message = "Punti operazione insufficienti!"
-		panic(blerr)
-	}
-
-	header.CurrentPlayer.ActionPoints -= 1
-
-	if randint < p.Risk {
-		// oops
-		header.CurrentPlayer.Budget = 0
-
-		p.From.Budget = 0
-		if err := tx.Save(p.From); err.Error != nil {
-			panic(err.Error)
-		}
-
-		session.AddFlash("CONTROLLO FISCALE! Il tuo budget e' stato sequestrato!", "error_")
+	if err != nil {
+		session.AddFlash(err.Error(), "error_")
 	} else {
-		// success
-		header.CurrentPlayer.Budget += p.Amount
+		if fiscalCheck {
+			session.AddFlash("CONTROLLO FISCALE! Il tuo budget e' stato sequestrato!", "error_")
+		} else {
+			tx.Commit()
 
-		session.AddFlash("Trasferimento completato!", "success_")
-	}
-
-	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
-		panic(err)
-	}
-
-	if err := tx.Delete(p).Error; err != nil {
-		panic(err)
+			session.AddFlash("Trasferimento completato!", "success_")
+		}
 	}
 
 	RedirectToURL(w, r, blerr.Redirect)

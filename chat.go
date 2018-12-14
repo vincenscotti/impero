@@ -5,23 +5,13 @@ import (
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
 	"net/http"
-	"time"
 )
 
 func GetChat(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
 
-	msgs := make([]*ChatMessage, 0)
-
-	if err := tx.Preload("From").Order("Date desc", true).Find(&msgs).Error; err != nil {
-		panic(err)
-	}
-
-	header.CurrentPlayer.LastChatViewed = GetTime(r)
-	if err := tx.Save(header.CurrentPlayer).Error; err != nil {
-		panic(err)
-	}
+	_, msgs := tx.GetChatMessages(header.CurrentPlayer)
 
 	page := ChatData{HeaderData: header, Messages: msgs}
 
@@ -29,8 +19,8 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostChat(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -46,17 +36,14 @@ func PostChat(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if msg.Content == "" {
-		blerr.Message = "Messaggio vuoto non valido!"
+	err := tx.PostChatMessage(header.CurrentPlayer, msg.Content)
+
+	if err != nil {
+		blerr.Message = err.Error()
 		panic(blerr)
 	}
 
-	msg.FromID = header.CurrentPlayer.ID
-	msg.Date = time.Now()
-
-	if err := tx.Create(msg).Error; err != nil {
-		panic(err)
-	}
+	tx.Commit()
 
 	RedirectToURL(w, r, blerr.Redirect)
 }

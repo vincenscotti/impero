@@ -1,23 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func MessagesInbox(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
 
-	msgs := make([]*Message, 0)
-	if err := tx.Where("`to_id` = ?", header.CurrentPlayer.ID).Preload("From").Order("`Date` desc", true).Find(&msgs).Error; err != nil {
-		panic(err)
-	}
+	_, msgs := tx.GetInbox(header.CurrentPlayer)
 
 	page := MessagesInboxData{HeaderData: header, Messages: msgs}
 
@@ -25,13 +22,10 @@ func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 }
 
 func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
 
-	msgs := make([]*Message, 0)
-	if err := tx.Where("`from_id` = ?", header.CurrentPlayer.ID).Preload("To").Order("`Date` desc", true).Find(&msgs).Error; err != nil {
-		panic(err)
-	}
+	_, msgs := tx.GetOutbox(header.CurrentPlayer)
 
 	page := MessagesOutboxData{HeaderData: header, Messages: msgs}
 
@@ -39,8 +33,8 @@ func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMessage(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
 
 	blerr := BLError{}
 
@@ -56,29 +50,24 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	msg := &Message{}
-	if err := tx.Preload("From").Preload("To").Where(id).First(msg).Error; err != nil {
-		panic(err)
-	}
+	err, msg := tx.GetMessage(header.CurrentPlayer, id)
 
-	if msg.FromID != header.CurrentPlayer.ID && msg.ToID != header.CurrentPlayer.ID {
-		blerr.Message = "Non puoi leggere questo messaggio!"
+	if err != nil {
+		blerr.Message = err.Error()
 		panic(blerr)
-	} else if msg.ToID == header.CurrentPlayer.ID {
-		msg.Read = true
-		if err := tx.Save(&msg).Error; err != nil {
-			panic(err)
-		}
 	}
 
 	page := MessageData{HeaderData: header, Message: msg}
+
+	tx.Commit()
 
 	RenderHTML(w, r, templates.MessagePage(&page))
 }
 
 func NewMessagePost(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
 	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
+
 	session := GetSession(r)
 
 	blerr := BLError{}
@@ -95,25 +84,19 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if msg.Content == "" {
-		blerr.Message = "Non puoi inviare un messaggio vuoto!"
+	to := &Player{}
+	to.ID = msg.ToID
+	fmt.Println("SENDING TO", to.ID, to, msg.To)
+
+	err := tx.PostMessage(header.CurrentPlayer, to, msg.Subject, msg.Content)
+
+	if err != nil {
+		blerr.Message = err.Error()
 		panic(blerr)
-	}
-
-	if msg.ToID == 0 {
-		blerr.Message = "Destinatario non valido!"
-		panic(blerr)
-	}
-
-	msg.FromID = header.CurrentPlayer.ID
-	msg.Date = time.Now()
-	msg.Read = false
-
-	if err := tx.Create(msg).Error; err != nil {
-		panic(err)
 	}
 
 	session.AddFlash("Messaggio inviato!", "success_")
+	tx.Commit()
 
 	RedirectToURL(w, r, blerr.Redirect)
 }

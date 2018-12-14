@@ -8,8 +8,8 @@
 <fieldset>
 <legend>Opzioni</legend>
 
-<label for="LastCheckpoint">Ultimo checkpoint</label>
-<input type="text" name="LastCheckpoint" value="{%s= p.Options.LastCheckpoint.Format("2006-01-02 15:04:05-07:00") %}">
+<label for="GameStart">Data di inizio</label>
+<input type="text" name="GameStart" value="{%s= p.Options.GameStart.Format("2006-01-02 15:04:05-07:00") %}">
 <br>
 
 <label for="LastTurnCalculated">Ultimo turno calcolato</label>
@@ -26,6 +26,10 @@
 
 <label for="CompanyActionPoints">Punti azione per societa'</label>
 <input type="number" min="0" name="CompanyActionPoints" value="{%d p.Options.CompanyActionPoints %}">
+<br>
+
+<label for="CompanyPureIncomePercentage">Percentuale di rendimento che resta alle societa'</label>
+<input type="number" min="0" max="100" name="CompanyPureIncomePercentage" value="{%d p.Options.CompanyPureIncomePercentage %}">
 <br>
 
 <label for="PlayerBudget">Budget iniziale giocatori</label>
