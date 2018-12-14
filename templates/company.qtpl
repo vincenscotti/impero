@@ -11,10 +11,10 @@ cmp := p.Company
 
 <p><b>{%s cmp.Name %}</b></p>
 <p>Amministratore: {%s cmp.CEO.Name %}</p>
-<p>Capitale: {%d cmp.ShareCapital %}</p>
-<p>Entrate: {%d cmp.Income %}</p>
+<p>Capitale: {%s markupMoney(cmp.ShareCapital) %}</p>
+<p>Entrate: {%s markupMoney(cmp.Income) %}</p>
 {% if p.IsShareHolder %}
-	<p>Entrate che restano alla societa': {%d cmp.PureIncomePercentage %} &percnt; ({%d p.PureIncome %}$ alla societa' e {%d cmp.Income - p.PureIncome %}$ agli azionisti)</p>
+	<p>Entrate che restano alla societa': {%d cmp.PureIncomePercentage %} &percnt; ({%s markupMoney(p.PureIncome) %} alla societa' e {%s markupMoney(cmp.Income - p.PureIncome) %} agli azionisti)</p>
 
 	{% if cmp.CEO.ID == p.CurrentPlayer.ID %}
 		<form action="{%s quickURL(p.HeaderData, "company_pureincome") %}" method="POST">
@@ -28,7 +28,7 @@ cmp := p.Company
 
 <br>
 <p>Azioni: {%d p.Shares %}</p>
-<p>Guadagno azionisti per azione: {%d p.IncomePerShare %}</p>
+<p>Guadagno azionisti per azione: {%s markupMoney(p.IncomePerShare) %}</p>
 
 <table>
 <tr>

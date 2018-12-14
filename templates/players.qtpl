@@ -17,8 +17,8 @@
 <tr>
 	<td>{%d i+1 %}</td>
 	<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(pl.ID)) %}">{%s pl.Name %}</a></td>
-	<td>{%d pl.LastBudget %}</td>
-	<td>{%d pl.LastIncome %}</td>
+	<td>{%s markupMoney(pl.LastBudget) %}</td>
+	<td>{%s markupMoney(pl.LastIncome) %}</td>
 </tr>
 {% endfor %}
 

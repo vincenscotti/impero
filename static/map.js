@@ -21,8 +21,8 @@ for (i = 0; i < tds.length; i++) {
 			if (this.readyState == 4 && this.status == 200) {
 				var costs = JSON.parse(this.responseText);
 
-				buyCost.innerHTML = costs.BuyCost
-				investCost.innerHTML = costs.InvestCost
+				buyCost.innerHTML = costs.BuyCost / 100
+				investCost.innerHTML = costs.InvestCost / 100
 			}
 		};
 

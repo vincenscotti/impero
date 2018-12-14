@@ -33,7 +33,7 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	cmp := &Company{}
 	cmp.ID = params.ID
 
-	err := tx.CreateAuction(header.CurrentPlayer, cmp, params.Amount)
+	err := tx.CreateAuction(header.CurrentPlayer, cmp, params.Amount * 100)
 
 	if err != nil {
 		session.AddFlash(err.Error(), "error_")
@@ -71,7 +71,7 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	shareauction := &ShareAuction{}
 	shareauction.ID = params.Auction
 
-	err := tx.BidAuction(header.CurrentPlayer, shareauction, params.Amount)
+	err := tx.BidAuction(header.CurrentPlayer, shareauction, params.Amount * 100)
 	if err != nil {
 		session.AddFlash(err.Error(), "error_")
 	} else {

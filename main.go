@@ -152,13 +152,13 @@ func main() {
 		opt.CompanyPureIncomePercentage = 30
 		opt.CostPerYield = 1
 		opt.EndGame = 24
-		opt.InitialShares = 3
+		opt.InitialShares = 20
 		opt.GameStart = time.Now()
 		opt.LastTurnCalculated = time.Now()
 		opt.NewCompanyCost = 5
 		opt.PlayerActionPoints = 5
-		opt.PlayerBudget = 100
-		opt.TurnDuration = 60
+		opt.PlayerBudget = 10000
+		opt.TurnDuration = 5
 		opt.Turn = 1
 
 		db.Create(opt)

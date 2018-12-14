@@ -71,7 +71,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if err := tx.NewCompany(header.CurrentPlayer, cmp.Name, cmp.ShareCapital); err != nil {
+	if err := tx.NewCompany(header.CurrentPlayer, cmp.Name, cmp.ShareCapital * 100); err != nil {
 		blerr.Message = err.Error()
 		panic(blerr)
 	} else {

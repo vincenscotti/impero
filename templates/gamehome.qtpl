@@ -65,13 +65,13 @@
 	{% endif %}
 	</td>
 	<td>{%d c.Shares %}</td>
-	<td>{%d c.Shares*c.ValuePerShare %}</td>
+	<td>{%s markupMoney(c.Shares*c.ValuePerShare) %}</td>
 </tr>
 {% endfor %}
 
 <tr>
 	<td colspan="2"><b>TOTALE</b></td>
-	<td><b>{%d p.PlayerIncome %}</b></td>
+	<td><b>{%s markupMoney(p.PlayerIncome) %}</b></td>
 </tr>
 
 </tbody>
@@ -119,7 +119,7 @@
 
 	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(sa.Share.CompanyID)) %}">{%s sa.Share.Company.Name %}</a></td>
 
-	<td>{%d sa.HighestOffer %}</td>
+	<td>{%s markupMoney(sa.HighestOffer) %}</td>
 
 	<td>
 		{% if sa.HighestOfferPlayerID == p.HeaderData.CurrentPlayer.ID %}
@@ -136,7 +136,7 @@
 	<td>{%v sa.Expiration.Format("02-01 15:04:05") %}</td>
 
 	<td>
-		<input type="number" min="{%d sa.HighestOffer + 1 %}" name="amount" value="{%d sa.HighestOffer + 1 %}">
+		<input type="number" min="{%d (sa.HighestOffer + 100) / 100 %}" name="amount" value="{%d (sa.HighestOffer + 100) / 100 %}">
 		<input type="submit" value="Punta">
 	</td>
 </form>

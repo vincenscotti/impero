@@ -64,7 +64,7 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 		}
 	}
 
-	if err := es.tx.Where("`owner_id` = 0 and `yield` = 1").Find(&freenodes).Error; err != nil {
+	if err := es.tx.Where("`owner_id` = 0 and `yield` = 100").Find(&freenodes).Error; err != nil {
 		panic(err)
 	}
 
@@ -121,9 +121,12 @@ func (es *EngineSession) GetCompany(p *Player, id int) (err error, cmp *Company,
 		panic(err)
 	}
 
-	es.updateCompanyIncome(cmp)
+	err, cmp.Income = es.GetCompanyIncome(cmp, false)
+	if err != nil {
+		return
+	}
 
-	err, pureincome, valuepershare = es.GetCompanyFinancials(cmp)
+	err, pureincome, valuepershare = es.GetCompanyFinancials(cmp, false)
 	if err != nil {
 		return
 	}
@@ -154,39 +157,6 @@ func (es *EngineSession) GetCompanyPartnerships(cmp *Company) (err error, partne
 	return nil, partnerships
 }
 
-func (es *EngineSession) updateCompanyIncome(cmp *Company) {
-	nodes := make([]*Node, 0)
-	rentals := make([]*Rental, 0)
-
-	if err := es.tx.Where("`owner_id` = ?", cmp.ID).Find(&nodes).Error; err != nil {
-		panic(err)
-	}
-
-	income := 0
-
-	for _, n := range nodes {
-		income += n.Yield
-
-		if err := es.tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
-			panic(err.Error())
-		}
-
-		for _, _ = range rentals {
-			income += int(math.Ceil(float64(n.Yield) / 2.))
-		}
-	}
-
-	if err := es.tx.Preload("Node").Where("`tenant_id` = ?", cmp.ID).Find(&rentals).Error; err != nil {
-		panic(err)
-	}
-
-	for _, r := range rentals {
-		income += r.Node.Yield / 2
-	}
-
-	cmp.Income = income
-}
-
 func (es *EngineSession) GetCompanies() (err error, companies []*Company) {
 	companies = make([]*Company, 0)
 	if err := es.tx.Order("share_capital desc").Find(&companies).Error; err != nil {
@@ -194,7 +164,7 @@ func (es *EngineSession) GetCompanies() (err error, companies []*Company) {
 	}
 
 	for _, cmp := range companies {
-		es.GetCompanyIncome(cmp)
+		es.GetCompanyIncome(cmp, false)
 	}
 
 	return
@@ -251,7 +221,7 @@ func (es *EngineSession) PromoteCEO(cmp *Company, newceo *Player) error {
 	return nil
 }
 
-func (es *EngineSession) GetCompanyIncome(cmp *Company) (err error, income int) {
+func (es *EngineSession) GetCompanyIncome(cmp *Company, effective bool) (err error, income int) {
 	nodes := make([]*Node, 0)
 	rentals := make([]*Rental, 0)
 
@@ -260,7 +230,11 @@ func (es *EngineSession) GetCompanyIncome(cmp *Company) (err error, income int) 
 	}
 
 	for _, n := range nodes {
-		yield := effectiveYield(n)
+		yield := n.Yield
+		if effective {
+			yield = effectiveYield(n)
+		}
+
 		income += yield
 
 		if err := es.tx.Where("`node_id` = ?", n.ID).Find(&rentals).Error; err != nil {
@@ -268,7 +242,7 @@ func (es *EngineSession) GetCompanyIncome(cmp *Company) (err error, income int) 
 		}
 
 		for _, _ = range rentals {
-			income += int(math.Ceil(float64(yield) / 2.))
+			income += yield / 2
 		}
 	}
 
@@ -277,15 +251,19 @@ func (es *EngineSession) GetCompanyIncome(cmp *Company) (err error, income int) 
 	}
 
 	for _, r := range rentals {
-		income += effectiveYield(&r.Node) / 2
+		yield := r.Node.Yield
+		if effective {
+			yield = effectiveYield(&r.Node)
+		}
+		income += yield / 2
 	}
 
 	return
 }
 
-func (es *EngineSession) GetCompanyFinancials(cmp *Company) (err error, pureIncome, valuePerShare int) {
+func (es *EngineSession) GetCompanyFinancials(cmp *Company, effective bool) (err error, pureIncome, valuePerShare int) {
 	if cmp.Income == 0 {
-		err, cmp.Income = es.GetCompanyIncome(cmp)
+		err, cmp.Income = es.GetCompanyIncome(cmp, effective)
 
 		if err != nil {
 			return
@@ -298,11 +276,10 @@ func (es *EngineSession) GetCompanyFinancials(cmp *Company) (err error, pureInco
 		panic(err)
 	}
 
-	floatIncome := float64(cmp.Income)
-	floatPureIncome := math.Floor(floatIncome * (float64(cmp.PureIncomePercentage) / 100.0))
-	floatValuePerShare := int(math.Ceil((floatIncome - floatPureIncome) / float64(cmpshares)))
+	pureIncome = int(math.Floor(float64(cmp.Income) * (float64(cmp.PureIncomePercentage) / 100.0)))
+	valuePerShare = (cmp.Income - pureIncome) / cmpshares
 
-	return nil, int(floatPureIncome), int(floatValuePerShare)
+	return
 }
 
 func (es *EngineSession) ModifyCompanyPureIncome(p *Player, cmp *Company, increase bool) error {

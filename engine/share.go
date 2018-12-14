@@ -25,7 +25,7 @@ func (es *EngineSession) CalculateSharesIncome(shares []*SharesPerPlayer) (err e
 			panic(err)
 		}
 
-		err, _, sh.ValuePerShare = es.GetCompanyFinancials(cmp)
+		err, _, sh.ValuePerShare = es.GetCompanyFinancials(cmp, false)
 
 		if err != nil {
 			return
