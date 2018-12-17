@@ -17,7 +17,8 @@ services:
       - MYSQL_CNX_STRING=impero:password@tcp(mysql)/impero?parseTime=true&loc=Local
       - WEB_ROOT
       - TGUI_TOKEN
-    command: "/root/impero -pass=${ADMIN_PASSWORD} -debug=true"
+    working_dir: "/root/"
+    command: "./impero -pass=${ADMIN_PASSWORD} -debug=true"
     restart: on-failure
     depends_on:
       - mysql
