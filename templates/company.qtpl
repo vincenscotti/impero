@@ -57,6 +57,14 @@ cmp := p.Company
 	<input type="submit" value="Diventa amministratore">
 	</form>
 	{% endif %}
+
+<form action="{%s quickURL(p.HeaderData, "company_sellshares") %}" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<label for="numshares">Numero di azioni da vendere</label><input type="number" style="width: 50px;" min="1" max="10" name="numshares" placeholder="Numero di azioni" value="1">
+<label for="price">Prezzo di vendita</label><input type="number" style="width: 50px;" min="0" name="price" placeholder="Prezzo di vendita" value="10">
+<input type="submit" value="Vendi azioni">
+</form>
+
 {% endif %}
 
 {% if len(p.Partnerships) > 0 %}

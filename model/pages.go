@@ -28,6 +28,7 @@ type GameHomeData struct {
 	SharesInfo        []*SharesPerPlayer
 	PlayerIncome      int
 	ShareAuctions     []*ShareAuction
+	ShareOffers       []*ShareOffer
 	IncomingTransfers []*TransferProposal
 }
 

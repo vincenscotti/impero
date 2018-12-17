@@ -125,6 +125,16 @@ type ShareAuction struct {
 	Participations       []*ShareAuctionParticipation `gorm:"ForeignKey:ShareAuctionID"`
 }
 
+type ShareOffer struct {
+	gorm.Model
+	Company    Company
+	CompanyID  uint
+	Owner      Player
+	OwnerID    uint
+	Price      int
+	Expiration time.Time
+}
+
 type ShareAuctionParticipation struct {
 	gorm.Model
 	ShareAuction   ShareAuction

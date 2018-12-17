@@ -77,6 +77,11 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			}
 		}
 
+		// delete expired share offers
+		if err := es.tx.Delete(&ShareOffer{}, "`expiration` < ?", endturn).Error; err != nil {
+			panic(err)
+		}
+
 		transferproposals := make([]*TransferProposal, 0)
 		if err := es.tx.Preload("From").Preload("To").Where("`expiration` < ?", endturn).Find(&transferproposals).Error; err != nil {
 			panic(err)
@@ -297,6 +302,17 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 
 	if !shareauction.Expiration.IsZero() && shareauction.Expiration.Before(nextEvent) {
 		nextEvent = shareauction.Expiration
+	}
+
+	// ... then we check offers...
+	shareoffer := ShareOffer{}
+
+	if err := es.tx.Order("`expiration`").First(&shareoffer).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if !shareoffer.Expiration.IsZero() && shareoffer.Expiration.Before(nextEvent) {
+		nextEvent = shareoffer.Expiration
 	}
 
 	// ... then we check transfer proposals...

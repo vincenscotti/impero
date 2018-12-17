@@ -41,11 +41,13 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	_, shares := tx.GetSharesForPlayer(header.CurrentPlayer)
 	_, playerincome := tx.CalculateSharesIncome(shares)
 	_, shareauctions := tx.GetShareAuctionsWithPlayerParticipation(header.CurrentPlayer)
+	_, shareoffers := tx.GetShareOffers()
 	_, incomingtransfers := tx.GetIncomingTransfers(header.CurrentPlayer)
 
 	page := &GameHomeData{HeaderData: header,
 		SharesInfo: shares, PlayerIncome: playerincome,
-		ShareAuctions: shareauctions, IncomingTransfers: incomingtransfers}
+		ShareAuctions: shareauctions, ShareOffers: shareoffers,
+		IncomingTransfers: incomingtransfers}
 
 	RenderHTML(w, r, templates.GameHomePage(page))
 }
@@ -143,7 +145,7 @@ func main() {
 	db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
 		&ChatMessage{}, &Company{}, &Partnership{}, &Share{}, &Rental{},
 		&ShareAuction{}, &ShareAuctionParticipation{},
-		&TransferProposal{})
+		&TransferProposal{}, &ShareOffer{})
 
 	opt := &Options{}
 	if err := db.First(opt).Error; err == gorm.ErrRecordNotFound {
@@ -209,10 +211,12 @@ func main() {
 	game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
 	game.HandleFunc("/company/pureincome/", GameMiddleware(ModifyCompanyPureIncome)).Name("company_pureincome")
 	game.HandleFunc("/company/emitshares/", GameMiddleware(EmitShares)).Name("company_emitshares")
+	game.HandleFunc("/company/sellshares/", GameMiddleware(SellShares)).Name("company_sellshares")
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
 
-	game.HandleFunc("/bid/share/", GameMiddleware(BidShare)).Name("bid_share")
+	game.HandleFunc("/share/bid/", GameMiddleware(BidShare)).Name("bid_share")
+	game.HandleFunc("/share/buy/", GameMiddleware(BuyShare)).Name("buy_share")
 	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
 	game.HandleFunc("/map/costs/{x}/{y}", GameMiddleware(GetCosts)).Name("map_costs")
 
