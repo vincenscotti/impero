@@ -7,19 +7,6 @@ import (
 	"math"
 )
 
-var NodeYields = []struct {
-	Yield       int
-	Prob        float64
-	UpgradeCost int
-}{
-	{1, 0.22, 1},
-	{3, 0.5, 2},
-	{6, 0.15, 5},
-	{12, 0.08, 13},
-	{25, 0.04, 30},
-	{50, 0.01, 0},
-}
-
 var PowerSupplyScale = map[int]float64{
 	PowerOK:           1.0,
 	PowerOff:          0.0,
@@ -27,7 +14,7 @@ var PowerSupplyScale = map[int]float64{
 }
 
 func effectiveYield(n *Node) int {
-	return int(math.Ceil(float64(n.Yield) * PowerSupplyScale[n.PowerSupply]))
+	return int(math.Floor(float64(n.Yield) * PowerSupplyScale[n.PowerSupply]))
 }
 
 func (es *EngineSession) GetCostsByYield(yield int) (BuyCost int, InvestCost int, NewYield int) {
@@ -37,7 +24,7 @@ func (es *EngineSession) GetCostsByYield(yield int) (BuyCost int, InvestCost int
 	newyieldindex := 0
 	yieldfound := false
 
-	for i, y := range NodeYields {
+	for i, y := range nodeYields {
 		if y.Yield == yield {
 			yieldfound = true
 			yieldindex = i
@@ -51,9 +38,9 @@ func (es *EngineSession) GetCostsByYield(yield int) (BuyCost int, InvestCost int
 
 	newyieldindex = yieldindex + 1
 
-	if newyieldindex < len(NodeYields) {
-		InvestCost = NodeYields[yieldindex].UpgradeCost
-		NewYield = NodeYields[newyieldindex].Yield
+	if newyieldindex < len(nodeYields) {
+		InvestCost = nodeYields[yieldindex].UpgradeCost
+		NewYield = nodeYields[newyieldindex].Yield
 	}
 
 	BuyCost = int(math.Floor(float64(yield) * es.opt.CostPerYield))

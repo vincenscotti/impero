@@ -37,7 +37,7 @@ Le celle in <s><b>blackout</s></b> hanno reso 0 all'ultimo turno, le celle <s>ad
 				<s data-x="{%d x %}" data-y="{%d y %}">
 			{% endif %}
 
-			{%d node.Yield %}
+			{%d node.Yield/100 %}
 
 			{% if node.PowerSupply == PowerOff %}
 				</s></b>

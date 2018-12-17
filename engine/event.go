@@ -28,22 +28,27 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		es.logger.Println("doing everything between ", lastturn, " and ", endturn)
 
 		shareauctions := make([]*ShareAuction, 0)
-		if err := es.tx.Preload("Share").Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions).Error; err != nil {
+		if err := es.tx.Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions).Error; err != nil {
 			panic(err)
 		}
 
 		for _, sa := range shareauctions {
-			sa.Share.OwnerID = sa.HighestOfferPlayerID
-
 			cmp := &Company{}
-			if err := es.tx.Where(sa.Share.CompanyID).First(cmp).Error; err != nil {
+			if err := es.tx.Where(sa.CompanyID).First(cmp).Error; err != nil {
 				panic(err)
 			}
 
-			cmp.ShareCapital += sa.HighestOffer
+			if sa.HighestOfferPlayerID != 0 {
+				share := Share{}
 
-			if err := es.tx.Save(&sa.Share).Error; err != nil {
-				panic(err)
+				share.CompanyID = sa.CompanyID
+				share.OwnerID = sa.HighestOfferPlayerID
+
+				cmp.ShareCapital += sa.HighestOffer
+
+				if err := es.tx.Create(&share).Error; err != nil {
+					panic(err)
+				}
 			}
 
 			if err := es.tx.Save(cmp).Error; err != nil {
@@ -57,7 +62,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 
 			for _, participant := range participations {
 				subject := "Asta " + cmp.Name
-				content := fmt.Sprintf("L'asta a cui hai partecipato per la societa' "+cmp.Name+" e' stata vinta da "+sa.HighestOfferPlayer.Name+" per %d$.", sa.HighestOffer)
+				content := fmt.Sprintf("L'asta a cui hai partecipato per la societa' "+cmp.Name+" e' stata vinta da "+sa.HighestOfferPlayer.Name+" per %d $.", sa.HighestOffer/100)
 				report := &Report{PlayerID: participant.PlayerID, Date: sa.Expiration, Subject: subject, Content: content}
 				if err := es.tx.Create(report).Error; err != nil {
 					panic(err)
@@ -70,6 +75,11 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			if err := es.tx.Delete(&ShareAuctionParticipation{}, "share_auction_id = ?", sa.ID).Error; err != nil {
 				panic(err)
 			}
+		}
+
+		// delete expired share offers
+		if err := es.tx.Delete(&ShareOffer{}, "`expiration` < ?", endturn).Error; err != nil {
+			panic(err)
 		}
 
 		transferproposals := make([]*TransferProposal, 0)
@@ -87,7 +97,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			// report generation
 
 			subject := "Proposta di trasferimento denaro"
-			content := fmt.Sprintf("La proposta di trasferimento di %d$ da "+tp.From.Name+" a "+tp.To.Name+" e' scaduta", tp.Amount)
+			content := fmt.Sprintf("La proposta di trasferimento di %d $ da "+tp.From.Name+" a "+tp.To.Name+" e' scaduta", tp.Amount/100)
 			report := &Report{PlayerID: tp.FromID, Date: tp.Expiration, Subject: subject, Content: content}
 
 			if err := es.tx.Create(report).Error; err != nil {
@@ -153,7 +163,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			for _, n := range nodes {
 				nodesByCoord[Coord{X: n.X, Y: n.Y}] = n
 
-				if randEvent(0.001 * float64(n.Yield)) {
+				if randEvent(0.001 * (float64(n.Yield) / 100.)) {
 					n.PowerSupply = PowerOff
 					nodesUpdated = append(nodesUpdated, n)
 				}
@@ -197,7 +207,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			}
 
 			for _, cmp := range cmps {
-				err, pureIncome, valuePerShare := es.GetCompanyFinancials(cmp)
+				err, pureIncome, valuePerShare := es.GetCompanyFinancials(cmp, true)
 				if err != nil {
 					panic(err)
 				}
@@ -206,7 +216,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 
 				shares := 0
 
-				if err := es.tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Group("owner_id").Find(&shareholders).Error; err != nil {
+				if err := es.tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ?", cmp.ID).Group("owner_id").Find(&shareholders).Error; err != nil {
 					panic(err)
 				}
 
@@ -246,11 +256,11 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 
 				totalincome := 0
 				for _, d := range dividends {
-					content += fmt.Sprintf(d.Company.Name+" : %d$<br>", d.Income)
+					content += fmt.Sprintf(d.Company.Name+" : %d.%02d $<br>", d.Income/100, d.Income%100)
 					totalincome += d.Income
 				}
 
-				content += fmt.Sprintf("Totale: %d$", totalincome)
+				content += fmt.Sprintf("<br>Totale: %d.%02d $", totalincome/100, totalincome%100)
 
 				report := &Report{PlayerID: shid, Date: endturn, Subject: subject, Content: content}
 
@@ -292,6 +302,17 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 
 	if !shareauction.Expiration.IsZero() && shareauction.Expiration.Before(nextEvent) {
 		nextEvent = shareauction.Expiration
+	}
+
+	// ... then we check offers...
+	shareoffer := ShareOffer{}
+
+	if err := es.tx.Order("`expiration`").First(&shareoffer).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if !shareoffer.Expiration.IsZero() && shareoffer.Expiration.Before(nextEvent) {
+		nextEvent = shareoffer.Expiration
 	}
 
 	// ... then we check transfer proposals...

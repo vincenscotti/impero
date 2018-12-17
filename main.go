@@ -41,11 +41,13 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	_, shares := tx.GetSharesForPlayer(header.CurrentPlayer)
 	_, playerincome := tx.CalculateSharesIncome(shares)
 	_, shareauctions := tx.GetShareAuctionsWithPlayerParticipation(header.CurrentPlayer)
+	_, shareoffers := tx.GetShareOffers()
 	_, incomingtransfers := tx.GetIncomingTransfers(header.CurrentPlayer)
 
 	page := &GameHomeData{HeaderData: header,
 		SharesInfo: shares, PlayerIncome: playerincome,
-		ShareAuctions: shareauctions, IncomingTransfers: incomingtransfers}
+		ShareAuctions: shareauctions, ShareOffers: shareoffers,
+		IncomingTransfers: incomingtransfers}
 
 	RenderHTML(w, r, templates.GameHomePage(page))
 }
@@ -143,7 +145,7 @@ func main() {
 	db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
 		&ChatMessage{}, &Company{}, &Partnership{}, &Share{}, &Rental{},
 		&ShareAuction{}, &ShareAuctionParticipation{},
-		&TransferProposal{})
+		&TransferProposal{}, &ShareOffer{})
 
 	opt := &Options{}
 	if err := db.First(opt).Error; err == gorm.ErrRecordNotFound {
@@ -152,13 +154,13 @@ func main() {
 		opt.CompanyPureIncomePercentage = 30
 		opt.CostPerYield = 1
 		opt.EndGame = 24
-		opt.InitialShares = 3
+		opt.InitialShares = 20
 		opt.GameStart = time.Now()
 		opt.LastTurnCalculated = time.Now()
 		opt.NewCompanyCost = 5
 		opt.PlayerActionPoints = 5
-		opt.PlayerBudget = 100
-		opt.TurnDuration = 60
+		opt.PlayerBudget = 10000
+		opt.TurnDuration = 5
 		opt.Turn = 1
 
 		db.Create(opt)
@@ -176,6 +178,7 @@ func main() {
 
 	router.HandleFunc("/admin/", GlobalMiddleware(Admin)).Name("admin")
 	router.HandleFunc("/admin/options/", GlobalMiddleware(UpdateOptions)).Name("admin_options")
+	router.HandleFunc("/admin/map/import/", GlobalMiddleware(ImportMap)).Name("admin_map_import")
 	router.HandleFunc("/admin/map/", GlobalMiddleware(GenerateMap)).Name("admin_map")
 	router.HandleFunc("/admin/broadcast/", GlobalMiddleware(BroadcastMessage)).Name("admin_broadcast")
 
@@ -208,11 +211,13 @@ func main() {
 	game.HandleFunc("/company/partnership/confirm/", GameMiddleware(ConfirmPartnership)).Name("company_partnership_confirm")
 	game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
 	game.HandleFunc("/company/pureincome/", GameMiddleware(ModifyCompanyPureIncome)).Name("company_pureincome")
-	game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
+	game.HandleFunc("/company/emitshares/", GameMiddleware(EmitShares)).Name("company_emitshares")
+	game.HandleFunc("/company/sellshares/", GameMiddleware(SellShares)).Name("company_sellshares")
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
 
-	game.HandleFunc("/bid/share/", GameMiddleware(BidShare)).Name("bid_share")
+	game.HandleFunc("/share/bid/", GameMiddleware(BidShare)).Name("bid_share")
+	game.HandleFunc("/share/buy/", GameMiddleware(BuyShare)).Name("buy_share")
 	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
 	game.HandleFunc("/map/costs/{x}/{y}", GameMiddleware(GetCosts)).Name("map_costs")
 

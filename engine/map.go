@@ -2,6 +2,7 @@ package engine
 
 import (
 	. "github.com/vincenscotti/impero/model"
+	"io/ioutil"
 	"math"
 	"math/rand"
 )
@@ -11,12 +12,12 @@ var nodeYields = []struct {
 	Prob        float64
 	UpgradeCost int
 }{
-	{1, 0.22, 1},
-	{3, 0.5, 2},
-	{6, 0.15, 5},
-	{12, 0.08, 13},
-	{25, 0.04, 30},
-	{50, 0.01, 0},
+	{100, 0.22, 100},
+	{300, 0.50, 200},
+	{600, 0.15, 500},
+	{1200, 0.08, 1300},
+	{2500, 0.04, 3000},
+	{5000, 0.01, 0},
 }
 
 var ColourValues = []int32{
@@ -75,6 +76,18 @@ func (es *EngineSession) GetMapInfo() (err error, mapnodes map[Coord]*Node, rent
 	p2.Y = s.Maxy
 
 	return
+}
+
+func (es *EngineSession) ImportMap() (err error) {
+	var sql []byte
+
+	sql, err = ioutil.ReadFile("map.sql")
+
+	if err != nil {
+		return
+	}
+
+	return es.tx.Exec(string(sql)).Error
 }
 
 func (es *EngineSession) UpdateMapYields(x0, x1, y0, y1 int, generate bool) error {

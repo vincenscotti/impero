@@ -65,13 +65,13 @@
 	{% endif %}
 	</td>
 	<td>{%d c.Shares %}</td>
-	<td>{%d c.Shares*c.ValuePerShare %}</td>
+	<td>{%s markupMoney(c.Shares*c.ValuePerShare) %}</td>
 </tr>
 {% endfor %}
 
 <tr>
 	<td colspan="2"><b>TOTALE</b></td>
-	<td><b>{%d p.PlayerIncome %}</b></td>
+	<td><b>{%s markupMoney(p.PlayerIncome) %}</b></td>
 </tr>
 
 </tbody>
@@ -100,7 +100,7 @@
 
 <table>
 <tr>
-	<th colspan="6">Mercato</th>
+	<th colspan="6">Mercato primario (azioni appena emesse)</th>
 </tr>
 <tr>
 	<th>Societa'</th>
@@ -114,30 +114,50 @@
 {% for _, sa := range p.ShareAuctions %}
 <tr>
 
-<form action="{%s quickURL(p.HeaderData, "bid_share") %}" method="POST">
-<input type="hidden" name="auction" value="{%d int(sa.ID) %}">
+<form action="{%s quickURL(p.HeaderData, "bid_share") %}" method="POST"> <input
+type="hidden" name="auction" value="{%d int(sa.ID) %}">
 
-	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(sa.Share.CompanyID)) %}">{%s sa.Share.Company.Name %}</a></td>
+	<td><a href="{%s quickURL(p.HeaderData, "company", "id",
+	fmt.Sprint(sa.CompanyID)) %}">{%s sa.Company.Name %}</a></td>
 
-	<td>{%d sa.HighestOffer %}</td>
+	<td>{%s markupMoney(sa.HighestOffer) %}</td>
 
-	<td>
-		{% if sa.HighestOfferPlayerID == p.HeaderData.CurrentPlayer.ID %}
-			X
-		{% endif %}
-	</td>
+	<td> {% if sa.HighestOfferPlayerID == p.HeaderData.CurrentPlayer.ID %}
+	X {% endif %} </td>
 
-	<td>
-		{% if len(sa.Participations) > 0 %}
-			X
-		{% endif %}
-	</td>
+	<td> {% if len(sa.Participations) > 0 %} X {% endif %} </td>
 
 	<td>{%v sa.Expiration.Format("02-01 15:04:05") %}</td>
 
+	<td> <input type="number" min="{%d (sa.HighestOffer + 100) / 100 %}"
+	name="amount" value="{%d (sa.HighestOffer + 100) / 100 %}"> <input
+	type="submit" value="Punta"> </td> </form>
+
+</tr> {% endfor %}
+
+</table>
+
+{% endif %}
+
+{% if len(p.ShareOffers) > 0 %}
+
+<table> <tr> <th colspan="6">Mercato secondario (azioni di altri giocatori in
+vendita)</th> </tr> <tr> <th>Societa'</th> <th>Prezzo</th> <th>Scadenza</th>
+<th>Operazioni</th> </tr>
+
+{% for _, so := range p.ShareOffers %} <tr>
+
+<form action="{%s quickURL(p.HeaderData, "buy_share") %}" method="POST">
+<input type="hidden" name="offer" value="{%d int(so.ID) %}">
+
+	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(so.CompanyID)) %}">{%s so.Company.Name %}</a></td>
+
+	<td>{%s markupMoney(so.Price) %}</td>
+
+	<td>{%v so.Expiration.Format("02-01 15:04:05") %}</td>
+
 	<td>
-		<input type="number" min="{%d sa.HighestOffer + 1 %}" name="amount" value="{%d sa.HighestOffer + 1 %}">
-		<input type="submit" value="Punta">
+		<input type="submit" value="Compra">
 	</td>
 </form>
 

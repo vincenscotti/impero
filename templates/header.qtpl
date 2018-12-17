@@ -1,4 +1,5 @@
 {% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
 
 {% func HeaderPage() %}
 
@@ -25,6 +26,14 @@ func quickURL(h *HeaderData, name string, args ...string) string {
 		panic(err)
 	} else {
 		return target.Path
+	}
+}
+
+func markupMoney(amount int) string {
+	if amount % 100 != 0 {
+		return fmt.Sprintf("%d.%02d $", amount / 100, amount % 100)
+	} else {
+		return fmt.Sprintf("%d $", amount / 100)
 	}
 }
 

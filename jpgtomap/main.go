@@ -122,7 +122,7 @@ func main() {
 						fmt.Print(",")
 					}
 
-					fmt.Println("(", j+x0, ",", i+y0, ", 1)")
+					fmt.Println("(", j+x0, ",", i+y0, ", 0)")
 					first = false
 
 					break

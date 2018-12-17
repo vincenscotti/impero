@@ -88,6 +88,25 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	Redirect(w, r, "admin")
 }
 
+func ImportMap(w http.ResponseWriter, r *http.Request) {
+	session := GetSession(r)
+	tx := GetTx(r)
+
+	if err := validateAdmin(r); err != nil {
+		session.AddFlash(err.Error(), "message_")
+	} else {
+		if err := tx.ImportMap(); err != nil {
+			session.AddFlash(err.Error(), "message_")
+		} else {
+			tx.Commit()
+
+			session.AddFlash("Mappa importata", "message_")
+		}
+	}
+
+	Redirect(w, r, "admin")
+}
+
 func GenerateMap(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)

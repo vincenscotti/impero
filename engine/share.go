@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	. "github.com/vincenscotti/impero/model"
 	"time"
@@ -25,7 +26,7 @@ func (es *EngineSession) CalculateSharesIncome(shares []*SharesPerPlayer) (err e
 			panic(err)
 		}
 
-		err, _, sh.ValuePerShare = es.GetCompanyFinancials(cmp)
+		err, _, sh.ValuePerShare = es.GetCompanyFinancials(cmp, false)
 
 		if err != nil {
 			return
@@ -40,15 +41,11 @@ func (es *EngineSession) CalculateSharesIncome(shares []*SharesPerPlayer) (err e
 func (es *EngineSession) GetShareAuctionsWithPlayerParticipation(p *Player) (err error, shareauctions []*ShareAuction) {
 	shareauctions = make([]*ShareAuction, 0)
 
-	if err := es.tx.Model(&ShareAuction{}).Preload("Share").Order("`expiration`").Find(&shareauctions).Error; err != nil {
+	if err := es.tx.Model(&ShareAuction{}).Preload("Company").Order("`expiration`").Find(&shareauctions).Error; err != nil {
 		panic(err)
 	}
 
 	for _, sa := range shareauctions {
-		if err := es.tx.Where(sa.Share.CompanyID).Find(&sa.Share.Company).Error; err != nil {
-			panic(err)
-		}
-
 		participations := make([]*ShareAuctionParticipation, 0)
 		if err := es.tx.Where("`share_auction_id` = ? and `player_id` = ?", sa.ID, p.ID).Find(&participations).Error; err != nil {
 			panic(err)
@@ -60,12 +57,20 @@ func (es *EngineSession) GetShareAuctionsWithPlayerParticipation(p *Player) (err
 	return
 }
 
-func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error {
+func (es *EngineSession) GetShareOffers() (err error, shareoffers []*ShareOffer) {
+	shareoffers = make([]*ShareOffer, 0)
+
+	if err := es.tx.Model(&ShareOffer{}).Preload("Company").Order("`expiration`").Find(&shareoffers).Error; err != nil {
+		panic(err)
+	}
+
+	return
+}
+
+func (es *EngineSession) CreateAuction(p *Player, cmp *Company, numshares int, price int) error {
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
-
-	share := &Share{}
 
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
@@ -73,6 +78,10 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error
 
 	if cmp.ID == 0 {
 		return errors.New("Societa' inesistente!")
+	}
+
+	if numshares < 1 || numshares > 10 {
+		return errors.New("Devi emettere un numero di azioni tra 1 e 10!")
 	}
 
 	if cmp.CEOID != p.ID {
@@ -88,13 +97,59 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error
 		panic(err)
 	}
 
-	share.CompanyID = uint(cmp.ID)
-	if err := es.tx.Create(share).Error; err != nil {
+	for ; numshares > 0; numshares-- {
+		if err := es.tx.Create(&ShareAuction{CompanyID: cmp.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
+			panic(err)
+		}
+	}
+
+	return nil
+}
+
+func (es *EngineSession) SellShares(p *Player, cmp *Company, numshares int, price int) error {
+	if es.timestamp.Before(es.opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
+
+	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
-	if err := es.tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
+	if cmp.ID == 0 {
+		return errors.New("Societa' inesistente!")
+	}
+
+	offers := 0
+	if err := es.tx.Model(&ShareOffer{}).Where("`company_id` = ? and `owner_id` = ?", cmp.ID, p.ID).Count(&offers).Error; err != nil {
+		return err
+	}
+
+	shares := 0
+	if err := es.tx.Model(&Share{}).Where("`company_id` = ? and `owner_id` = ?", cmp.ID, p.ID).Count(&shares).Error; err != nil {
+		return err
+	}
+
+	if offers+numshares > shares {
+		return errors.New("Non hai cosi' tante azioni da vendere!")
+	}
+
+	if numshares < 1 || numshares > 10 {
+		return errors.New("Puoi vendere un numero di azioni tra 1 e 10!")
+	}
+
+	if p.ActionPoints < 1 {
+		return errors.New("Punti operazione insufficienti!")
+	}
+
+	p.ActionPoints -= 1
+	if err := es.tx.Save(p).Error; err != nil {
 		panic(err)
+	}
+
+	for ; numshares > 0; numshares-- {
+		if err := es.tx.Create(&ShareOffer{CompanyID: cmp.ID, OwnerID: p.ID, Price: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
+			panic(err)
+		}
 	}
 
 	return nil
@@ -168,6 +223,79 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 	}
 
 	if err := es.tx.Save(shareauction).Error; err != nil {
+		panic(err)
+	}
+
+	return nil
+}
+
+func (es *EngineSession) BuyShare(p *Player, shareoffer *ShareOffer) error {
+	if es.timestamp.Before(es.opt.GameStart) {
+		return errors.New("Il gioco non e' iniziato!")
+	}
+
+	if err := es.tx.Preload("Company").First(shareoffer).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if shareoffer.ID == 0 {
+		return errors.New("L'offerta non esiste!")
+	}
+
+	if p.Budget < shareoffer.Price {
+		return errors.New("Budget insufficiente!")
+	}
+
+	if p.ActionPoints < 1 {
+		return errors.New("Punti operazione insufficienti!")
+	}
+
+	p.ActionPoints -= 1
+
+	p.Budget -= shareoffer.Price
+	if err := es.tx.Save(p).Error; err != nil {
+		panic(err)
+	}
+
+	oldp := &Player{}
+	oldp.ID = shareoffer.OwnerID
+	if err := es.tx.First(oldp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if oldp.ID == 0 {
+		return errors.New("Proprietario dell'azione non trovato!")
+	}
+
+	oldp.Budget += shareoffer.Price
+	if err := es.tx.Save(oldp).Error; err != nil {
+		panic(err)
+	}
+
+	subject := "Vendita azione"
+	content := fmt.Sprintf("L'azione della societa' "+shareoffer.Company.Name+" e' stata venduta per %d $.", shareoffer.Price/100)
+	report := &Report{PlayerID: oldp.ID, Date: es.timestamp, Subject: subject, Content: content}
+	if err := es.tx.Create(report).Error; err != nil {
+		panic(err)
+	}
+
+	share := &Share{}
+	if err := es.tx.Where("`owner_id` = ? and `company_id` = ?", shareoffer.OwnerID, shareoffer.CompanyID).
+		First(share).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if share.ID == 0 {
+		return errors.New("Nessuna azione trovata!")
+	}
+
+	share.OwnerID = p.ID
+
+	if err := es.tx.Save(share).Error; err != nil {
+		panic(err)
+	}
+
+	if err := es.tx.Delete(shareoffer).Error; err != nil {
 		panic(err)
 	}
 

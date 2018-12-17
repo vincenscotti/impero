@@ -116,13 +116,23 @@ type Share struct {
 
 type ShareAuction struct {
 	gorm.Model
-	Share                Share
-	ShareID              uint
+	Company              Company
+	CompanyID            uint
 	HighestOffer         int
 	HighestOfferPlayer   Player
 	HighestOfferPlayerID uint
 	Expiration           time.Time
 	Participations       []*ShareAuctionParticipation `gorm:"ForeignKey:ShareAuctionID"`
+}
+
+type ShareOffer struct {
+	gorm.Model
+	Company    Company
+	CompanyID  uint
+	Owner      Player
+	OwnerID    uint
+	Price      int
+	Expiration time.Time
 }
 
 type ShareAuctionParticipation struct {

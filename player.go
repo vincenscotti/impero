@@ -71,7 +71,7 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 	to := &Player{}
 	to.ID = p.ToID
 
-	if err, _ := tx.CreateTransferProposal(header.CurrentPlayer, to, p.Amount); err != nil {
+	if err, _ := tx.CreateTransferProposal(header.CurrentPlayer, to, p.Amount * 100); err != nil {
 		session.AddFlash(err.Error(), "error_")
 	} else {
 		session.AddFlash("Proposta inviata!", "success_")

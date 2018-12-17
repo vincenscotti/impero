@@ -65,6 +65,19 @@
 </fieldset>
 </form>
 
+<form action="/admin/map/import/" method="POST">
+<fieldset>
+<legend>Importa mappa</legend>
+
+Il file map.sql sara' aperto (se esiste) ed eseguito.<br>
+
+<label for="Password">Password amministratore</label>
+<input type="password" name="Password" placeholder="Password">
+<input type="submit" value="Importa">
+
+</fieldset>
+</form>
+
 <form action="/admin/map/" method="POST">
 <fieldset>
 <legend>Aggiornamento rendimenti</legend>

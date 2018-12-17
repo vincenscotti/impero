@@ -11,10 +11,10 @@ cmp := p.Company
 
 <p><b>{%s cmp.Name %}</b></p>
 <p>Amministratore: {%s cmp.CEO.Name %}</p>
-<p>Capitale: {%d cmp.ShareCapital %}</p>
-<p>Entrate: {%d cmp.Income %}</p>
+<p>Capitale: {%s markupMoney(cmp.ShareCapital) %}</p>
+<p>Entrate: {%s markupMoney(cmp.Income) %}</p>
 {% if p.IsShareHolder %}
-	<p>Entrate che restano alla societa': {%d cmp.PureIncomePercentage %} &percnt; ({%d p.PureIncome %}$ alla societa' e {%d cmp.Income - p.PureIncome %}$ agli azionisti)</p>
+	<p>Entrate che restano alla societa': {%d cmp.PureIncomePercentage %} &percnt; ({%s markupMoney(p.PureIncome) %} alla societa' e {%s markupMoney(cmp.Income - p.PureIncome) %} agli azionisti)</p>
 
 	{% if cmp.CEO.ID == p.CurrentPlayer.ID %}
 		<form action="{%s quickURL(p.HeaderData, "company_pureincome") %}" method="POST">
@@ -28,7 +28,7 @@ cmp := p.Company
 
 <br>
 <p>Azioni: {%d p.Shares %}</p>
-<p>Guadagno azionisti per azione: {%d p.IncomePerShare %}</p>
+<p>Guadagno azionisti per azione: {%s markupMoney(p.IncomePerShare) %}</p>
 
 <table>
 <tr>
@@ -57,6 +57,14 @@ cmp := p.Company
 	<input type="submit" value="Diventa amministratore">
 	</form>
 	{% endif %}
+
+<form action="{%s quickURL(p.HeaderData, "company_sellshares") %}" method="POST">
+<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+<label for="numshares">Numero di azioni da vendere</label><input type="number" style="width: 50px;" min="1" max="10" name="numshares" placeholder="Numero di azioni" value="1">
+<label for="price">Prezzo di vendita</label><input type="number" style="width: 50px;" min="0" name="price" placeholder="Prezzo di vendita" value="10">
+<input type="submit" value="Vendi azioni">
+</form>
+
 {% endif %}
 
 {% if len(p.Partnerships) > 0 %}
@@ -127,10 +135,11 @@ NB: gli accordi da confermare sono sbarrati
 {% endif %}
 
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
-<form action="{%s quickURL(p.HeaderData, "company_addshare") %}" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_emitshares") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-<input type="number" min="0" name="amount" placeholder="Base d'asta opzionale">
-<input type="submit" value="Ricapitalizza">
+<label for="numshares">Numero di azioni da emettere</label><input type="number" style="width: 50px;" min="1" max="10" name="numshares" placeholder="Numero di azioni" value="1">
+<label for="price">Base d'asta</label><input type="number" style="width: 50px;" min="0" name="price" placeholder="Base d'asta" value="10">
+<input type="submit" value="Emetti azioni">
 </form>
 
 <form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
