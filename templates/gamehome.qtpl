@@ -117,7 +117,7 @@
 <form action="{%s quickURL(p.HeaderData, "bid_share") %}" method="POST">
 <input type="hidden" name="auction" value="{%d int(sa.ID) %}">
 
-	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(sa.Share.CompanyID)) %}">{%s sa.Share.Company.Name %}</a></td>
+	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(sa.CompanyID)) %}">{%s sa.Company.Name %}</a></td>
 
 	<td>{%s markupMoney(sa.HighestOffer) %}</td>
 

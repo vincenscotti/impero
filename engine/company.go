@@ -114,7 +114,7 @@ func (es *EngineSession) GetCompany(p *Player, id int) (err error, cmp *Company,
 	if err := es.tx.Preload("CEO").Where(id).First(cmp).Error; err != nil {
 		panic(err)
 	}
-	if err := es.tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` != 0").Count(&shares).Error; err != nil {
+	if err := es.tx.Model(&Share{}).Where("`company_id` = ?", id).Count(&shares).Error; err != nil {
 		panic(err)
 	}
 	if err := es.tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", p.ID).Count(&myshares).Error; err != nil {
@@ -134,7 +134,7 @@ func (es *EngineSession) GetCompany(p *Player, id int) (err error, cmp *Company,
 	shareholders = make([]*ShareholdersPerCompany, 0)
 
 	if err := es.tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").
-		Where("`company_id` = ? and `owner_id` != 0", cmp.ID).
+		Where("`company_id` = ?", cmp.ID).
 		Group("`owner_id`").Order("`owner_id` asc").
 		Find(&shareholders).Error; err != nil {
 		panic(err)
@@ -272,7 +272,7 @@ func (es *EngineSession) GetCompanyFinancials(cmp *Company, effective bool) (err
 
 	cmpshares := 0
 
-	if err := es.tx.Table("shares").Where("`company_id` = ?", cmp.ID).Where("`owner_id` != 0").Count(&cmpshares).Error; err != nil {
+	if err := es.tx.Table("shares").Where("`company_id` = ?", cmp.ID).Count(&cmpshares).Error; err != nil {
 		panic(err)
 	}
 

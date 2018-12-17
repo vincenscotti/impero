@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func AddShare(w http.ResponseWriter, r *http.Request) {
+func EmitShares(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -34,7 +34,7 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	cmp := &Company{}
 	cmp.ID = params.ID
 
-	err := tx.CreateAuction(header.CurrentPlayer, cmp, params.Numshares, params.Price * 100)
+	err := tx.CreateAuction(header.CurrentPlayer, cmp, params.Numshares, params.Price*100)
 
 	if err != nil {
 		session.AddFlash(err.Error(), "error_")
@@ -72,7 +72,7 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	shareauction := &ShareAuction{}
 	shareauction.ID = params.Auction
 
-	err := tx.BidAuction(header.CurrentPlayer, shareauction, params.Amount * 100)
+	err := tx.BidAuction(header.CurrentPlayer, shareauction, params.Amount*100)
 	if err != nil {
 		session.AddFlash(err.Error(), "error_")
 	} else {

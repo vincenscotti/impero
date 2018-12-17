@@ -116,8 +116,8 @@ type Share struct {
 
 type ShareAuction struct {
 	gorm.Model
-	Share                Share
-	ShareID              uint
+	Company              Company
+	CompanyID            uint
 	HighestOffer         int
 	HighestOfferPlayer   Player
 	HighestOfferPlayerID uint

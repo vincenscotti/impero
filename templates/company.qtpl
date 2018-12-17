@@ -127,7 +127,7 @@ NB: gli accordi da confermare sono sbarrati
 {% endif %}
 
 {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
-<form action="{%s quickURL(p.HeaderData, "company_addshare") %}" method="POST">
+<form action="{%s quickURL(p.HeaderData, "company_emitshares") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
 <label for="numshares">Numero di azioni da emettere</label><input type="number" style="width: 50px;" min="1" max="10" name="numshares" placeholder="Numero di azioni" value="1">
 <label for="price">Base d'asta</label><input type="number" style="width: 50px;" min="0" name="price" placeholder="Base d'asta" value="10">

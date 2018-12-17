@@ -208,7 +208,7 @@ func main() {
 	game.HandleFunc("/company/partnership/confirm/", GameMiddleware(ConfirmPartnership)).Name("company_partnership_confirm")
 	game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
 	game.HandleFunc("/company/pureincome/", GameMiddleware(ModifyCompanyPureIncome)).Name("company_pureincome")
-	game.HandleFunc("/company/addshare/", GameMiddleware(AddShare)).Name("company_addshare")
+	game.HandleFunc("/company/emitshares/", GameMiddleware(EmitShares)).Name("company_emitshares")
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
 

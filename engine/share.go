@@ -40,15 +40,11 @@ func (es *EngineSession) CalculateSharesIncome(shares []*SharesPerPlayer) (err e
 func (es *EngineSession) GetShareAuctionsWithPlayerParticipation(p *Player) (err error, shareauctions []*ShareAuction) {
 	shareauctions = make([]*ShareAuction, 0)
 
-	if err := es.tx.Model(&ShareAuction{}).Preload("Share").Order("`expiration`").Find(&shareauctions).Error; err != nil {
+	if err := es.tx.Model(&ShareAuction{}).Preload("Company").Order("`expiration`").Find(&shareauctions).Error; err != nil {
 		panic(err)
 	}
 
 	for _, sa := range shareauctions {
-		if err := es.tx.Where(sa.Share.CompanyID).Find(&sa.Share.Company).Error; err != nil {
-			panic(err)
-		}
-
 		participations := make([]*ShareAuctionParticipation, 0)
 		if err := es.tx.Where("`share_auction_id` = ? and `player_id` = ?", sa.ID, p.ID).Find(&participations).Error; err != nil {
 			panic(err)
@@ -64,8 +60,6 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, numshares int, p
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
-
-	share := &Share{}
 
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
@@ -93,13 +87,7 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, numshares int, p
 	}
 
 	for ; numshares > 0; numshares-- {
-		share.ID = 0
-		share.CompanyID = uint(cmp.ID)
-		if err := es.tx.Create(share).Error; err != nil {
-			panic(err)
-		}
-
-		if err := es.tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
+		if err := es.tx.Create(&ShareAuction{CompanyID: cmp.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
 			panic(err)
 		}
 	}
