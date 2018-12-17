@@ -159,6 +159,7 @@ NB: gli accordi da confermare sono sbarrati
 {% else %}
 
 {% if len(p.PossiblePartners) > 0 %}
+<!--
 
 <form action="{%s quickURL(p.HeaderData, "company_partnership_proposal") %}" method="POST">
 <fieldset>
@@ -175,6 +176,7 @@ NB: gli accordi da confermare sono sbarrati
 </fieldset>
 </form>
 
+-->
 {% endif %}
 
 {% endif %}
