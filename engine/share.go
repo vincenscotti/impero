@@ -60,7 +60,7 @@ func (es *EngineSession) GetShareAuctionsWithPlayerParticipation(p *Player) (err
 	return
 }
 
-func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error {
+func (es *EngineSession) CreateAuction(p *Player, cmp *Company, numshares int, price int) error {
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
 	}
@@ -73,6 +73,10 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error
 
 	if cmp.ID == 0 {
 		return errors.New("Societa' inesistente!")
+	}
+
+	if numshares < 1 || numshares > 10 {
+		return errors.New("Devi emettere un numero di azioni tra 1 e 10!")
 	}
 
 	if cmp.CEOID != p.ID {
@@ -88,13 +92,16 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, price int) error
 		panic(err)
 	}
 
-	share.CompanyID = uint(cmp.ID)
-	if err := es.tx.Create(share).Error; err != nil {
-		panic(err)
-	}
+	for ; numshares > 0; numshares-- {
+		share.ID = 0
+		share.CompanyID = uint(cmp.ID)
+		if err := es.tx.Create(share).Error; err != nil {
+			panic(err)
+		}
 
-	if err := es.tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
-		panic(err)
+		if err := es.tx.Create(&ShareAuction{ShareID: share.ID, HighestOffer: price, Expiration: es.timestamp.Add(time.Duration(es.opt.TurnDuration) * time.Minute)}).Error; err != nil {
+			panic(err)
+		}
 	}
 
 	return nil

@@ -14,8 +14,9 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	blerr := BLError{}
 
 	params := struct {
-		ID     uint
-		Amount int
+		ID        uint
+		Numshares int
+		Price     int
 	}{}
 
 	if err := binder.Bind(&params, r); err != nil {
@@ -33,7 +34,7 @@ func AddShare(w http.ResponseWriter, r *http.Request) {
 	cmp := &Company{}
 	cmp.ID = params.ID
 
-	err := tx.CreateAuction(header.CurrentPlayer, cmp, params.Amount * 100)
+	err := tx.CreateAuction(header.CurrentPlayer, cmp, params.Numshares, params.Price * 100)
 
 	if err != nil {
 		session.AddFlash(err.Error(), "error_")
