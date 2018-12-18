@@ -47,7 +47,7 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 	p.Budget -= cmp.ShareCapital
 	p.ActionPoints -= es.opt.NewCompanyCost
 	cmp.CEO = *p
-	cmp.ActionPoints = es.opt.CompanyActionPoints + es.opt.InitialShares
+	cmp.ActionPoints = es.opt.CompanyActionPoints + 1 // one initial shareholder
 	cmp.PureIncomePercentage = es.opt.CompanyPureIncomePercentage
 
 	if err := es.tx.Create(cmp).Error; err != nil {
@@ -164,7 +164,7 @@ func (es *EngineSession) GetCompanies() (err error, companies []*Company) {
 	}
 
 	for _, cmp := range companies {
-		es.GetCompanyIncome(cmp, false)
+		_, cmp.Income = es.GetCompanyIncome(cmp, false)
 	}
 
 	return

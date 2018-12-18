@@ -96,7 +96,7 @@ func (tg *TGUI) Run(debug bool) (err error) {
 			switch value := n.(type) {
 			case endTurnNotification:
 				for chatid, _ := range tg.chatToPlayer {
-					msg := tgbotapi.NewMessage(chatid, "E' finito il turno!\n\nClicca <a href=\""+tg.webURL+"/game/report/\">qui</a> per leggere i report")
+					msg := tgbotapi.NewMessage(chatid, "E' finito il turno!\n\nClicca <a href=\""+tg.webURL+"/game/report/all/\">qui</a> per leggere i report")
 					msg.ParseMode = tgbotapi.ModeHTML
 					tg.bot.Send(msg)
 				}

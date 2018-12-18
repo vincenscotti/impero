@@ -9,7 +9,7 @@
 <tr>
 	<th>#</th>
 	<th>Nome</th>
-	<th>Capitale sociale</th>
+	<th>Capitale</th>
 	<th>Rendimento</th>
 </tr>
 
@@ -17,8 +17,8 @@
 <tr>
 	<td>{%d i+1 %}</i>
 	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(cmp.ID)) %}">{%s cmp.Name %}</a></td>
-	<td>{%d cmp.ShareCapital %}</td>
-	<td>{%d cmp.Income %}</td>
+	<td>{%s markupMoney(cmp.ShareCapital) %}</td>
+	<td>{%s markupMoney(cmp.Income) %}</td>
 </tr>
 {% endfor %}
 
