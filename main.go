@@ -71,6 +71,7 @@ func (sp sortablePlayers) Swap(i, j int) {
 }
 
 func EndGamePage(w http.ResponseWriter, r *http.Request) {
+	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
 	winners := make([]*Player, 0)
@@ -91,7 +92,7 @@ func EndGamePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	page := &EndGameData{Players: players, Winners: winners}
+	page := &EndGameData{HeaderData: header, Players: players, Winners: winners}
 
 	RenderHTML(w, r, templates.EndGamePage(page))
 }
@@ -223,6 +224,8 @@ func main() {
 	game.HandleFunc("/share/buy/", GameMiddleware(BuyShare)).Name("buy_share")
 	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
 	game.HandleFunc("/map/costs/{x}/{y}", GameMiddleware(GetCosts)).Name("map_costs")
+
+	game.HandleFunc("/chart/", GameMiddleware(EndGamePage)).Name("chart")
 
 	gameEngine = engine.NewEngine(db, logger)
 

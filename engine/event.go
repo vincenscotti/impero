@@ -277,6 +277,20 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			es.opt.Turn += 1
 
 			es.e.notificator.NotifyEndTurn()
+
+			// check if we just calculated the last turn, and updated VP
+			if es.opt.Turn > es.opt.EndGame {
+				players := make([]*Player, 0)
+
+				if err := es.tx.Find(&players).Error; err != nil {
+					panic(err)
+				}
+
+				for _, p := range players {
+					p.VP = p.Budget
+					es.tx.Save(p)
+				}
+			}
 		}
 
 		lastturn = endturn

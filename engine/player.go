@@ -78,6 +78,10 @@ func (es *EngineSession) CreateTransferProposal(from, to *Player, amount int) (e
 		return errors.New("Il gioco non e' iniziato!"), nil
 	}
 
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!"), nil
+	}
+
 	if proposal.Amount > from.Budget {
 		return errors.New("Budget insufficiente!"), nil
 	}
@@ -107,6 +111,10 @@ func (es *EngineSession) ConfirmTransferProposal(proposal *TransferProposal) (er
 
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!"), false
+	}
+
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!"), false
 	}
 
 	randint := rand.Intn(100) + 1

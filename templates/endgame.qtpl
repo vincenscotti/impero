@@ -2,7 +2,7 @@
 
 {% func EndGamePage(p *EndGameData) %}
 
-{%= HeaderPage() %}
+{%= GameHeaderPage(p.HeaderData) %}
 
 {% if len(p.Winners) > 1 %}
 <h1 style="text-align: center">And the winners are...</h1>
@@ -30,7 +30,7 @@
 		<tr>
 			<td>{%d i+1 %}</td>
 			<td>{%s pl.Name %}</td>
-			<td>{%d pl.Budget %}</td>
+			<td>{%s markupMoney(pl.Budget) %}</td>
 			<td>{%d pl.VP %}</td>
 		</tr>
 {% endfor %}

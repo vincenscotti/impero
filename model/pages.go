@@ -33,6 +33,7 @@ type GameHomeData struct {
 }
 
 type EndGameData struct {
+	*HeaderData
 	Players []*Player
 	Winners []*Player
 }

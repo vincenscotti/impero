@@ -79,6 +79,10 @@ func (es *EngineSession) BuyNode(p *Player, cmp *Company, coord Coord) error {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
+	}
+
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
@@ -189,6 +193,10 @@ func (es *EngineSession) InvestNode(p *Player, cmp *Company, coord Coord) error 
 
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
+	}
+
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
 	}
 
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {

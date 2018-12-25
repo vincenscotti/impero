@@ -72,6 +72,10 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, numshares int, p
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
+	}
+
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
@@ -109,6 +113,10 @@ func (es *EngineSession) CreateAuction(p *Player, cmp *Company, numshares int, p
 func (es *EngineSession) SellShares(p *Player, cmp *Company, numshares int, price int) error {
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
+	}
+
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
 	}
 
 	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
@@ -163,6 +171,10 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
+	}
+
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
 	}
 
 	if err := es.tx.Where(participation).Find(participation).Error; err != nil && err != gorm.ErrRecordNotFound {
@@ -234,6 +246,10 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 func (es *EngineSession) BuyShare(p *Player, shareoffer *ShareOffer) error {
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
+	}
+
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
 	}
 
 	if err := es.tx.Preload("Company").First(shareoffer).Error; err != nil && err != gorm.ErrRecordNotFound {

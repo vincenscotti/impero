@@ -12,6 +12,10 @@ func (es *EngineSession) ProposePartnership(ceo *Player, cmp1 *Company, cmp2 *Co
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
+	}
+
 	p := &Partnership{}
 	from := &Company{}
 	to := &Company{}
@@ -78,6 +82,10 @@ func (es *EngineSession) ConfirmPartnership(ceo *Player, p *Partnership) error {
 		return errors.New("Il gioco non e' iniziato!")
 	}
 
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
+	}
+
 	if err := es.tx.Preload("To").Preload("From").First(p).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
@@ -124,6 +132,10 @@ func (es *EngineSession) DeletePartnership(ceo *Player, p *Partnership) error {
 
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
+	}
+
+	if es.opt.Turn > es.opt.EndGame {
+		return errors.New("Il gioco e' terminato!")
 	}
 
 	if err := es.tx.Preload("To").Preload("From").First(p).Error; err != nil && err != gorm.ErrRecordNotFound {
