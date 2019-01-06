@@ -3,7 +3,7 @@
 
 {% func PlayersPage(p *PlayersData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Giocatori", "") %}
 
 <table>
 <tr>

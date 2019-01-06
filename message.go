@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	. "github.com/vincenscotti/impero/model"
@@ -9,6 +8,21 @@ import (
 	"net/http"
 	"strconv"
 )
+
+func ComposeMessage(w http.ResponseWriter, r *http.Request) {
+	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
+
+	err, players := tx.GetPlayers()
+
+	if err != nil {
+		panic(err)
+	}
+
+	page := ComposeMessageData{HeaderData: header, Players: players}
+
+	RenderHTML(w, r, templates.ComposeMessagePage(&page))
+}
 
 func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
@@ -86,7 +100,6 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 
 	to := &Player{}
 	to.ID = msg.ToID
-	fmt.Println("SENDING TO", to.ID, to, msg.To)
 
 	err := tx.PostMessage(header.CurrentPlayer, to, msg.Subject, msg.Content)
 

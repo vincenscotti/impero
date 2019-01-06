@@ -1,0 +1,46 @@
+{% import . "github.com/vincenscotti/impero/model" %}
+
+{% func ComposeMessagePage(p *ComposeMessageData) %}
+
+{%= GameHeaderPage(p.HeaderData, "Nuovo messaggio", "") %}
+
+      <div class="row">
+        {%= MessageFoldersBox(p.HeaderData) %}
+
+        <form action="{%s quickURL(p.HeaderData, "message_new") %}" method="post">
+        <div class="col-md-9">
+          <div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title">Componi messaggio</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <div class="form-group">
+                <select class="form-control col-sm-10" name="to_id">
+                  <option value="0">Destinatario:</option>
+                  {% for _, p := range p.Players %}
+                    <option value="{%d int(p.ID) %}">{%s p.Name %}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <br>
+              <div class="form-group">
+                <input class="form-control" placeholder="Oggetto:" type="text" name="subject">
+              </div>
+              <textarea class="form-control" rows="5" placeholder="Messaggio:" name="content"></textarea>
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer">
+              <div class="pull-right">
+                <button type="submit" class="btn btn-primary"><i class="fa fa-envelope-o"></i> Invia</button>
+              </div>
+            </div>
+            <!-- /.box-footer -->
+          </div>
+          <!-- /. box -->
+        </div>
+      </div>
+
+{%= FooterPage() %}
+
+{% endfunc %}

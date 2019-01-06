@@ -3,135 +3,151 @@
 
 {% func MapPage(p *MapData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Mappa", "") %}
 
-Le celle in <s><b>blackout</s></b> hanno reso 0 all'ultimo turno, le celle <s>adiacenti</s> hanno reso la meta'.
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Legenda</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
 
-<table style="float: left;">
-<tr>
-<th>Y/X</th>
-{% for x := p.XMin; x <= p.XMax; x++ %}
-<th>{%d x %}</th>
-{% endfor %}
-</tr>
+        <p>Le celle in <s><b>blackout</s></b> non hanno generato profitti all'ultimo turno, mentre le celle <s>adiacenti</s> hanno reso la met&agrave;</p>
+        {% for _, c := range p.CompaniesByName %}
+          <span class="badge" style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}"><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.ID)) %}" style="color: black">
+          {% if c.CEOID == p.CurrentPlayer.ID %}
+            <i class="fa fa-star"></i>
+          {% endif %}
+          {%s c.Name %}</a></span>
+        {% endfor %}
 
-{% for y := p.YMin; y <= p.YMax; y++ %}
-<tr>
-<th scope="horizontal">{%d y %}</th>
-	{% for x := p.XMin; x <= p.XMax; x++ %}
+        </div>
+        <!-- /.box-body -->
+      </div>
 
-		{% code
-		node, ok := p.Nodes[Coord{X: x, Y: y}]
-		%}
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Il mondo di gioco</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
 
-		{% if ok %}
-			{% if node.Owner.ID != 0 %}
-				<td style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})" data-x="{%d x %}" data-y="{%d y %}">
-			{% else %}
-				<td title="({%d x %}, {%d y %})" data-x="{%d x %}" data-y="{%d y %}">
-			{% endif %}
+          <p>Clicca sulle celle per avere pi&ugrave; informazioni ed accedere alle operazioni</p>
 
-			{% if node.PowerSupply == PowerOff %}
-				<b><s data-x="{%d x %}" data-y="{%d y %}">
-			{% elseif node.PowerSupply == PowerOffNeighbour %}
-				<s data-x="{%d x %}" data-y="{%d y %}">
-			{% endif %}
+          <div class="map-container" data-blackoutmultiplier="{%f p.Options.BlackoutProbPerDollar %}">
+            <table class="map">
+              <tr>
+                <th class="fakenode"></th>
+                <th colspan="{%d p.XMax - p.XMin + 2 %}">X</th>
+              </tr>
 
-			{%d node.Yield/100 %}
+              <tr>
+                <th rowspan="{%d p.YMax - p.YMin + 2 %}">Y</th>
+                <th class="fakenode"></th>
+                {% for x := p.XMin; x <= p.XMax; x++ %}
+                  <th>{%d x %}</th>
+                {% endfor %}
+              </tr>
 
-			{% if node.PowerSupply == PowerOff %}
-				</s></b>
-			{% elseif node.PowerSupply == PowerOffNeighbour %}
-				</s>
-			{% endif %}
-		{% else %}
-		<td class="fakenode">
-		{% endif %}
+              {% for y := p.YMin; y <= p.YMax; y++ %}
+                <tr>
+                <th scope="horizontal">{%d y %}</th>
+                {% for x := p.XMin; x <= p.XMax; x++ %}
 
-		{% for _, r := range p.Rentals %}
-			{% if r.Node.X == x && r.Node.Y == y %}
-				<div style="height: 10%; background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[r.Tenant.Name].Color) %}" title="{%s r.Tenant.Name %}"><br>
-				</div>
-			{% endif %}
-		{% endfor %}
-	</td>
-	{% endfor %}
-</tr>
-{% endfor %}
+                  {% code
+                  node, ok := p.Nodes[Coord{X: x, Y: y}]
+                  %}
 
-</table>
+                  {% if ok %}
+                    <td data-x="{%d x %}" data-y="{%d y %}" data-yield="{%d node.Yield %}" data-powersupply="{%d node.PowerSupply %}" data-toggle="modal" data-target="#modal-node" data-buycost="{%d node.BuyCost %}"
+                    {% if node.Owner.ID != 0 %}
+                      data-owner-name="{%s node.Owner.Name %}" data-owner-id="{%d int(node.Owner.ID) %}" data-newyield="{%d node.NewYield %}" style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})"
+                      {% if node.Owner.CEOID == p.CurrentPlayer.ID %}
+                        data-investcost="{%d node.InvestCost %}" 
+                      {% endif %}
+                    {% else %}
+                      title="({%d x %}, {%d y %})"
+                    {% endif %}
+                    >
 
-<table>
-<tr>
-<th>Colore</th>
-<th>Nome</th>
-</tr>
+                    {% if node.PowerSupply == PowerOff %}
+                      <b><s data-x="{%d x %}" data-y="{%d y %}">
+                    {% elseif node.PowerSupply == PowerOffNeighbour %}
+                      <s data-x="{%d x %}" data-y="{%d y %}">
+                    {% endif %}
 
-{% for _, c := range p.CompaniesByName %}
-<tr>
-	<td style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}"></td>
-	<td>
-	{% if c.CEOID == p.CurrentPlayer.ID %}
-		<b><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.ID)) %}">{%s c.Name %}</a></b>
-	{% else %}
-		<a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.ID)) %}">{%s c.Name %}</a>
-	{% endif %}
-	</td>
-</tr>
-{% endfor %}
+                    {%d node.Yield/100 %}
 
-</table>
+                    {% if node.PowerSupply == PowerOff %}
+                      </s></b>
+                    {% elseif node.PowerSupply == PowerOffNeighbour %}
+                      </s>
+                    {% endif %}
+                  {% else %}
+                    <td class="fakenode">
+                  {% endif %}
 
-<form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
+                  {% for _, r := range p.Rentals %}
+                    {% if r.Node.X == x && r.Node.Y == y %}
+                      <div style="height: 10%; background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[r.Tenant.Name].Color) %}" title="{%s r.Tenant.Name %}"><br></div>
+                    {% endif %}
+                  {% endfor %}
+                </td>
+                {% endfor %}
+                </tr>
+              {% endfor %}
 
-<fieldset>
-<legend>Acquisto rapido</legend>
+            </table>
+          </div>
+        </div>
+        <!-- /.box-body -->
+      </div>
 
-Clicca sul nodo da acquistare e completa questo form.
+      <div class="modal fade" id="modal-node" style="display: none;">
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content">
+            <div class="modal-header text-center">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span></button>
+              <h4 class="modal-title"><span id="sel-owner-name"></span> (<span id="sel-x"></span>, <span id="sel-y"></span>)</h4>
+            </div>
+            <div class="modal-body">
+              <p><i class="fa fa-money"></i> Rendimento per turno: <span id="sel-yield"></span> $</p>
+              <p><i class="fa fa-bolt"></i> <span id="sel-powersupply"></span></p>
+              <p><i class="fa fa-warning"></i> Probabilit&agrave; di blackout: <span id="sel-blackoutprob"></span> &percnt;</p>
+            </div>
+            <div class="modal-footer">
+              <div id="investbutton">
+                <form action="{%s quickURL(p.HeaderData, "company_invest") %}" method="POST">
+                  <input class="sel-owner-id" type="hidden" name="ID">
+                  <input class="sel-x" type="hidden" name="X">
+                  <input class="sel-y" type="hidden" name="Y">
+                  <button type="submit" class="btn btn-primary">Potenzia (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-investcost"></span>)</button>
+                </form>
+                <br>
+              </div>
+              <div>
+                <form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
+                  <select class="form-control" name="ID" class="pull-left">
+                    <option value="0">Societ&agrave;</option>
+                    {% for _, c := range p.CompaniesByName %}
+                      {% if c.CEOID == p.CurrentPlayer.ID %}
+                        <option value="{%d int(c.ID) %}">{%s c.Name %}</option>
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                  <input class="sel-x" type="hidden" name="X">
+                  <input class="sel-y" type="hidden" name="Y">
+                  <button type="submit" class="btn btn-primary pull-right">Compra (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-buycost"></span>)</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+      </div>
 
-<select name="ID">
-<option value="0">Seleziona societa'</option>
-{% for _, c := range p.CompaniesByName %}
-	{% if c.CEOID == p.CurrentPlayer.ID %}
-		<option value="{%d int(c.ID) %}">{%s c.Name %}</option>
-	{% endif %}
-{% endfor %}
-</select>
-
-<input type="number" name="X">
-<input type="number" name="Y">
-<b>Costo: <span id="buyCost">0</span>$</b>
-<input type="submit" value="Acquista">
-
-</fieldset>
-</form>
-
-<form action="{%s quickURL(p.HeaderData, "company_invest") %}" method="POST">
-
-<fieldset>
-<legend>Investimento rapido</legend>
-
-Clicca sul nodo sul quale investire e completa questo form.
-
-<select name="ID">
-<option value="0">Seleziona societa'</option>
-{% for _, c := range p.CompaniesByName %}
-	{% if c.CEOID == p.CurrentPlayer.ID %}
-		<option value="{%d int(c.ID) %}">{%s c.Name %}</option>
-	{% endif %}
-{% endfor %}
-</select>
-
-<input type="number" name="X">
-<input type="number" name="Y">
-<b>Costo: <span id="investCost">0</span>$</b>
-<input type="submit" value="Migliora">
-
-</fieldset>
-</form>
-
-<script type="text/javascript" src="/static/map.js"></script>
-
-{%= FooterPage() %}
+{%= FooterPageGeneration("map", true) %}
 
 {% endfunc %}

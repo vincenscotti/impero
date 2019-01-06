@@ -110,6 +110,9 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		if s := session.Flashes("error_"); len(s) > 0 {
 			header.Error = s[0].(string)
 		}
+		if s := session.Flashes("warning_"); len(s) > 0 {
+			header.Warning = s[0].(string)
+		}
 		if s := session.Flashes("success_"); len(s) > 0 {
 			header.Success = s[0].(string)
 		}

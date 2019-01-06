@@ -41,13 +41,10 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	// TODO: handle errors
 	_, shares := tx.GetSharesForPlayer(header.CurrentPlayer)
 	_, playerincome := tx.CalculateSharesIncome(shares)
-	_, shareauctions := tx.GetShareAuctionsWithPlayerParticipation(header.CurrentPlayer)
-	_, shareoffers := tx.GetShareOffers()
 	_, incomingtransfers := tx.GetIncomingTransfers(header.CurrentPlayer)
 
 	page := &GameHomeData{HeaderData: header,
 		SharesInfo: shares, PlayerIncome: playerincome,
-		ShareAuctions: shareauctions, ShareOffers: shareoffers,
 		IncomingTransfers: incomingtransfers}
 
 	RenderHTML(w, r, templates.GameHomePage(page))
@@ -159,6 +156,7 @@ func main() {
 		opt.CostPerYield = 1
 		opt.EndGame = 24
 		opt.InitialShares = 20
+		opt.BlackoutProbPerDollar = 0.001
 		opt.GameStart = time.Now()
 		opt.LastTurnCalculated = time.Now()
 		opt.NewCompanyCost = 5
@@ -189,6 +187,7 @@ func main() {
 	game := router.PathPrefix("/game").Subrouter()
 
 	game.HandleFunc("/", GameMiddleware(GameHome)).Name("gamehome")
+	game.HandleFunc("/market/", GameMiddleware(Market)).Name("market")
 
 	game.HandleFunc("/player/all/", GameMiddleware(Players)).Name("player_all")
 	game.HandleFunc("/player/{id}", GameMiddleware(GetPlayer)).Name("player")
@@ -198,6 +197,7 @@ func main() {
 	game.HandleFunc("/chat/", GameMiddleware(GetChat)).Name("chat")
 	game.HandleFunc("/chat/post/", GameMiddleware(PostChat)).Name("chat_post")
 
+	game.HandleFunc("/message/compose/", GameMiddleware(ComposeMessage)).Name("message_compose")
 	game.HandleFunc("/message/inbox/", GameMiddleware(MessagesInbox)).Name("message_inbox")
 	game.HandleFunc("/message/outbox/", GameMiddleware(MessagesOutbox)).Name("message_outbox")
 	game.HandleFunc("/message/{id}", GameMiddleware(GetMessage)).Name("message")
@@ -220,10 +220,11 @@ func main() {
 	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
 	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
 
+	game.HandleFunc("/stats/", GameMiddleware(Stats)).Name("stats")
+
 	game.HandleFunc("/share/bid/", GameMiddleware(BidShare)).Name("bid_share")
 	game.HandleFunc("/share/buy/", GameMiddleware(BuyShare)).Name("buy_share")
 	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
-	game.HandleFunc("/map/costs/{x}/{y}", GameMiddleware(GetCosts)).Name("map_costs")
 
 	game.HandleFunc("/chart/", GameMiddleware(EndGamePage)).Name("chart")
 

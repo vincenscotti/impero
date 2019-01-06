@@ -3,170 +3,156 @@
 
 {% func GameHomePage(p *GameHomeData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Pannello di controllo", "") %}
 
-{% if len(p.IncomingTransfers) > 0 %}
+      <div class="row">
 
-<table>
-<tr>
-	<th colspan="4">Trasferimenti in ingresso</th>
-</tr>
-<tr>
-	<th>Da</th>
-	<th>Ammontare</th>
-	<th>Rischio pena fiscale</th>
-	<th>Operazioni</th>
-</tr>
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Le mie societ&agrave;</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
 
-{% for _, t := range p.IncomingTransfers %}
-<tr>
-<form action="{%s quickURL(p.HeaderData, "player_transfer_confirm") %}" method="POST">
-<input type="hidden" name="id" value="{%d int(t.ID) %}">
-	<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(t.FromID)) %}">{%s t.From.Name %}</a></td>
-	<td>{%d t.Amount %}</td>
-	<td>{%d t.Risk %}%</td>
-	<td>
-		<input type="submit" value="Accetta (scade il {%s t.Expiration.Format("02-01 15:04:05") %})">
-	</td>
-</form>
-</tr>
-{% endfor %}
+            {% if len(p.SharesInfo) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px"></th>
+                  <th>Nome</th>
+                  <th>Azioni</th>
+                  <th>Rendimento</th>
+                </tr>
+                {% for _, c := range p.SharesInfo %}
+                  <tr>
+                    <td>
+                      {% if c.Company.CEOID == p.CurrentPlayer.ID %}
+                        <i class="fa fa-star"></i>
+                      {% endif %}
+                    </td>
+                    <td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.CompanyID)) %}">{%s c.Company.Name %}</a></td>
+                    <td>{%d c.Shares %}</td>
+                    <td>{%s markupMoney(c.Shares*c.ValuePerShare) %}</td>
+                  </tr>
+                {% endfor %}
 
-</table>
+                <tr>
+                  <td></td>
+                  <td colspan="2"><b>TOTALE</b></td>
+                  <td><b>{%s markupMoney(p.PlayerIncome) %}</b></td>
+                </tr>
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non possiedi azioni di alcuna societ&agrave;</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+          </div>
 
-{% endif %}
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title">Crea una nuova societ&agrave;</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <form action="{%s quickURL(p.HeaderData, "company_new") %}" method="POST">
 
-<div class="row">
+                <div class="row">
+                  <div class="col-lg-3">
+                    <input class="form-control" placeholder="Nome" type="text" name="name">
+                  </div>
+                  <div class="col-lg-5">
+                    <div class="input-group">
+                      <span class="input-group-addon">$</span>
+                      <input class="form-control" type="text" placeholder="Capitale iniziale" name="sharecapital">
+                      <span class="input-group-addon">.00</span>
+                    </div>
+                  </div>
+                  <div class="col-lg-4">
+                    <button type="submit" class="btn btn-primary">Crea (<i class="fa fa-heart"></i> 5)</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <!-- /.box-body -->
+          </div>
+        </div>
 
-<div class="col-md-6 col-xs-12">
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Trasferimenti di denaro</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
 
-{% if len(p.SharesInfo) > 0 %}
+            {% if len(p.IncomingTransfers) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px"></th>
+                  <th>Da</th>
+                  <th>Capitale</th>
+                  <th>Rischio controllo fiscale</th>
+                  <th><i class="fa fa-clock-o"></i></th>
+                  <th>Operazioni</th>
+                </tr>
+                {% for _, t := range p.IncomingTransfers %}
+                  <tr>
+                    <td></td>
+                    <td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(t.FromID)) %}">{%s t.From.Name %}</a></td>
+                    <td>{%s markupMoney(t.Amount) %}</td>
+                    <td>{%d t.Risk %} &percnt;</td>
+                    <td>{%s t.Expiration.Format("02-01 15:04:05") %}</td>
+                    <td>
+                      <form action="{%s quickURL(p.HeaderData, "player_transfer_confirm") %}" method="POST">
+                        <input type="hidden" name="id" value="{%d int(t.ID) %}">
+                        <button type="submit" class="btn btn-primary">Accetta (<i class="fa fa-heart"></i> 1)</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non ci sono trasferimenti in ingresso</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+          </div>
 
-<table>
-<thead>
-<tr>
-	<th colspan="3">Societa' possedute</th>
-</tr>
-<tr>
-	<th>Nome</th>
-	<th>Azioni</th>
-	<th>Il tuo rendimento</th>
-</tr>
-</thead>
-<tbody>
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title">Invia denaro</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <form action="{%s quickURL(p.HeaderData, "player_transfer") %}" method="post">
 
-{% for _, c := range p.SharesInfo %}
-<tr>
-	<td>
-	{% if c.Company.CEOID == p.CurrentPlayer.ID %}
-		<b><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.CompanyID)) %}">{%s c.Company.Name %}</a></b>
-	{% else %}
-		<a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.CompanyID)) %}">{%s c.Company.Name %}</a>
-	{% endif %}
-	</td>
-	<td>{%d c.Shares %}</td>
-	<td>{%s markupMoney(c.Shares*c.ValuePerShare) %}</td>
-</tr>
-{% endfor %}
+                <div class="row">
+                  <div class="col-lg-3">
+                    <input class="form-control" placeholder="Destinatario" type="text" name="to">
+                  </div>
+                  <div class="col-lg-5">
+                    <div class="input-group">
+                      <span class="input-group-addon">$</span>
+                      <input class="form-control" type="text" placeholder="Capitale da inviare" name="amount">
+                      <span class="input-group-addon">.00</span>
+                    </div>
+                  </div>
+                  <div class="col-lg-4">
+                    <button type="submit" class="btn btn-primary">Invia (<i class="fa fa-heart"></i> 1)</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <!-- /.box-body -->
+          </div>
+        </div>
 
-<tr>
-	<td colspan="2"><b>TOTALE</b></td>
-	<td><b>{%s markupMoney(p.PlayerIncome) %}</b></td>
-</tr>
-
-</tbody>
-</table>
-
-{% endif %}
-
-</div>
-
-<div class="col-md-6 col-xs-12">
-
-<form action="{%s quickURL(p.HeaderData, "company_new") %}" method="POST">
-<fieldset>
-<legend>Crea societa' (<b>costa {%d p.Options.NewCompanyCost %} punti operazione!</b>)</legend>
-<input type="text" name="name" placeholder="Nome" maxlength="30" required>
-<input type="number" min="1" name="sharecapital" placeholder="Capitale iniziale" required>
-<input type="submit" value="Crea">
-</fieldset>
-</form>
-
-</div>
-
-</div>
-
-{% if len(p.ShareAuctions) > 0 %}
-
-<table>
-<tr>
-	<th colspan="6">Mercato primario (azioni appena emesse)</th>
-</tr>
-<tr>
-	<th>Societa'</th>
-	<th>Valore</th>
-	<th>Offerta piu' alta</th>
-	<th>Punto azione speso</th>
-	<th>Scadenza</th>
-	<th>Operazioni</th>
-</tr>
-
-{% for _, sa := range p.ShareAuctions %}
-<tr>
-
-<form action="{%s quickURL(p.HeaderData, "bid_share") %}" method="POST"> <input
-type="hidden" name="auction" value="{%d int(sa.ID) %}">
-
-	<td><a href="{%s quickURL(p.HeaderData, "company", "id",
-	fmt.Sprint(sa.CompanyID)) %}">{%s sa.Company.Name %}</a></td>
-
-	<td>{%s markupMoney(sa.HighestOffer) %}</td>
-
-	<td> {% if sa.HighestOfferPlayerID == p.HeaderData.CurrentPlayer.ID %}
-	X {% endif %} </td>
-
-	<td> {% if len(sa.Participations) > 0 %} X {% endif %} </td>
-
-	<td>{%v sa.Expiration.Format("02-01 15:04:05") %}</td>
-
-	<td> <input type="number" min="{%d (sa.HighestOffer + 100) / 100 %}"
-	name="amount" value="{%d (sa.HighestOffer + 100) / 100 %}"> <input
-	type="submit" value="Punta"> </td> </form>
-
-</tr> {% endfor %}
-
-</table>
-
-{% endif %}
-
-{% if len(p.ShareOffers) > 0 %}
-
-<table> <tr> <th colspan="6">Mercato secondario (azioni di altri giocatori in
-vendita)</th> </tr> <tr> <th>Societa'</th> <th>Prezzo</th> <th>Scadenza</th>
-<th>Operazioni</th> </tr>
-
-{% for _, so := range p.ShareOffers %} <tr>
-
-<form action="{%s quickURL(p.HeaderData, "buy_share") %}" method="POST">
-<input type="hidden" name="offer" value="{%d int(so.ID) %}">
-
-	<td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(so.CompanyID)) %}">{%s so.Company.Name %}</a></td>
-
-	<td>{%s markupMoney(so.Price) %}</td>
-
-	<td>{%v so.Expiration.Format("02-01 15:04:05") %}</td>
-
-	<td>
-		<input type="submit" value="Compra">
-	</td>
-</form>
-
-</tr>
-{% endfor %}
-
-</table>
-
-{% endif %}
+      </div>
 
 {%= FooterPage() %}
 

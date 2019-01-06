@@ -1,7 +1,64 @@
-{% func FooterPage() %}
+{% func FooterPageGeneration(path string, includeFooter bool) %}
+
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+{% if includeFooter %}
+  <!-- Main Footer -->
+  <footer class="main-footer">
+    <!-- To the right -->
+    <div class="pull-right hidden-xs">
+      <!-- empty now -->
+    </div>
+    <!-- Default to the left -->
+    <strong>Copyright &copy; 2018-2019.</strong> All rights reserved.
+  </footer>
+{% endif %}
 
 </div>
+<!-- ./wrapper -->
 
+<!-- REQUIRED JS SCRIPTS -->
+
+<!-- jQuery 3 -->
+<script src="/static/js/jquery.min.js"></script>
+<!-- Bootstrap 3.3.7 -->
+<script src="/static/js/bootstrap.min.js"></script>
+<!-- AdminLTE App -->
+<script src="/static/js/adminlte.min.js"></script>
+
+<!-- Fix for bootstrap dropdowns - make them lose focus after being closed -->
+<script>
+var dropdown = $(".dropdown-toggle");
+
+dropdown.on("click", function() {
+  setTimeout(function(){
+    dropdown.blur();
+  }, 0);
+});
+
+$(function() {
+  $("html").css("height", "100%");
+});
+
+$(function() {
+  $("body").css("height", "");
+});
+</script>
+
+{% if path != "" %}
+  <!-- Page script -->
+  <script src="/static/js/{%s path %}.js"></script>
+{% endif %}
+
+</body>
 </html>
 
 {% endfunc %}
+
+{% func FooterPage() %}
+  {%= FooterPageGeneration("", true) %}
+{% endfunc %}
+

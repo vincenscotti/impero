@@ -11,9 +11,10 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
-	_, msgs := tx.GetChatMessages(header.CurrentPlayer)
+	page := ChatData{HeaderData: header, LastChatViewed: header.CurrentPlayer.LastChatViewed}
 
-	page := ChatData{HeaderData: header, Messages: msgs}
+	_, msgs := tx.GetChatMessages(header.CurrentPlayer)
+	page.Messages = msgs
 
 	RenderHTML(w, r, templates.ChatPage(&page))
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	. "github.com/vincenscotti/impero/model"
@@ -56,27 +55,32 @@ func Transfer(w http.ResponseWriter, r *http.Request) {
 
 	blerr := BLError{}
 
-	p := &TransferProposal{}
+	params := struct {
+		To        string
+		Numshares int
+		Amount    int
+	}{}
 
-	if err := binder.Bind(p, r); err != nil {
+	if err := binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	if target, err := router.Get("player").URL("id", fmt.Sprint(p.ToID)); err != nil {
+	if target, err := router.Get("gamehome").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
 	}
 
-	to := &Player{}
-	to.ID = p.ToID
-
-	if err, _ := tx.CreateTransferProposal(header.CurrentPlayer, to, p.Amount * 100); err != nil {
+	if err, to := tx.GetPlayerByName(params.To); err != nil {
 		session.AddFlash(err.Error(), "error_")
 	} else {
-		session.AddFlash("Proposta inviata!", "success_")
+		if err, _ := tx.CreateTransferProposal(header.CurrentPlayer, to, params.Amount*100); err != nil {
+			session.AddFlash(err.Error(), "error_")
+		} else {
+			session.AddFlash("Proposta inviata!", "success_")
 
-		tx.Commit()
+			tx.Commit()
+		}
 	}
 
 	RedirectToURL(w, r, blerr.Redirect)
@@ -111,7 +115,7 @@ func ConfirmTransfer(w http.ResponseWriter, r *http.Request) {
 		session.AddFlash(err.Error(), "error_")
 	} else {
 		if fiscalCheck {
-			session.AddFlash("CONTROLLO FISCALE! Il tuo budget e' stato sequestrato!", "error_")
+			session.AddFlash("Controllo fiscale! Il tuo budget e' stato sequestrato!", "warning_")
 		} else {
 			tx.Commit()
 

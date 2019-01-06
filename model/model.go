@@ -17,6 +17,7 @@ type Options struct {
 	NewCompanyCost              int
 	InitialShares               int
 	CostPerYield                float64
+	BlackoutProbPerDollar       float64
 	Turn                        int
 	EndGame                     int
 }
@@ -37,6 +38,9 @@ type Node struct {
 	X           int
 	Y           int
 	Yield       int
+	BuyCost     int `gorm:"-"`
+	InvestCost  int `gorm:"-"`
+	NewYield    int `gorm:"-"`
 	PowerSupply int
 	Owner       Company
 	OwnerID     uint

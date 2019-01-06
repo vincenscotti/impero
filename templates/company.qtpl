@@ -3,69 +3,235 @@
 
 {% func CompanyPage(p *CompanyData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Societ&agrave;", p.Company.Name) %}
 
 {% code
 cmp := p.Company
 %}
 
-<p><b>{%s cmp.Name %}</b></p>
-<p>Amministratore: {%s cmp.CEO.Name %}</p>
-<p>Capitale: {%s markupMoney(cmp.ShareCapital) %}</p>
-<p>Entrate: {%s markupMoney(cmp.Income) %}</p>
-{% if p.IsShareHolder %}
-	<p>Entrate che restano alla societa': {%d cmp.PureIncomePercentage %} &percnt; ({%s markupMoney(p.PureIncome) %} alla societa' e {%s markupMoney(cmp.Income - p.PureIncome) %} agli azionisti)</p>
+      <div class="row">
 
-	{% if cmp.CEO.ID == p.CurrentPlayer.ID %}
-		<form action="{%s quickURL(p.HeaderData, "company_pureincome") %}" method="POST">
-		<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-		<button name="Action" type="submit" value="inc">+10&percnt;</button>
-		<button name="Action" type="submit" value="dec">-10&percnt;</button>
-		(costa 1 pt. operazione)
-		</form>
-	{% endif %}
-{% endif %}
+        <div class="col-md-3 col-sm-6 col-xs-12">
+          <div class="info-box">
+            <span class="info-box-icon bg-aqua"><i class="fa fa-bank"></i></span>
 
-<br>
-<p>Azioni: {%d p.Shares %}</p>
-<p>Guadagno azionisti per azione: {%s markupMoney(p.IncomePerShare) %}</p>
+            <div class="info-box-content">
+              <span class="info-box-text">Capitale</span>
+              <span class="info-box-number">{%s markupMoney(cmp.ShareCapital) %}</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
 
-<table>
-<tr>
-	<th colspan="2">Azionisti</th>
-</tr>
-<tr>
-	<th>Giocatore</th>
-	<th>Azioni</th>
-</tr>
+        <div class="col-md-3 col-sm-6 col-xs-12">
+          <div class="info-box">
 
-{% for _, sh := range p.SharesInfo %}
-<tr>
-	<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(sh.Owner.ID)) %}">{%s sh.Owner.Name %}</a></td>
-	<td>{%d sh.Shares %}</td>
-</tr>
-{% endfor %}
+            {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
+              <div class="pull-right">
+                <form action="{%s quickURL(p.HeaderData, "company_pureincome") %}" method="POST">
+                  <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+                  <button type="submit" class="btn btn-danger btn-xs" name="action" value="dec"><i class="fa fa-arrow-circle-down"></i> 10 &percnt;</button>
+                  <button type="submit" class="btn btn-success btn-xs" name="action" value="inc"><i class="fa fa-arrow-circle-up"></i> 10 &percnt;</button>
+                </form>
+              </div>
+            {% endif %}
 
-</table>
+            <span class="info-box-icon bg-green"><i class="fa fa-pie-chart"></i></span>
 
-{% if p.IsShareHolder %}
-<p>Punti operazione: {%d cmp.ActionPoints %}</p>
+            <div class="info-box-content">
+              <span class="info-box-text">Entrate</span>
+              <span class="info-box-number">{%s markupMoney(cmp.Income) %}</span>
 
-	{% if cmp.CEO.ID != p.CurrentPlayer.ID %}
-	<form action="{%s quickURL(p.HeaderData, "company_promoteceo") %}" method="POST">
-	<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-	<input type="submit" value="Diventa amministratore">
-	</form>
-	{% endif %}
+              <div class="progress">
+                <div class="progress-bar bg-green" style="width: {%d cmp.PureIncomePercentage %}%"></div>
+              </div>
+                  <span class="progress-description">Il {%d cmp.PureIncomePercentage %} &percnt; resta nelle casse della societ&agrave;</span>
 
-<form action="{%s quickURL(p.HeaderData, "company_sellshares") %}" method="POST">
-<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-<label for="numshares">Numero di azioni da vendere</label><input type="number" style="width: 50px;" min="1" max="10" name="numshares" placeholder="Numero di azioni" value="1">
-<label for="price">Prezzo di vendita</label><input type="number" style="width: 50px;" min="0" name="price" placeholder="Prezzo di vendita" value="10">
-<input type="submit" value="Vendi azioni">
-</form>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
 
-{% endif %}
+        <div class="col-md-3 col-sm-6 col-xs-12">
+          <div class="info-box">
+            <span class="info-box-icon bg-yellow"><i class="fa fa-money"></i></span>
+
+            <div class="info-box-content">
+              <span class="info-box-text">Rendimento per azione</span>
+              <span class="info-box-number">{%s markupMoney(p.IncomePerShare) %}</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
+
+        {% if p.IsShareHolder %}
+        <div class="col-md-3 col-sm-6 col-xs-12">
+          <div class="info-box">
+            <span class="info-box-icon bg-red"><i class="fa fa-cubes"></i></span>
+
+            <div class="info-box-content">
+              <span class="info-box-text">PO</span>
+              <span class="info-box-number">{%d cmp.ActionPoints %}</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
+        {% endif %}
+
+      </div>
+
+      <div class="row">
+
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Gli azionisti</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+
+            {% if len(p.SharesInfo) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px"></th>
+                  <th>Nome</th>
+                  <th>Azioni</th>
+                  <th>Rendimento</th>
+                </tr>
+                {% for _, sh := range p.SharesInfo %}
+                  <tr>
+                    <td>
+                      {% if cmp.CEOID == sh.Owner.ID %}
+                        <i class="fa fa-star"></i>
+                      {% endif %}
+                    </td>
+                    <td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(sh.Owner.ID)) %}">{%s sh.Owner.Name %}</a></td>
+                    <td>{%d sh.Shares %}</td>
+                    <td>{%s markupMoney(sh.Shares*p.IncomePerShare) %}</td>
+                  </tr>
+                {% endfor %}
+
+                <tr>
+                  <td></td>
+                  <td><b>TOTALE</b></td>
+                  <td colspan="2"><b>{%d p.Shares %}</b></td>
+                </tr>
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non sono presenti azionisti</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+
+            <div class="box-footer no-padding">
+              {% if p.IsShareHolder && cmp.CEO.ID != p.CurrentPlayer.ID %}
+                <form action="{%s quickURL(p.HeaderData, "company_promoteceo") %}" method="POST">
+                <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+                <button type="submit" class="btn btn-block btn-primary"><i class="fa fa-star"></i> Diventa amministratore</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          {% if p.IsShareHolder %}
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Vendita azioni</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <div class="row text-center">
+                <form action="{%s quickURL(p.HeaderData, "company_sellshares") %}" method="POST">
+                  <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+
+                  <div class="col-sm-2">
+                    <select class="form-control" name="numshares">
+                      <option>1</option>
+                      <option>2</option>
+                      <option>3</option>
+                      <option>4</option>
+                      <option>5</option>
+                      <option>6</option>
+                      <option>7</option>
+                      <option>8</option>
+                      <option>9</option>
+                      <option>10</option>
+                    </select>
+                  </div>
+
+                  <div class="col-sm-6">
+                    <div class="input-group">
+                      <span class="input-group-addon">$</span>
+                      <input class="form-control" type="text" placeholder="Prezzo di vendita" name="price">
+                      <span class="input-group-addon">.00</span>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-4">
+                    <button type="submit" class="btn btn-primary">Vendi (<i class="fa fa-heart"></i> 1)</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <!-- /.box-body -->
+          </div>
+          {% endif %}
+
+          {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Emissione azioni</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <div class="row text-center">
+                <form action="{%s quickURL(p.HeaderData, "company_emitshares") %}" method="POST">
+                  <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
+
+                  <div class="col-sm-2">
+                    <select class="form-control" name="numshares">
+                      <option>1</option>
+                      <option>2</option>
+                      <option>3</option>
+                      <option>4</option>
+                      <option>5</option>
+                      <option>6</option>
+                      <option>7</option>
+                      <option>8</option>
+                      <option>9</option>
+                      <option>10</option>
+                    </select>
+                  </div>
+
+                  <div class="col-sm-6">
+                    <div class="input-group">
+                      <span class="input-group-addon">$</span>
+                      <input class="form-control" type="text" placeholder="Base d'asta" name="price">
+                      <span class="input-group-addon">.00</span>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-4">
+                    <button type="submit" class="btn btn-primary">Emetti (<i class="fa fa-cubes"></i> 1)</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <!-- /.box-body -->
+          </div>
+          {% endif %}
+
+        </div>
+
+      </div>
 
 {% if len(p.Partnerships) > 0 %}
 
@@ -134,31 +300,7 @@ NB: gli accordi da confermare sono sbarrati
 
 {% endif %}
 
-{% if cmp.CEO.ID == p.CurrentPlayer.ID %}
-<form action="{%s quickURL(p.HeaderData, "company_emitshares") %}" method="POST">
-<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-<label for="numshares">Numero di azioni da emettere</label><input type="number" style="width: 50px;" min="1" max="10" name="numshares" placeholder="Numero di azioni" value="1">
-<label for="price">Base d'asta</label><input type="number" style="width: 50px;" min="0" name="price" placeholder="Base d'asta" value="10">
-<input type="submit" value="Emetti azioni">
-</form>
-
-<form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
-<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-<input type="number" name="x" placeholder="X">
-<input type="number" name="y" placeholder="Y">
-<input type="submit" value="Compra cella">
-</form>
-
-<form action="{%s quickURL(p.HeaderData, "company_invest") %}" method="POST">
-<input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-<input type="number" name="x" placeholder="X">
-<input type="number" name="y" placeholder="Y">
-<input type="submit" value="Migliora cella">
-</form>
-
-{% else %}
-
-{% if len(p.PossiblePartners) > 0 %}
+{% if cmp.CEO.ID != p.CurrentPlayer.ID && len(p.PossiblePartners) > 0 %}
 <!--
 
 <form action="{%s quickURL(p.HeaderData, "company_partnership_proposal") %}" method="POST">
@@ -177,8 +319,6 @@ NB: gli accordi da confermare sono sbarrati
 </form>
 
 -->
-{% endif %}
-
 {% endif %}
 
 {%= FooterPage() %}

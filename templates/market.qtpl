@@ -1,0 +1,120 @@
+{% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
+
+{% func MarketPage(p *MarketData) %}
+
+{%= GameHeaderPage(p.HeaderData, "Mercato", "") %}
+
+      <div class="row">
+
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Mercato primario</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+
+            {% if len(p.ShareAuctions) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px"></th>
+                  <th>Societ&agrave;</th>
+                  <th>Valore</th>
+                  <th><i class="fa fa-clock-o"></i></th>
+                  <th>Operazioni</th>
+                </tr>
+                {% for _, sa := range p.ShareAuctions %}
+                  <tr>
+                    <td>
+                      {% if sa.HighestOfferPlayerID == p.HeaderData.CurrentPlayer.ID %}
+                        <i class="fa fa-star"></i>
+                      {% endif %}
+                    </td>
+                    <td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(sa.CompanyID)) %}">{%s sa.Company.Name %}</a></td>
+                    <td>{%s markupMoneyCompact(sa.HighestOffer) %}</td>
+                    <td>{%s sa.Expiration.Format("02-01 15:04:05") %}</td>
+                    <td>
+                      <div class="row">
+                        <form action="{%s quickURL(p.HeaderData, "bid_share") %}" method="POST">
+                          <input type="hidden" name="auction" value="{%d int(sa.ID) %}">
+
+                          <div class="col-md-6">
+                            <div class="input-group">
+                              <span class="input-group-addon">$</span>
+                              <input class="form-control" type="text" placeholder="Rilancio" name="amount">
+                              <span class="input-group-addon">.00</span>
+                            </div>
+                          </div>
+
+                          <div class="col-md-6">
+                            {% if len(sa.Participations) > 0 %}
+                              <button type="submit" class="btn btn-primary">Rilancia</button>
+                            {% else %}
+                              <button type="submit" class="btn btn-primary">Rilancia (<i class="fa fa-heart"></i> 1)</button>
+                            {% endif %}
+                          </div>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non ci sono nuove azioni all'asta</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Mercato secondario</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+
+            {% if len(p.ShareOffers) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px"></th>
+                  <th>Societ&agrave;</th>
+                  <th>Prezzo</th>
+                  <th><i class="fa fa-clock-o"></i></th>
+                  <th>Operazioni</th>
+                </tr>
+                {% for _, so := range p.ShareOffers %}
+                  <tr>
+                    <td></td>
+                    <td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(so.CompanyID)) %}">{%s so.Company.Name %}</a></td>
+                    <td>{%s markupMoneyCompact(so.Price) %}</td>
+                    <td>{%s so.Expiration.Format("02-01 15:04:05") %}</td>
+                    <td>
+                      <form action="{%s quickURL(p.HeaderData, "buy_share") %}" method="POST">
+                        <input type="hidden" name="offer" value="{%d int(so.ID) %}">
+
+                        <button type="submit" class="btn btn-primary">Compra (<i class="fa fa-heart"></i> 1)</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non ci sono azioni in vendita</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+          </div>
+        </div>
+
+      </div>
+
+{%= FooterPage() %}
+
+{% endfunc %}

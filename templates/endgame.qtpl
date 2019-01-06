@@ -2,7 +2,7 @@
 
 {% func EndGamePage(p *EndGameData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Classifica", "") %}
 
 {% if len(p.Winners) > 1 %}
 <h1 style="text-align: center">And the winners are...</h1>

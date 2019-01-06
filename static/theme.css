@@ -1,25 +1,22 @@
-body {
-	/*text-align: center;*/
+.fixed .wrapper {
+	overflow: auto;
 }
 
-.logo {
-	max-width: 100%;
+.map-container {
+	overflow: auto;
+	padding: 1px;
 }
 
-/*.row > div {*/
-	/*overflow: auto;*/
-/*}*/
-
-table {
+.map {
 	table-layout: fixed;
 	max-width: 100%;
 
 	margin: auto;
 	text-align: center;
 	border-collapse: collapse;
-}   
+}
 
-th, td {
+.map th, .map td {
 	overflow: auto;
 
 	text-align: inherit;
@@ -27,21 +24,14 @@ th, td {
 	min-width: 20px;
 }
 
-.fakenode {
-	border: none;
-}   
-
-fieldset {
-	border: 1px groove;
-	padding: 10px;
-}   
-
-legend {
-	width: auto;
-	margin: 0px;
+.map .fakenode {
+	border-style: none;
 }
 
-input[type="number"] {
-	width: 4em;
+.logo-lg {
+	margin: auto;
 }
 
+.direct-chat-msg.right .direct-chat-text, .direct-chat-msg .direct-chat-text {
+	margin: 5px 5px 0px 5px;
+}

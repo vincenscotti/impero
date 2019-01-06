@@ -1,24 +1,67 @@
 {% import . "github.com/vincenscotti/impero/model" %}
-{% import "fmt" %}
 
 {% func ChatPage(p *ChatData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Chat", "") %}
 
-<form action="{%s quickURL(p.HeaderData, "chat_post") %}" method="POST">
-<input type="text" name="content" placeholder="Scrivi messaggio" required>
-<input type="submit" value="Invia">
-</form>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="box box-primary direct-chat direct-chat-primary">
+              <div class="box-header with-border">
+                <h3 class="box-title">Chat</h3>
+              </div>
+              <!-- /.box-header -->
+              <div class="box-body">
+                <div class="direct-chat-messages">
 
-{% for _, m := range p.Messages %}
+                  {% for _, m := range p.Messages %}
+                    {% if m.From.ID == p.HeaderData.CurrentPlayer.ID %}
+                      <div class="direct-chat-msg right">
+                    {% else %}
+                      <div class="direct-chat-msg">
+                    {% endif %}
+                      <div class="direct-chat-info clearfix">
+                        {% if m.From.ID == p.HeaderData.CurrentPlayer.ID %}
+                          <span class="direct-chat-name pull-right">{%s m.From.Name %}</span>
+                          <span class="direct-chat-timestamp pull-left">{%s m.Date.Format("02-01 15:04:05") %}</span>
+                        {% else %}
+                          <span class="direct-chat-name pull-left">{%s m.From.Name %}</span>
+                          <span class="direct-chat-timestamp pull-right">{%s m.Date.Format("02-01 15:04:05") %}</span>
+                        {% endif %}
+                      </div>
+                      <!-- /.direct-chat-info -->
+                      <!-- /.direct-chat-img -->
+                      {% if p.LastChatViewed.Before(m.Date) %}
+                        <div class="direct-chat-text text-bold">
+                      {% else %}
+                        <div class="direct-chat-text">
+                      {% endif %}
+                        {%s m.Content %}
+                      </div>
+                      <!-- /.direct-chat-text -->
+                    </div>
+                    <!-- /.direct-chat-msg -->
+                  {% endfor %}
 
-<p>
-&lt;<a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(m.From.ID)) %}">{%s m.From.Name %}</a> @ {%s m.Date.Format("02-01 15:04:05") %}&gt;
-{%s m.Content %}
-</p>
+                </div>
+                <!--/.direct-chat-messages-->
+              </div>
+              <!-- /.box-body -->
+              <div class="box-footer">
+                <form action="{%s quickURL(p.HeaderData, "chat_post") %}" method="POST">
+                  <div class="input-group">
+                    <input name="content" placeholder="Scrivi messaggio" class="form-control" type="text">
+                        <span class="input-group-btn">
+                          <button type="submit" class="btn btn-primary btn-flat">Invia</button>
+                        </span>
+                  </div>
+                </form>
+              </div>
+              <!-- /.box-footer-->
+            </div>
+          </div>
+        </div>
 
-{% endfor %}
-
-{%= FooterPage() %}
+{%= FooterPageGeneration("chat", true) %}
 
 {% endfunc %}

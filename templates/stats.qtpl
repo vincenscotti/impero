@@ -1,0 +1,88 @@
+{% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
+
+{% func StatsPage(p *StatsData) %}
+
+{%= GameHeaderPage(p.HeaderData, "Statistiche", "") %}
+
+      <div class="row">
+
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Societ&agrave;</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+
+            {% if len(p.Companies) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px">#</th>
+                  <th>Nome</th>
+                  <th>Capitale</th>
+                  <th>Entrate</th>
+                </tr>
+                {% for i, cmp := range p.Companies %}
+                  <tr>
+                    <td>{%d i+1 %}</i>
+                    <td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(cmp.ID)) %}">{%s cmp.Name %}</a></td>
+                    <td>{%s markupMoney(cmp.ShareCapital) %}</td>
+                    <td>{%s markupMoney(cmp.Income) %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non ci sono societ&agrave;</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Giocatori</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+
+            {% if len(p.Players) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px">#</th>
+                  <th>Nome</th>
+                  <th>Capitale all'ultimo turno</th>
+                  <th>Entrate all'ultimo turno</th>
+                </tr>
+                {% for i, pl := range p.Players %}
+                  {% if pl.ID == p.HeaderData.CurrentPlayer.ID %}
+                    <tr style="font-weight: bold">
+                  {% else %}
+                    <tr>
+                  {% endif %}
+                    <td>{%d i+1 %}</td>
+                    <td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(pl.ID)) %}">{%s pl.Name %}</a></td>
+                    <td>{%s markupMoney(pl.LastBudget) %}</td>
+                    <td>{%s markupMoney(pl.LastIncome) %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non ci sono societ&agrave;</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+          </div>
+        </div>
+
+      </div>
+
+{%= FooterPage() %}
+
+{% endfunc %}

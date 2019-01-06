@@ -15,6 +15,7 @@ type HeaderData struct {
 	CurrentPlayer   *Player
 	Router          *mux.Router
 	Error           string
+	Warning         string
 	Success         string
 	NewChatMessages int
 	NewMessages     int
@@ -27,9 +28,13 @@ type GameHomeData struct {
 	*HeaderData
 	SharesInfo        []*SharesPerPlayer
 	PlayerIncome      int
-	ShareAuctions     []*ShareAuction
-	ShareOffers       []*ShareOffer
 	IncomingTransfers []*TransferProposal
+}
+
+type MarketData struct {
+	*HeaderData
+	ShareAuctions []*ShareAuction
+	ShareOffers   []*ShareOffer
 }
 
 type EndGameData struct {
@@ -46,6 +51,11 @@ type SharesPerPlayer struct {
 }
 
 type PlayersData struct {
+	*HeaderData
+	Players []*Player
+}
+
+type ComposeMessageData struct {
 	*HeaderData
 	Players []*Player
 }
@@ -77,7 +87,8 @@ type ReportData struct {
 
 type ChatData struct {
 	*HeaderData
-	Messages []*ChatMessage
+	LastChatViewed time.Time
+	Messages       []*ChatMessage
 }
 
 type PlayerData struct {
@@ -88,6 +99,12 @@ type PlayerData struct {
 type CompaniesData struct {
 	*HeaderData
 	Companies []*Company
+}
+
+type StatsData struct {
+	*HeaderData
+	Companies []*Company
+	Players   []*Player
 }
 
 type CompanyData struct {

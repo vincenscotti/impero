@@ -1,66 +1,267 @@
 {% import . "github.com/vincenscotti/impero/model" %}
 {% import "time" %}
 
-{% func GameHeaderPage(p *HeaderData) %}
+{% func GameHeaderPage(p *HeaderData, title, subtitle string) %}
 
-{%= HeaderPage() %}
+{%= HeaderPage(title) %}
 
 {% code
 cp := p.CurrentPlayer
 %}
 
-<img class="logo" src="/static/logo.png" alt="Impero">
+  <!-- Main Header -->
+  <header class="main-header">
 
-<p>
-Ciao {%s cp.Name%}!
-{% if p.Now.Before(p.Options.GameStart) %}
-	Il gioco iniziera' alle {%s p.Options.GameStart.Format("15:04") %}!
-{% elseif p.Options.Turn > p.Options.EndGame %}
-	Il gioco e' terminato! <b>Vai alla <a href="{%s quickURL(p, "chart") %}">classifica</a>!</b>
-{% else %}
-	Hai {%s markupMoney(cp.Budget) %} e {%d cp.ActionPoints %} punti operazione.
-	Siamo al turno {%d p.Options.Turn %}.
-	Il prossimo turno iniziera' alle {%s p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Format("15:04") %}.
-	L'orario del server e' {%s p.Now.Format("15:04:05") %}.
-{% endif %}
-<br><b>Per ricevere le notifiche su telegram, clicca <a href="http://t.me/ImperoTGBot">qui</a>!</b>
-</p>
+    <!-- Logo -->
+    <a href="/" class="logo">
+      <!-- mini logo for sidebar mini 50x50 pixels -->
+      <img class="logo-mini" src="/static/logo/logo50.jpg" alt="IMP">
+      <!-- logo for regular state and mobile devices -->
+      <img class="logo-lg" src="/static/logo/logo.jpg" alt="Impero">
+    </a>
 
-<nav>
+    <!-- Header Navbar -->
+    <nav class="navbar navbar-static-top" role="navigation">
+      <!-- Sidebar toggle button-->
+      <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button" title="Mostra/nascondi menu">
+        <span class="sr-only">Mostra/nascondi menu</span>
+      </a>
 
-<a href="{%s quickURL(p, "gamehome") %}">Home</a>
+      <div class="navbar-custom-menu" style="display: inline-block; float: left">
+        <ul class="nav navbar-nav">
+          <li>
+            <a title="Budget"><i class="fa fa-usd"></i> {%s= markupMoneyNoCurrency(cp.Budget) %}</a>
+          </li>
+          <li>
+            <a title="Punti energia"><i class="fa fa-heart"></i> {%d cp.ActionPoints %}</a>
+          </li>
+        </ul>
+      </div>
 
-<a href="{%s quickURL(p, "help") %}">Regolamento</a>
+      <!-- Navbar Right Menu -->
+      <div class="navbar-custom-menu">
+        <ul class="nav navbar-nav">
+          <!-- Messages: style can be found in dropdown.less-->
+          <li class="hidden-xs">
+            <!-- Messages menu -->
+            <a href="{%s quickURL(p, "message_inbox") %}" title="Messaggi">
+              <i class="fa fa-envelope-o"></i>
+              {% if p.NewMessages > 100 %}
+                <span class="label label-warning">99+</span>
+              {% elseif p.NewMessages > 0 %}
+                <span class="label label-warning">{%d p.NewMessages %}</span>
+              {% endif %}
+            </a>
+          </li>
+          <!-- /.messages-menu -->
 
-<a href="{%s quickURL(p, "map") %}">Mappa</a>
+          <!-- Report Menu -->
+          <li class="hidden-xs">
+            <!-- Menu toggle button -->
+            <a href="{%s quickURL(p, "report_all") %}" title="Report">
+              <i class="fa fa-file"></i>
+              {% if p.NewReports > 100 %}
+                <span class="label label-warning">99+</span>
+              {% elseif p.NewReports > 0 %}
+                <span class="label label-warning">{%d p.NewReports %}</span>
+              {% endif %}
+            </a>
+          </li>
 
-{% if p.NewReports == 0 %}
-<a href="{%s quickURL(p, "report_all") %}">Report</a>
-{% else %}
-<b><a href="{%s quickURL(p, "report_all") %}">Report ({%d p.NewReports %})</a></b>
-{% endif %} 
+          <!-- Chat Menu -->
+          <li class="hidden-xs">
+            <a href="{%s quickURL(p, "chat") %}" title="Chat">
+              <i class="fa fa-comments"></i>
+              {% if p.NewChatMessages > 100 %}
+                <span class="label label-warning">99+</span>
+              {% elseif p.NewChatMessages > 0 %}
+                <span class="label label-warning">{%d p.NewChatMessages %}</span>
+              {% endif %}
+            </a>
+          </li>
 
-{% if p.NewMessages == 0 %}
-<a href="{%s quickURL(p, "message_inbox") %}">Messaggi</a>
-{% else %}
-<b><a href="{%s quickURL(p, "message_inbox") %}">Messaggi ({%d p.NewMessages %})</a></b>
-{% endif %} 
+          <!-- Notifications Menu -->
+          <li class="dropdown notifications-menu hidden-sm hidden-md hidden-lg">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+              <i class="fa fa-bell-o"></i>
+              {% if p.NewMessages + p.NewReports + p.NewChatMessages > 100 %}
+                <span class="label label-warning">99+</span>
+              {% elseif p.NewMessages + p.NewReports + p.NewChatMessages > 0 %}
+                <span class="label label-warning">{%d p.NewMessages + p.NewReports + p.NewChatMessages %}</span>
+              {% endif %}
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <!-- inner menu: contains the actual data -->
+                <ul class="menu">
+                    <li>
+                      <a href="{%s quickURL(p, "message_inbox") %}">
+                      {% if p.NewMessages != 0 %}
+                        <i class="fa fa-envelope-o"></i> {%d p.NewMessages %} nuovi messaggi
+                      {% else %}
+                        <i class="fa fa-envelope-o"></i> Vai ai messaggi
+                      {% endif %}
+                      </a>
+                    </li>
+                  <li>
+                    <a href="{%s quickURL(p, "report_all") %}">
+                      {% if p.NewReports != 0 %}
+                        <i class="fa fa-file"></i> {%d p.NewReports %} nuovi report
+                      {% else %}
+                        <i class="fa fa-file"></i> Vai ai report
+                      {% endif %}
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{%s quickURL(p, "chat") %}">
+                      {% if p.NewChatMessages != 0 %}
+                        <i class="fa fa-comments"></i> {%d p.NewChatMessages %} nuovi messaggi in chat
+                      {% else %}
+                        <i class="fa fa-comments"></i> Vai alla chat
+                      {% endif %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
 
-{% if p.NewChatMessages == 0 %}
-<a href="{%s quickURL(p, "chat") %}">Chat</a>
-{% else %}
-<b><a href="{%s quickURL(p, "chat") %}">Chat ({%d p.NewChatMessages %})</a></b>
-{% endif %}
+          <!-- Turn info -->
+          <li class="dropdown notifications-menu">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" title="Turno">
+              <i class="fa fa-clock-o"></i>
+              <span class="label label-danger">{%d p.Options.Turn %}</span>
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <!-- inner menu: contains the actual data -->
+                <ul class="menu">
+                  <li class="header">
+                    <a>Siamo al turno {%d p.Options.Turn %} su {%d p.Options.EndGame %}</a>
+                  </li>
+                  <li>
+                    <a><i class="fa fa-clock-o"></i> Orario del server: {%s p.Now.Format("15:04:05") %}</a>
+                  </li>
+                  <li>
+                    <a><i class="fa fa-hourglass-half"></i> Fine turno: {%s p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Format("15:04") %}</a>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
 
-<a href="{%s quickURL(p, "player_all") %}">Giocatori</a>
+          <!-- Server time -->
+          <li class="hidden-xs">
+            <a title="Orario del server">
+              <span>{%s p.Now.Format("15:04:05") %}</span>
+            </a>
+          </li>
 
-<a href="{%s quickURL(p, "company_all") %}">Societa'</a>
+          <!-- Player menu -->
+          <li class="dropdown user user-menu">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="{%s cp.Name %}">
+              <i class="fa fa-user"></i>
+              <span class="hidden-xs">{%s cp.Name %}</span>
+            </a>
+            <ul class="dropdown-menu">
+              <li class="user-header" style="height: auto">
+                <p>
+                  {%s cp.Name %}
+                </p>
+              </li>
+              <!-- Menu Body -->
+              <li class="user-body">
+                <div class="row">
+                  <div class="col-xs-6 text-center">
+                    <i class="fa fa-bank"></i> {%s markupMoney(cp.Budget) %}
+                  </div>
+                  <div class="col-xs-6 text-center">
+                    <i class="fa fa-heart"></i> {%d cp.ActionPoints %}
+                  </div>
+                </div>
+                <!-- /.row -->
+              </li>
+              <!-- Menu Footer-->
+              <li class="user-footer">
+                <div class="pull-right">
+                  <a href="{%s quickURL(p, "logout") %}" class="btn btn-default btn-flat">Esci</a>
+                </div>
+              </li>
+            </ul>
+          </li>
 
-<a href="{%s quickURL(p, "logout") %}">Esci</a>
+          <!-- Empty -->
+          <li class="hidden-xs">
+            <span style="padding: 20px">&nbsp;</span>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+  <!-- Left side column. contains the logo and sidebar -->
+  <aside class="main-sidebar">
 
-</nav>
+    <!-- sidebar: style can be found in sidebar.less -->
+    <section class="sidebar">
 
-<p class="text-danger">{%s p.Error %}</p>
-<p class="text-success">{%s p.Success %}</p>
+      <!-- Sidebar Menu -->
+      <ul class="sidebar-menu" data-widget="tree">
+        <li class="header">Menu di gioco</li>
+        <!-- Optionally, you can add icons to the links -->
+        <li><a href="{%s quickURL(p, "gamehome") %}"><i class="fa fa-home"></i><span>Pannello di controllo</span></a></li>
+        <li><a href="{%s quickURL(p, "market") %}"><i class="fa fa-btc"></i><span>Mercato</span></a></li>
+        <li><a href="{%s quickURL(p, "map") %}"><i class="fa fa-globe"></i><span>Mappa</span></a></li>
+        <li><a href="{%s quickURL(p, "stats") %}"><i class="fa fa-line-chart"></i><span>Statistiche</span></a></li>
+        <li><a href="{%s quickURL(p, "help") %}"><i class="fa fa-book"></i><span>Regolamento</span></a></li>
+        <li class="header">Telegram</li>
+        <li><a href="http://t.me/ImperoTGBot"><i class="fa fa-paper-plane"></i><span>Attiva il bot</span></a></li>
+      </ul>
+      <!-- /.sidebar-menu -->
+    </section>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <h1>
+        {% if p.Now.Before(p.Options.GameStart) %}
+          Il gioco iniziera' alle {%s p.Options.GameStart.Format("15:04") %}!
+        {% elseif p.Options.Turn > p.Options.EndGame %}
+          Il gioco e' terminato! <b>Vai alla <a href="{%s quickURL(p, "chart") %}">classifica</a>!</b>
+        {% else %}
+          {%s= title %} <small>{%s= subtitle %}</small>
+        {% endif %}
+      </h1>
+    </section>
+
+    <!-- Main content -->
+
+    <section class="content container-fluid">
+
+      {% if p.Error != "" %}
+        <div class="alert alert-danger alert-dismissible">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+          <h4><i class="icon fa fa-ban"></i> Operazione annullata!</h4>
+          {%s p.Error %}
+        </div>
+      {% endif %}
+
+      {% if p.Warning != "" %}
+        <div class="alert alert-warning alert-dismissible">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+          <h4><i class="icon fa fa-warning"></i> Attenzione!</h4>
+          {%s p.Warning %}
+        </div>
+      {% endif %}
+
+      {% if p.Success != "" %}
+        <div class="alert alert-success alert-dismissible">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+          <h4><i class="icon fa fa-check"></i> Operazione completa!</h4>
+          {%s p.Success %}
+        </div>
+      {% endif %}
 
 {% endfunc %}

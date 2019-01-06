@@ -2,11 +2,47 @@
 
 {% func ReportPage(p *ReportData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Visualizza report", "") %}
 
-<p>Oggetto: {%s p.Report.Subject %}</p>
-<p>Data: {%s p.Report.Date.Format("02-01 15:04:05") %}</p>
-<p>{%s= p.Report.Content %}</p>
+      <form action="{%s quickURL(p.HeaderData, "report_delete") %}" method="POST">
+      <input type="hidden" name="IDs" value="{%d int(p.Report.ID) %}">
+
+      <div class="row">
+        {%= MessageFoldersBox(p.HeaderData) %}
+        <div class="col-md-9">
+          <div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title">Report</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+              <div class="mailbox-read-info">
+                <h3>{%s p.Report.Subject %}</h3>
+                <h5><span class="mailbox-read-time pull-right">{%s p.Report.Date.Format("02-01 15:04:05") %}</span></h5>
+              </div>
+              <!-- /.mailbox-read-info -->
+              <div class="mailbox-controls with-border text-center">
+                <div class="btn-group">
+                  <button type="submit" class="btn btn-default btn-sm" data-toggle="tooltip" data-container="body" title="" data-original-title="Delete">
+                    <i class="fa fa-trash-o"></i></button>
+                </div>
+                <!-- /.btn-group -->
+              </div>
+              <!-- /.mailbox-controls -->
+              <div class="mailbox-read-message">
+                {%s= p.Report.Content %}
+              </div>
+              <!-- /.mailbox-read-message -->
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer">
+              <button type="submit" class="btn btn-default"><i class="fa fa-trash-o"></i> Cancella</button>
+            </div>
+            <!-- /.box-footer -->
+          </div>
+        </div>
+        <!-- /.col -->
+      </div>
 
 {%= FooterPage() %}
 

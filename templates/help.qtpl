@@ -1,6 +1,6 @@
 {% func HelpPage() %}
 
-{%= HeaderPage() %}
+{%= HeaderPage("Regolamento") %}
 
 <a href="/game/">Torna al gioco</a>.
 

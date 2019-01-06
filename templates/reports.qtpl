@@ -3,58 +3,91 @@
 
 {% func ReportsPage(p *ReportsData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Report", "") %}
 
-<script>
-function selectall() {
-	var i;
-	var chks;
+      <form action="{%s quickURL(p.HeaderData, "report_delete") %}" method="POST">
 
-	chks = document.getElementsByName("IDs");
-	for (i = 0; i < chks.length; i++) {
-		chks[i].checked = !chks[i].checked;
-	}
-}
-</script>
+      <div class="row">
+        {%= MessageFoldersBox(p.HeaderData) %}
+        <div class="col-md-9">
+          <div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title">Report</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+              <div class="mailbox-controls">
+                <!-- Check all button -->
+                <button type="button" class="btn btn-default btn-sm checkbox-toggle" id="select-btn"><i class="fa fa-square-o"></i></button>
+                <button type="submit" class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button>
+                <button type="button" class="btn btn-default btn-sm" onclick="javascript:window.location.reload(true)"><i class="fa fa-refresh"></i></button>
+                <div class="pull-right">
+                  {%d len(p.Reports) %}
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-left"></i></button>
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-right"></i></button>
+                  </div>
+                  <!-- /.btn-group -->
+                </div>
+                <!-- /.pull-right -->
+              </div>
+              <div class="table-responsive mailbox-messages">
+                <table class="table table-hover table-striped">
+                  <tbody>
+                  {% if len(p.Reports) == 0 %}
+                    <tr><td>Cartella vuota</td></tr>
+                  {% else %}
+                    {% for _, r := range p.Reports %}
+                      <tr>
+                        <td><input type="checkbox" name="IDs" value="{%d int(r.ID) %}"></td>
+                        <td class="mailbox-star"></td>
+                        <td class="mailbox-name"></td>
+                        <td class="mailbox-subject">
+                        {% if !r.Read %}
+                          <b>
+                        {% endif %}
+                        <a href="{%s quickURL(p.HeaderData, "report", "id", fmt.Sprint(r.ID)) %}">{%s r.Subject %}</a>
+                        {% if !r.Read %}
+                          </b>
+                        {% endif %}
+                        </td>
+                        <td class="mailbox-attachment"></td>
+                        <td class="mailbox-date">{%s r.Date.Format("02-01 15:04:05") %}</td>
+                      </tr>
+                    {% endfor %}
+                  {% endif %}
+                  </tbody>
+                </table>
+                <!-- /.table -->
+              </div>
+              <!-- /.mail-box-messages -->
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer no-padding">
+              <div class="mailbox-controls">
+                <!-- Check all button -->
+                <button type="button" class="btn btn-default btn-sm checkbox-toggle"><i class="fa fa-square-o"></i></button>
+                <button type="submit" class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button>
+                <button type="button" class="btn btn-default btn-sm" onclick="javascript:window.location.reload(true)"><i class="fa fa-refresh"></i></button>
+                <div class="pull-right">
+                  {%d len(p.Reports) %}
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-left"></i></button>
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-right"></i></button>
+                  </div>
+                  <!-- /.btn-group -->
+                </div>
+                <!-- /.pull-right -->
+              </div>
+            </div>
+          </div>
+          <!-- /. box -->
+        </div>
+        <!-- /.col -->
+      </div>
 
-{% if len(p.Reports) > 0 %}
+      </form>
 
-<form action="{%s quickURL(p.HeaderData, "report_delete") %}" method="POST">
-<input type="submit" value="Cancella">
-<table>
-<tr>
-	<th><a name="selectall" href="#" onclick="selectall()">Inverti selezione</a></th>
-	<th>Oggetto</th>
-	<th>Data</th>
-</tr>
-
-	{% for _, r := range p.Reports %}
-<tr>
-	<td><input type="checkbox" name="IDs" value="{%d int(r.ID) %}"></td>
-
-	<td>
-	{% if !r.Read %}
-	<b>
-	{% endif %}
-	<a href="{%s quickURL(p.HeaderData, "report", "id", fmt.Sprint(r.ID)) %}">{%s r.Subject %}</a>
-	{% if !r.Read %}
-	</b>
-	{% endif %}
-	</td>
-
-	<td>{%s r.Date.Format("02-01 15:04:05") %}</td>
-</tr>
-	{% endfor %}
-
-</table>
-</form>
-
-{% else %}
-
-<p>Nessun report!</p>
-
-{% endif %}
-
-{%= FooterPage() %}
+{%= FooterPageGeneration("reports", true) %}
 
 {% endfunc %}

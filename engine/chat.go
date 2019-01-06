@@ -8,7 +8,7 @@ import (
 func (es *EngineSession) GetChatMessages(p *Player) (err error, messages []*ChatMessage) {
 	messages = make([]*ChatMessage, 0)
 
-	if err := es.tx.Preload("From").Order("Date desc", true).Find(&messages).Error; err != nil {
+	if err := es.tx.Preload("From").Order("Date asc", true).Find(&messages).Error; err != nil {
 		panic(err)
 	}
 

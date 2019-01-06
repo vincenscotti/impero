@@ -3,49 +3,90 @@
 
 {% func MessagesInboxPage(p *MessagesInboxData) %}
 
-{%= GameHeaderPage(p.HeaderData) %}
+{%= GameHeaderPage(p.HeaderData, "Posta in arrivo", "") %}
 
-Ricevuti
-
-<a href="{%s quickURL(p.HeaderData, "message_outbox") %}">Inviati</a>
-
-{% if len(p.Messages) > 0 %}
-<table>
-<tr>
-	<th>Da</th>
-	<th>Oggetto</th>
-	<th>Data</th>
-</tr>
-
-	{% for _, m := range p.Messages %}
-<tr>
-	{% if m.From.Name != "" %}
-		<td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(m.From.ID)) %}">{%s m.From.Name %}</a></td>
-	{% else %}
-		<td>admin</td>
-	{% endif %}
-
-	<td>
-	{% if !m.Read %}
-	<b>
-	{% endif %}
-	<a href="{%s quickURL(p.HeaderData, "message", "id", fmt.Sprint(m.ID)) %}">{%s m.Subject %}</a>
-	{% if !m.Read %}
-	</b>
-	{% endif %}
-	</td>
-
-	<td>{%s m.Date.Format("02-01 15:04:05") %}</td>
-</tr>
-	{% endfor %}
-
-</table>
-
-{% else %}
-
-<p>Nessun messaggio!</p>
-
-{% endif %}
+      <div class="row">
+        {%= MessageFoldersBox(p.HeaderData) %}
+        <div class="col-md-9">
+          <div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title">Posta in arrivo</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+              <div class="mailbox-controls">
+                <!-- Check all button -->
+                <button type="button" class="btn btn-default btn-sm checkbox-toggle"><i class="fa fa-square-o"></i></button>
+                <button type="button" class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button>
+                <button type="button" class="btn btn-default btn-sm" onclick="javascript:window.location.reload(true)"><i class="fa fa-refresh"></i></button>
+                <div class="pull-right">
+                  {%d len(p.Messages) %}
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-left"></i></button>
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-right"></i></button>
+                  </div>
+                  <!-- /.btn-group -->
+                </div>
+                <!-- /.pull-right -->
+              </div>
+              <div class="table-responsive mailbox-messages">
+                <table class="table table-hover table-striped">
+                  <tbody>
+                  {% if len(p.Messages) == 0 %}
+                    <tr><td>Cartella vuota</td></tr>
+                  {% else %}
+                    {% for _, m := range p.Messages %}
+                      <tr>
+                        <td><input type="checkbox"></td>
+                        <td class="mailbox-star"></td>
+                        {% if m.From.Name != "" %}
+                          <td class="mailbox-name"><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(m.From.ID)) %}">{%s m.From.Name %}</a></td>
+                        {% else %}
+                          <td>Admin</td>
+                        {% endif %}
+                        <td class="mailbox-subject">
+                        {% if !m.Read %}
+                          <b>
+                        {% endif %}
+                        <a href="{%s quickURL(p.HeaderData, "message", "id", fmt.Sprint(m.ID)) %}">{%s m.Subject %}</a>
+                        {% if !m.Read %}
+                          </b>
+                        {% endif %}
+                        </td>
+                        <td class="mailbox-attachment"></td>
+                        <td class="mailbox-date">{%s m.Date.Format("02-01 15:04:05") %}</td>
+                      </tr>
+                    {% endfor %}
+                  {% endif %}
+                  </tbody>
+                </table>
+                <!-- /.table -->
+              </div>
+              <!-- /.mail-box-messages -->
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer no-padding">
+              <div class="mailbox-controls">
+                <!-- Check all button -->
+                <button type="button" class="btn btn-default btn-sm checkbox-toggle"><i class="fa fa-square-o"></i></button>
+                <button type="button" class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button>
+                <button type="button" class="btn btn-default btn-sm" onclick="javascript:window.location.reload(true)"><i class="fa fa-refresh"></i></button>
+                <div class="pull-right">
+                  {%d len(p.Messages) %}
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-left"></i></button>
+                    <button type="button" class="btn btn-default btn-sm" disabled><i class="fa fa-chevron-right"></i></button>
+                  </div>
+                  <!-- /.btn-group -->
+                </div>
+                <!-- /.pull-right -->
+              </div>
+            </div>
+          </div>
+          <!-- /. box -->
+        </div>
+        <!-- /.col -->
+      </div>
 
 {%= FooterPage() %}
 

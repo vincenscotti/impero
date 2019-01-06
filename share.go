@@ -4,8 +4,22 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 	"net/http"
 )
+
+func Market(w http.ResponseWriter, r *http.Request) {
+	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
+
+	_, shareauctions := tx.GetShareAuctionsWithPlayerParticipation(header.CurrentPlayer)
+	_, shareoffers := tx.GetShareOffers()
+
+	page := &MarketData{HeaderData: header,
+		ShareAuctions: shareauctions, ShareOffers: shareoffers}
+
+	RenderHTML(w, r, templates.MarketPage(page))
+}
 
 func EmitShares(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
@@ -94,7 +108,7 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 
 	blerr := BLError{}
 
-	if target, err := router.Get("gamehome").URL(); err != nil {
+	if target, err := router.Get("market").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -131,7 +145,7 @@ func BuyShare(w http.ResponseWriter, r *http.Request) {
 
 	blerr := BLError{}
 
-	if target, err := router.Get("gamehome").URL(); err != nil {
+	if target, err := router.Get("market").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target

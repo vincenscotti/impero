@@ -1,17 +1,40 @@
 {% func LoginPage(msg string) %}
 
-{%= HeaderPage() %}
+{%= HeaderPage("Accedi") %}
 
-<a href="/signup/">Registrati</a> o accedi al gioco.
-<a href="/help/">Regolamento</a>
-<p><b>{%s msg %}</b></p>
+  <div class="register-box">
+    <div class="register-logo">
+      <b><a href="/">Impero</a></b>
+    </div>
 
-<form action="/login/" method="post">
+    <div class="register-box-body">
+      <p class="login-box-msg">Accedi al gioco</p>
+      <p class="login-box-msg" style="color: red">{%s msg %}</p>
 
-<input type="text" name="name" placeholder="Username" required>
-<input type="password" name="password" placeholder="Password">
-<input type="submit" value="Login">
+      <form action="/login/" method="post">
+        <div class="form-group has-feedback">
+          <input class="form-control" placeholder="Nome utente" type="text" name="name" required>
+          <i class="form-control-feedback fa fa-user"></i>
+        </div>
+        <div class="form-group has-feedback">
+          <input class="form-control" placeholder="Password" type="password" name="password" required>
+          <i class="form-control-feedback fa fa-lock"></i>
+        </div>
+        <div class="row">
+          <div class="col-xs-7">
+            <p><a href="/signup/" class="text-center">Non sono registrato</a></p>
+          </div>
+          <!-- /.col -->
+          <div class="col-xs-5">
+            <button type="submit" class="btn btn-primary btn-block btn-flat">Accedi</button>
+          </div>
+          <!-- /.col -->
+        </div>
+      </form>
+    </div>
+    <!-- /.form-box -->
+  </div>
 
-</form>
+{%= FooterPageGeneration("", false) %}
 
 {% endfunc %}

@@ -83,12 +83,12 @@ func (es *EngineSession) BuyNode(p *Player, cmp *Company, coord Coord) error {
 		return errors.New("Il gioco e' terminato!")
 	}
 
-	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
-		panic(err)
+	if cmp.ID == 0 {
+		return errors.New("Nessuna societa' selezionata!")
 	}
 
-	if cmp.ID == 0 {
-		return errors.New("Societa' inesistente!")
+	if err := es.tx.First(cmp).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
 	}
 
 	if err := es.tx.Where("`x` = ? and `y` = ?", coord.X, coord.Y).First(node).Error; err != nil && err != gorm.ErrRecordNotFound {

@@ -32,6 +32,19 @@ func (es *EngineSession) GetPlayer(id int) (err error, p *Player) {
 	return
 }
 
+func (es *EngineSession) GetPlayerByName(name string) (err error, p *Player) {
+	p = &Player{}
+	if err := es.tx.Where("`name` = ?", name).First(p).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if p.ID == 0 {
+		err = errors.New("Giocatore inesistente!")
+	}
+
+	return
+}
+
 func (es *EngineSession) GetPlayerNotifications(id int) (err error, newchats, newmsgs, newreports int) {
 	var p *Player
 

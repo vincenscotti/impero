@@ -21,6 +21,18 @@ func Companies(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.CompaniesPage(&page))
 }
 
+func Stats(w http.ResponseWriter, r *http.Request) {
+	header := context.Get(r, "header").(*HeaderData)
+	tx := GetTx(r)
+
+	_, companies := tx.GetCompanies()
+	_, players := tx.GetPlayers()
+
+	page := StatsData{HeaderData: header, Companies: companies, Players: players}
+
+	RenderHTML(w, r, templates.StatsPage(&page))
+}
+
 func GetCompany(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
@@ -71,7 +83,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if err := tx.NewCompany(header.CurrentPlayer, cmp.Name, cmp.ShareCapital * 100); err != nil {
+	if err := tx.NewCompany(header.CurrentPlayer, cmp.Name, cmp.ShareCapital*100); err != nil {
 		blerr.Message = err.Error()
 		panic(blerr)
 	} else {

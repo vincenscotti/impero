@@ -50,6 +50,7 @@ func (es *EngineSession) GetMapInfo() (err error, mapnodes map[Coord]*Node, rent
 
 	colorn := 0
 	for _, n := range nodes {
+		n.BuyCost, n.InvestCost, n.NewYield = es.GetCostsByYield(n.Yield)
 		mapnodes[Coord{X: n.X, Y: n.Y}] = n
 
 		// cannot Preload, cause of sqlite bug

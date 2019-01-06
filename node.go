@@ -2,10 +2,8 @@ package main
 
 import (
 	"github.com/gorilla/context"
-	"github.com/gorilla/mux"
 	. "github.com/vincenscotti/impero/model"
 	"net/http"
-	"strconv"
 )
 
 func BuyNode(w http.ResponseWriter, r *http.Request) {
@@ -80,29 +78,4 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RedirectToURL(w, r, blerr.Redirect)
-}
-
-func GetCosts(w http.ResponseWriter, r *http.Request) {
-	tx := GetTx(r)
-
-	ret := struct {
-		BuyCost    int
-		InvestCost int
-	}{}
-
-	params := mux.Vars(r)
-
-	x, err := strconv.Atoi(params["x"])
-	if err != nil {
-		panic(err)
-	}
-
-	y, err := strconv.Atoi(params["y"])
-	if err != nil {
-		panic(err)
-	}
-
-	_, ret.BuyCost, ret.InvestCost = tx.GetNodeCosts(Coord{X: x, Y: y})
-
-	RenderJSON(w, r, ret)
 }
