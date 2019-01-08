@@ -7,6 +7,7 @@ while inotifywait -r -e modify --exclude "(.*.db.*|.*.swp|build)" .; do
 	if [ $(basename `pwd`) != "templates" ]; then
 		cd templates/
 	fi
+	markdown spec.md > spec.html &&
 	qtc &&
 	cd ../ &&
 	go build &&
