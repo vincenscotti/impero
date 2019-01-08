@@ -48,6 +48,9 @@ $(function() {
 });
 </script>
 
+<!-- Common script -->
+<script src="/static/js/common.js"></script>
+
 {% if path != "" %}
   <!-- Page script -->
   <script src="/static/js/{%s path %}.js"></script>

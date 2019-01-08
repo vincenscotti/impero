@@ -140,10 +140,10 @@ cp := p.CurrentPlayer
                     <a>Siamo al turno {%d p.Options.Turn %} su {%d p.Options.EndGame %}</a>
                   </li>
                   <li>
-                    <a><i class="fa fa-clock-o"></i> Orario del server: {%s p.Now.Format("15:04:05") %}</a>
+                    <a><i class="fa fa-clock-o"></i> Orario del server: <span id="server-time" data-unixtime="{%v p.Now.Unix() %}">{%s p.Now.Format("15:04:05") %}</span></a>
                   </li>
                   <li>
-                    <a><i class="fa fa-hourglass-half"></i> Fine turno: {%s p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Format("15:04") %}</a>
+                    <a><i class="fa fa-hourglass-half"></i> Fine turno: {%s p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Format("15:04") %} (<span class="expiration" data-unixtime="{%v p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Unix() %}"></span>)</a>
                   </li>
                 </ul>
               </li>
@@ -153,7 +153,7 @@ cp := p.CurrentPlayer
           <!-- Server time -->
           <li class="hidden-xs">
             <a title="Orario del server">
-              <span>{%s p.Now.Format("15:04:05") %}</span>
+              <span class="server-time">{%s p.Now.Format("15:04:05") %}</span>
             </a>
           </li>
 
