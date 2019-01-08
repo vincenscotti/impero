@@ -214,7 +214,7 @@ cp := p.CurrentPlayer
         <li><a href="{%s quickURL(p, "stats") %}"><i class="fa fa-line-chart"></i><span>Statistiche</span></a></li>
         <li><a href="{%s quickURL(p, "help") %}"><i class="fa fa-book"></i><span>Regolamento</span></a></li>
         <li class="header">Telegram</li>
-        <li><a href="http://t.me/ImperoTGBot"><i class="fa fa-paper-plane"></i><span>Attiva il bot</span></a></li>
+        <li><a target="_blank" href="http://t.me/ImperoTGBot"><i class="fa fa-paper-plane"></i><span>Attiva il bot</span></a></li>
       </ul>
       <!-- /.sidebar-menu -->
     </section>

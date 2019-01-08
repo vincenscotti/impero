@@ -128,13 +128,19 @@
               </div>
               <div>
                 <form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
-                  <select class="form-control" name="ID" class="pull-left">
-                    <option value="0">Societ&agrave;</option>
+                  <select class="form-control" name="ID">
+                    <optgroup label="Societ&agrave;">
                     {% for _, c := range p.CompaniesByName %}
                       {% if c.CEOID == p.CurrentPlayer.ID %}
-                        <option value="{%d int(c.ID) %}">{%s c.Name %}</option>
+                        <option value="{%d int(c.ID) %}"
+                        {% if c.ActionPoints < 1 %}
+                          disabled
+                        {% endif %}
+                        >
+                        {%s c.Name %} ({%s markupMoney(c.ShareCapital) %} &nbsp;&nbsp;{%d c.ActionPoints %} PO)</option>
                       {% endif %}
                     {% endfor %}
+                    </optgroup>
                   </select>
                   <input class="sel-x" type="hidden" name="X">
                   <input class="sel-y" type="hidden" name="Y">

@@ -17,10 +17,11 @@
             <div class="box-body">
               <div class="form-group">
                 <select class="form-control col-sm-10" name="to_id">
-                  <option value="0">Destinatario:</option>
+                  <optgroup label="Destinatario">
                   {% for _, p := range p.Players %}
                     <option value="{%d int(p.ID) %}">{%s p.Name %}</option>
                   {% endfor %}
+                  </optgroup>
                 </select>
               </div>
               <br>

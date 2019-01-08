@@ -39,7 +39,7 @@
                         <form action="{%s quickURL(p.HeaderData, "bid_share") %}" method="POST">
                           <input type="hidden" name="auction" value="{%d int(sa.ID) %}">
 
-                          <div class="col-md-6">
+                          <div class="col-lg-7">
                             <div class="input-group">
                               <span class="input-group-addon">$</span>
                               <input class="form-control" type="text" placeholder="Rilancio" name="amount">
@@ -47,7 +47,7 @@
                             </div>
                           </div>
 
-                          <div class="col-md-6">
+                          <div class="col-lg-5">
                             {% if len(sa.Participations) > 0 %}
                               <button type="submit" class="btn btn-primary">Rilancia</button>
                             {% else %}
