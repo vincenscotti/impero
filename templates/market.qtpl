@@ -28,7 +28,7 @@
                   <tr>
                     <td>
                       {% if sa.HighestOfferPlayerID == p.HeaderData.CurrentPlayer.ID %}
-                        <i class="fa fa-star"></i>
+                        <i class="fa fa-trophy"></i>
                       {% endif %}
                     </td>
                     <td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(sa.CompanyID)) %}">{%s sa.Company.Name %}</a></td>

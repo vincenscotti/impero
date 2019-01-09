@@ -5,16 +5,16 @@ function formatDurationLong(duration) {
 	var ret = "";
 
 	if (hours > 0) {
-		ret += hours
+		ret += hours;
 		ret += "h ";
 	}
 
 	if (minutes > 0) {
-		ret += minutes
+		ret += minutes % 60;
 		ret += "m ";
 	}
 
-	ret += seconds
+	ret += seconds;
 	ret += "s";
 
 	return ret;
@@ -29,19 +29,19 @@ function formatTime(time) {
 	if (hours < 10) {
 		ret += "0";
 	}
-	ret += hours
+	ret += hours;
 	ret += ":";
 
 	if (minutes < 10) {
 		ret += "0";
 	}
-	ret += minutes
+	ret += minutes;
 	ret += ":";
 
 	if (seconds < 10) {
 		ret += "0";
 	}
-	ret += seconds
+	ret += seconds;
 
 	return ret;
 }

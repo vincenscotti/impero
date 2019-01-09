@@ -62,7 +62,7 @@
                     <td data-x="{%d x %}" data-y="{%d y %}" data-yield="{%d node.Yield %}" data-powersupply="{%d node.PowerSupply %}" data-toggle="modal" data-target="#modal-node" data-buycost="{%d node.BuyCost %}"
                     {% if node.Owner.ID != 0 %}
                       data-owner-name="{%s node.Owner.Name %}" data-owner-id="{%d int(node.Owner.ID) %}" data-newyield="{%d node.NewYield %}" style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})"
-                      {% if node.Owner.CEOID == p.CurrentPlayer.ID %}
+                      {% if node.Owner.CEOID == p.CurrentPlayer.ID && node.InvestCost != -1 %}
                         data-investcost="{%d node.InvestCost %}" 
                       {% endif %}
                     {% else %}
