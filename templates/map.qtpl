@@ -13,12 +13,15 @@
         <div class="box-body">
 
         <p>Le celle in <s><b>blackout</s></b> non hanno generato profitti all'ultimo turno, mentre le celle <s>adiacenti</s> hanno reso la met&agrave;</p>
+        <span>Clicca sulle societ&agrave; da visualizzare</span>
+        <a id="company-selectall" href="#">tutte</a>
+        <a id="company-hideall" href="#">nessuna</a>
         {% for _, c := range p.CompaniesByName %}
-          <span class="badge" style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}"><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.ID)) %}" style="color: black">
+          <span class="badge company-label" style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}" data-company-id="{%d int(c.ID) %}">
           {% if c.CEOID == p.CurrentPlayer.ID %}
             <i class="fa fa-star"></i>
           {% endif %}
-          {%s c.Name %}</a></span>
+          {%s c.Name %}</span>
         {% endfor %}
 
         </div>
@@ -59,7 +62,7 @@
                   %}
 
                   {% if ok %}
-                    <td data-x="{%d x %}" data-y="{%d y %}" data-yield="{%d node.Yield %}" data-powersupply="{%d node.PowerSupply %}" data-toggle="modal" data-target="#modal-node" data-buycost="{%d node.BuyCost %}"
+                    <td class="realnode" data-x="{%d x %}" data-y="{%d y %}" data-yield="{%d node.Yield %}" data-powersupply="{%d node.PowerSupply %}" data-toggle="modal" data-target="#modal-node" data-buycost="{%d node.BuyCost %}"
                     {% if node.Owner.ID != 0 %}
                       data-owner-name="{%s node.Owner.Name %}" data-owner-id="{%d int(node.Owner.ID) %}" data-newyield="{%d node.NewYield %}" style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})"
                       {% if node.Owner.CEOID == p.CurrentPlayer.ID && node.InvestCost != -1 %}
@@ -109,7 +112,7 @@
             <div class="modal-header text-center">
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">×</span></button>
-              <h4 class="modal-title"><span id="sel-owner-name"></span> (<span id="sel-x"></span>, <span id="sel-y"></span>)</h4>
+              <h4 class="modal-title"><a id="sel-owner-link" href="{%s quickURL(p.HeaderData, "company", "id", "0") %}"><span id="sel-owner-name"></span></a> (<span id="sel-x"></span>, <span id="sel-y"></span>)</h4>
             </div>
             <div class="modal-body">
               <p><i class="fa fa-money"></i> Rendimento per turno: <span id="sel-yield"></span> $</p>

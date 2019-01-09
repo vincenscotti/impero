@@ -28,6 +28,15 @@
 	border-style: none;
 }
 
+.company-deselected {
+	background-color: grey !important;
+}
+
+.company-label, .map .realnode {
+	cursor: pointer;
+	color: black;
+}
+
 .logo-lg {
 	margin: auto;
 }
