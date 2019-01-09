@@ -1,9 +1,9 @@
 FROM golang:latest as builder
-RUN apt-get update && apt-get install -y markdown
-RUN mardown templates/spec.md > templates/spec.html
 RUN go get -u github.com/golang/dep/cmd/dep && go get -u github.com/valyala/quicktemplate/qtc
 COPY . /go/src/github.com/vincenscotti/impero/
 WORKDIR /go/src/github.com/vincenscotti/impero/templates
+RUN apt-get update && apt-get install -y markdown
+RUN markdown spec.md > spec.html
 RUN qtc
 WORKDIR /go/src/github.com/vincenscotti/impero
 RUN dep ensure && go build
