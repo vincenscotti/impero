@@ -73,7 +73,7 @@
               </tbody></table>
             {% else %}
               <table class="table">
-                <tbody><tr><td>Non ci sono societ&agrave;</td></tr></tbody>
+                <tbody><tr><td>Non ci sono giocatori</td></tr></tbody>
               </table>
             {% endif %}
             </div>

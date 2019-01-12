@@ -33,7 +33,7 @@ cp := p.CurrentPlayer
             <a title="Budget"><i class="fa fa-usd"></i> {%s= markupMoneyNoCurrency(cp.Budget) %}</a>
           </li>
           <li>
-            <a title="Punti energia"><i class="fa fa-heart"></i> {%d cp.ActionPoints %}</a>
+            <a title="Punti operazione"><i class="fa fa-heart"></i> {%d cp.ActionPoints %}</a>
           </li>
         </ul>
       </div>
