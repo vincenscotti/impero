@@ -104,7 +104,7 @@
                     <td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(t.FromID)) %}">{%s t.From.Name %}</a></td>
                     <td>{%s markupMoney(t.Amount) %}</td>
                     <td>{%d t.Risk %} &percnt;</td>
-                    <td>{%s t.Expiration.Format("02-01 15:04:05") %}</td>
+                    <td>{%s t.Expiration.Format("02/01 15:04:05") %}</td>
                     <td>
                       <form action="{%s quickURL(p.HeaderData, "player_transfer_confirm") %}" method="POST">
                         <input type="hidden" name="id" value="{%d int(t.ID) %}">

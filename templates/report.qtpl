@@ -18,7 +18,7 @@
             <div class="box-body no-padding">
               <div class="mailbox-read-info">
                 <h3>{%s p.Report.Subject %}</h3>
-                <h5><span class="mailbox-read-time pull-right">{%s p.Report.Date.Format("02-01 15:04:05") %}</span></h5>
+                <h5><span class="mailbox-read-time pull-right">{%s p.Report.Date.Format("02/01 15:04:05") %}</span></h5>
               </div>
               <!-- /.mailbox-read-info -->
               <div class="mailbox-controls with-border text-center">

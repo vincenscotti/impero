@@ -272,7 +272,7 @@ cmp := p.Company
 
 <form action="{%s quickURL(p.HeaderData, "company_partnership_confirm") %}" method="POST">
 <input type="hidden" name="id" value="{%d int(partner.ID) %}">
-<input type="submit" value="Conferma (scade il {%s partner.ProposalExpiration.Format("02-01 15:04:05") %})">
+<input type="submit" value="Conferma (scade il {%s partner.ProposalExpiration.Format("02/01 15:04:05") %})">
 </form>
 
 {% else %}

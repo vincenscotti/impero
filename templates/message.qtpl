@@ -50,7 +50,7 @@
                 {% else %}
                   <h5>Da: admin
                 {% endif %}
-                <span class="mailbox-read-time pull-right">{%s p.Message.Date.Format("02-01 15:04:05") %}</span></h5>
+                <span class="mailbox-read-time pull-right">{%s p.Message.Date.Format("02/01 15:04:05") %}</span></h5>
                 <h5>A: <a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(p.Message.To.ID)) %}">{%s p.Message.To.Name %}</a></h5>
               </div>
               <!-- /.mailbox-read-info -->

@@ -227,7 +227,7 @@ cp := p.CurrentPlayer
     <section class="content-header">
       <h1>
         {% if p.Now.Before(p.Options.GameStart) %}
-          Il gioco iniziera' alle {%s p.Options.GameStart.Format("15:04") %}!
+          Il gioco iniziera' il {%s p.Options.GameStart.Format("02/01") %} alle {%s p.Options.GameStart.Format("15:04") %}!
         {% elseif p.Options.Turn > p.Options.EndGame %}
           Il gioco e' terminato! <b>Vai alla <a href="{%s quickURL(p, "chart") %}">classifica</a>!</b>
         {% else %}

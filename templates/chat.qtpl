@@ -23,10 +23,10 @@
                       <div class="direct-chat-info clearfix">
                         {% if m.From.ID == p.HeaderData.CurrentPlayer.ID %}
                           <span class="direct-chat-name pull-right">{%s m.From.Name %}</span>
-                          <span class="direct-chat-timestamp pull-left">{%s m.Date.Format("02-01 15:04:05") %}</span>
+                          <span class="direct-chat-timestamp pull-left">{%s m.Date.Format("02/01 15:04:05") %}</span>
                         {% else %}
                           <span class="direct-chat-name pull-left">{%s m.From.Name %}</span>
-                          <span class="direct-chat-timestamp pull-right">{%s m.Date.Format("02-01 15:04:05") %}</span>
+                          <span class="direct-chat-timestamp pull-right">{%s m.Date.Format("02/01 15:04:05") %}</span>
                         {% endif %}
                       </div>
                       <!-- /.direct-chat-info -->

@@ -54,7 +54,7 @@
                         {% endif %}
                         </td>
                         <td class="mailbox-attachment"></td>
-                        <td class="mailbox-date">{%s m.Date.Format("02-01 15:04:05") %}</td>
+                        <td class="mailbox-date">{%s m.Date.Format("02/01 15:04:05") %}</td>
                       </tr>
                     {% endfor %}
                   {% endif %}
