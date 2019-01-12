@@ -4,24 +4,37 @@
 
 {%= GameHeaderPage(p.HeaderData, "Giocatore", p.Player.Name) %}
 
-<b>Scrivi messaggio</b>
+      <div class="row">
 
-<form action="{%s quickURL(p.HeaderData, "message_new") %}" method="post">
-<p>A: {%s p.Player.Name %}</p>
-<input type="text" name="subject" placeholder="Oggetto" required>
-<textarea name="content" placeholder="Messaggio" required>
-</textarea>
-<input type="hidden" name="to_id" value="{%d int(p.Player.ID) %}">
-<input type="submit" value="Invia">
-</form>
+        <div class="col-md-3 col-sm-6 col-xs-12">
+          <div class="info-box">
+            <span class="info-box-icon bg-aqua"><i class="fa fa-bank"></i></span>
 
-<b>Trasferisci denaro</b>
+            <div class="info-box-content">
+              <span class="info-box-text">Capitale</span>
+              <small>all'ultimo turno</small>
+              <span class="info-box-number">{%s markupMoney(p.Player.Budget) %}</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
 
-<form action="{%s quickURL(p.HeaderData, "player_transfer") %}" method="post">
-<input type="number" name="amount" placeholder="Capitale" required>
-<input type="hidden" name="to" value="{%s p.Player.Name %}">
-<input type="submit" value="Trasferisci">
-</form>
+        <div class="col-md-3 col-sm-6 col-xs-12">
+          <div class="info-box">
+            <span class="info-box-icon bg-green"><i class="fa fa-pie-chart"></i></span>
+
+            <div class="info-box-content">
+              <span class="info-box-text">Entrate</span>
+              <small>all'ultimo turno</small>
+              <span class="info-box-number">{%s markupMoney(p.Player.LastIncome) %}</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
+
+      </div>
 
 {%= FooterPage() %}
 
