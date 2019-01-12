@@ -1,4 +1,5 @@
 {% import . "github.com/vincenscotti/impero/model" %}
+{% import "fmt" %}
 
 {% func EndGamePage(p *EndGameData) %}
 
@@ -14,29 +15,44 @@
 <h1 style="text-align: center; color: red">{%s p.Name %}</h1>
 {% endfor %}
 
-<table>
-	<thead>
-		<tr>
-			<th>#</th>
-			<th>Nome</th>
-			<th>Capitale</th>
-			<th>Punti vittoria</th>
-		</tr>
-	</thead>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Classifica</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
 
-	<tbody>
-
-{% for i, pl := range p.Players %}
-		<tr>
-			<td>{%d i+1 %}</td>
-			<td>{%s pl.Name %}</td>
-			<td>{%s markupMoney(pl.Budget) %}</td>
-			<td>{%d pl.VP %}</td>
-		</tr>
-{% endfor %}
-
-	</tbody>
-</table>
+            {% if len(p.Players) > 0 %}
+              <table class="table table-striped table-condensed">
+                <tbody><tr>
+                  <th style="width: 10px">#</th>
+                  <th>Nome</th>
+                  <th>Capitale all'ultimo turno</th>
+                </tr>
+                {% for i, pl := range p.Players %}
+                  {% if pl.ID == p.HeaderData.CurrentPlayer.ID %}
+                    <tr style="font-weight: bold">
+                  {% else %}
+                    <tr>
+                  {% endif %}
+                    <td>{%d i+1 %}</td>
+                    <td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(pl.ID)) %}">{%s pl.Name %}</a></td>
+                    <td>{%s markupMoney(pl.LastBudget) %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody></table>
+            {% else %}
+              <table class="table">
+                <tbody><tr><td>Non ci sono societ&agrave;</td></tr></tbody>
+              </table>
+            {% endif %}
+            </div>
+            <!-- /.box-body -->
+          </div>
+        </div>
+      </div>
 
 {%= FooterPage() %}
 
