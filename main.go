@@ -153,14 +153,14 @@ func main() {
 		// insert sane default options
 		opt.CompanyActionPoints = 5
 		opt.CompanyPureIncomePercentage = 30
-		opt.CostPerYield = 1
+		opt.CostPerYield = 1.5
 		opt.EndGame = 24
 		opt.InitialShares = 20
 		opt.BlackoutProbPerDollar = 0.001
 		opt.GameStart = time.Now()
 		opt.LastTurnCalculated = time.Now()
 		opt.NewCompanyCost = 5
-		opt.PlayerActionPoints = 5
+		opt.PlayerActionPoints = 8
 		opt.PlayerBudget = 10000
 		opt.TurnDuration = 5
 		opt.Turn = 1
