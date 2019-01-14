@@ -44,10 +44,8 @@ type EndGameData struct {
 }
 
 type SharesPerPlayer struct {
-	Company       Company
-	CompanyID     uint
-	Shares        int
-	ValuePerShare int
+	ShareholderInfo Shareholder
+	ValuePerShare   int
 }
 
 type PlayersData struct {
@@ -113,16 +111,9 @@ type CompanyData struct {
 	Shares           int
 	PureIncome       int
 	IncomePerShare   int
-	SharesInfo       []*ShareholdersPerCompany
 	IsShareHolder    bool
 	PossiblePartners []*Company
 	Partnerships     []*Partnership
-}
-
-type ShareholdersPerCompany struct {
-	Owner   Player
-	OwnerID uint
-	Shares  int
 }
 
 type MapData struct {

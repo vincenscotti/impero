@@ -26,13 +26,13 @@
                 {% for _, c := range p.SharesInfo %}
                   <tr>
                     <td>
-                      {% if c.Company.CEOID == p.CurrentPlayer.ID %}
+                      {% if c.ShareholderInfo.Company.CEOID == p.CurrentPlayer.ID %}
                         <i class="fa fa-star"></i>
                       {% endif %}
                     </td>
-                    <td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.CompanyID)) %}">{%s c.Company.Name %} (<i class="fa fa-bank"></i> {%s markupMoney(c.Company.ShareCapital) %} &nbsp;&nbsp;<i class="fa fa-cubes"></i> {%d c.Company.ActionPoints %})</a></td>
-                    <td>{%d c.Shares %}</td>
-                    <td>{%s markupMoney(c.Shares*c.ValuePerShare) %}</td>
+                    <td><a href="{%s quickURL(p.HeaderData, "company", "id", fmt.Sprint(c.ShareholderInfo.CompanyID)) %}">{%s c.ShareholderInfo.Company.Name %} (<i class="fa fa-bank"></i> {%s markupMoney(c.ShareholderInfo.Company.ShareCapital) %} &nbsp;&nbsp;<i class="fa fa-cubes"></i> {%d c.ShareholderInfo.Company.ActionPoints %})</a></td>
+                    <td>{%d c.ShareholderInfo.Shares %}</td>
+                    <td>{%s markupMoney(c.ShareholderInfo.Shares*c.ValuePerShare) %}</td>
                   </tr>
                 {% endfor %}
 

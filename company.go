@@ -43,22 +43,22 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	_, cmp, shareholders, pureincome, valuepershare := tx.GetCompany(header.CurrentPlayer, id)
+	_, cmp, pureincome, valuepershare := tx.GetCompany(id)
 	_, partnerships := tx.GetCompanyPartnerships(cmp)
 	_, ownedcompanies := tx.GetOwnedCompanies(header.CurrentPlayer)
 
 	shares := 0
 	myshares := 0
 
-	for _, shs := range shareholders {
+	for _, shs := range cmp.Shareholders {
 		shares += shs.Shares
 
-		if shs.OwnerID == header.CurrentPlayer.ID {
+		if shs.PlayerID == header.CurrentPlayer.ID {
 			myshares = shs.Shares
 		}
 	}
 
-	page := CompanyData{HeaderData: header, Company: cmp, SharesInfo: shareholders, Shares: shares, PureIncome: pureincome,
+	page := CompanyData{HeaderData: header, Company: cmp, Shares: shares, PureIncome: pureincome,
 		IncomePerShare: valuepershare, IsShareHolder: myshares >= 1, PossiblePartners: ownedcompanies, Partnerships: partnerships}
 
 	RenderHTML(w, r, templates.CompanyPage(&page))

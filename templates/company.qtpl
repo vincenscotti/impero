@@ -94,7 +94,7 @@ cmp := p.Company
             <!-- /.box-header -->
             <div class="box-body no-padding">
 
-            {% if len(p.SharesInfo) > 0 %}
+            {% if len(cmp.Shareholders) > 0 %}
               <table class="table table-striped table-condensed">
                 <tbody><tr>
                   <th style="width: 10px"></th>
@@ -102,14 +102,14 @@ cmp := p.Company
                   <th>Azioni</th>
                   <th>Rendimento</th>
                 </tr>
-                {% for _, sh := range p.SharesInfo %}
+                {% for _, sh := range cmp.Shareholders %}
                   <tr>
                     <td>
-                      {% if cmp.CEOID == sh.Owner.ID %}
+                      {% if cmp.CEOID == sh.Player.ID %}
                         <i class="fa fa-star"></i>
                       {% endif %}
                     </td>
-                    <td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(sh.Owner.ID)) %}">{%s sh.Owner.Name %}</a></td>
+                    <td><a href="{%s quickURL(p.HeaderData, "player", "id", fmt.Sprint(sh.Player.ID)) %}">{%s sh.Player.Name %}</a></td>
                     <td>{%d sh.Shares %}</td>
                     <td>{%s markupMoney(sh.Shares*p.IncomePerShare) %}</td>
                   </tr>

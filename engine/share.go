@@ -8,31 +8,37 @@ import (
 	"time"
 )
 
-func (es *EngineSession) GetSharesForPlayer(p *Player) (err error, shares []*SharesPerPlayer) {
-	shares = make([]*SharesPerPlayer, 0)
+func (es *EngineSession) GetSharesForPlayer(p *Player) (err error, shares []*Shareholder) {
+	shares = make([]*Shareholder, 0)
 
-	if err := es.tx.Table("shares").Select("DISTINCT company_id, count(company_id) as shares").Where("`owner_id` = ?", p.ID).Group("`company_id`").Order("`shares` desc").Find(&shares).Error; err != nil {
+	if err := es.tx.Model(shares).Preload("Player").Preload("Company").
+		Where("`player_id` = ?", p.ID).Order("`shares` desc").Find(&shares).Error; err != nil {
 		panic(err)
 	}
 
 	return
 }
 
-func (es *EngineSession) CalculateSharesIncome(shares []*SharesPerPlayer) (err error, income int) {
-	for _, sh := range shares {
-		cmp := &sh.Company
+func (es *EngineSession) CalculateSharesIncome(shares []*Shareholder) (err error, shpp []*SharesPerPlayer, income int) {
+	shpp = make([]*SharesPerPlayer, 0, len(shares))
 
-		if err := es.tx.Where(sh.CompanyID).Find(cmp).Error; err != nil {
+	for _, sh := range shares {
+		out := &SharesPerPlayer{}
+
+		if err := es.tx.Where(sh.CompanyID).Find(&out.ShareholderInfo.Company).Error; err != nil {
 			panic(err)
 		}
 
-		err, _, sh.ValuePerShare = es.GetCompanyFinancials(cmp, false)
+		err, _, out.ValuePerShare = es.GetCompanyFinancials(&out.ShareholderInfo.Company, false)
 
 		if err != nil {
 			return
 		}
 
-		income += sh.Shares * sh.ValuePerShare
+		out.ShareholderInfo = *sh
+		shpp = append(shpp, out)
+
+		income += sh.Shares * out.ValuePerShare
 	}
 
 	return
@@ -132,10 +138,14 @@ func (es *EngineSession) SellShares(p *Player, cmp *Company, numshares int, pric
 		return err
 	}
 
-	shares := 0
-	if err := es.tx.Model(&Share{}).Where("`company_id` = ? and `owner_id` = ?", cmp.ID, p.ID).Count(&shares).Error; err != nil {
+	sh := &Shareholder{}
+	sh.CompanyID = cmp.ID
+	sh.PlayerID = p.ID
+	if err := es.tx.Where(sh).Find(sh).Error; err != nil {
 		return err
 	}
+
+	shares := sh.Shares
 
 	if offers+numshares > shares {
 		return errors.New("Non hai cosi' tante azioni da vendere!")
@@ -297,19 +307,40 @@ func (es *EngineSession) BuyShare(p *Player, shareoffer *ShareOffer) error {
 		panic(err)
 	}
 
-	share := &Share{}
-	if err := es.tx.Where("`owner_id` = ? and `company_id` = ?", shareoffer.OwnerID, shareoffer.CompanyID).
-		First(share).Error; err != nil && err != gorm.ErrRecordNotFound {
+	oldsh := &Shareholder{}
+	oldsh.CompanyID = shareoffer.CompanyID
+	oldsh.PlayerID = shareoffer.OwnerID
+	if err := es.tx.Where(oldsh).First(oldsh).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
-	if share.ID == 0 {
-		return errors.New("Nessuna azione trovata!")
+	oldsh.Shares -= 1
+
+	if oldsh.Shares == 0 {
+		if err := es.tx.Delete(oldsh).Error; err != nil {
+			panic(err)
+		}
+	} else {
+		if err := es.tx.Save(oldsh).Error; err != nil {
+			panic(err)
+		}
 	}
 
-	share.OwnerID = p.ID
+	newsh := &Shareholder{}
+	newsh.CompanyID = shareoffer.CompanyID
+	newsh.PlayerID = p.ID
 
-	if err := es.tx.Save(share).Error; err != nil {
+	if err := es.tx.Where(newsh).First(newsh).Error; err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+
+	if newsh.ID == 0 {
+		newsh.Shares = 1
+	} else {
+		newsh.Shares += 1
+	}
+
+	if err := es.tx.Save(newsh).Error; err != nil {
 		panic(err)
 	}
 

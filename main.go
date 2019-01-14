@@ -40,11 +40,11 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: handle errors
 	_, shares := tx.GetSharesForPlayer(header.CurrentPlayer)
-	_, playerincome := tx.CalculateSharesIncome(shares)
+	_, shpp, playerincome := tx.CalculateSharesIncome(shares)
 	_, incomingtransfers := tx.GetIncomingTransfers(header.CurrentPlayer)
 
 	page := &GameHomeData{HeaderData: header,
-		SharesInfo: shares, PlayerIncome: playerincome,
+		SharesInfo: shpp, PlayerIncome: playerincome,
 		IncomingTransfers: incomingtransfers}
 
 	RenderHTML(w, r, templates.GameHomePage(page))
@@ -144,7 +144,7 @@ func main() {
 	}
 
 	db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
-		&ChatMessage{}, &Company{}, &Partnership{}, &Share{}, &Rental{},
+		&ChatMessage{}, &Company{}, &Partnership{}, &Shareholder{}, &Rental{},
 		&ShareAuction{}, &ShareAuctionParticipation{},
 		&TransferProposal{}, &ShareOffer{})
 

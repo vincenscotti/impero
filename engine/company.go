@@ -53,6 +53,7 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 	cmp.CEO = *p
 	cmp.ActionPoints = es.opt.CompanyActionPoints + 1 // one initial shareholder
 	cmp.PureIncomePercentage = es.opt.CompanyPureIncomePercentage
+	cmp.Shareholders = []Shareholder{Shareholder{Player: *p, Shares: es.opt.InitialShares}}
 
 	if err := es.tx.Create(cmp).Error; err != nil {
 		panic(err)
@@ -60,12 +61,6 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 
 	if err := es.tx.Save(p).Error; err != nil {
 		panic(err)
-	}
-
-	for i := 0; i < es.opt.InitialShares; i++ {
-		if err := es.tx.Create(&Share{CompanyID: cmp.ID, OwnerID: p.ID}).Error; err != nil {
-			panic(err)
-		}
 	}
 
 	if err := es.tx.Where("`owner_id` = 0 and `yield` = 100").Find(&freenodes).Error; err != nil {
@@ -110,20 +105,14 @@ func (es *EngineSession) NewCompany(p *Player, name string, capital int) error {
 	return nil
 }
 
-func (es *EngineSession) GetCompany(p *Player, id int) (err error, cmp *Company, shareholders []*ShareholdersPerCompany, pureincome, valuepershare int) {
+func (es *EngineSession) GetCompany(id int) (err error, cmp *Company, pureincome, valuepershare int) {
 	cmp = &Company{}
-	shares := 0
-	myshares := 0
 
 	if err := es.tx.Preload("CEO").Where(id).First(cmp).Error; err != nil {
 		panic(err)
 	}
-	if err := es.tx.Model(&Share{}).Where("`company_id` = ?", id).Count(&shares).Error; err != nil {
-		panic(err)
-	}
-	if err := es.tx.Model(&Share{}).Where("`company_id` = ?", id).Where("`owner_id` = ?", p.ID).Count(&myshares).Error; err != nil {
-		panic(err)
-	}
+
+	es.tx.Model(cmp).Preload("Player").Related(&cmp.Shareholders)
 
 	err, cmp.Income = es.GetCompanyIncome(cmp, false)
 	if err != nil {
@@ -133,21 +122,6 @@ func (es *EngineSession) GetCompany(p *Player, id int) (err error, cmp *Company,
 	err, pureincome, valuepershare = es.GetCompanyFinancials(cmp, false)
 	if err != nil {
 		return
-	}
-
-	shareholders = make([]*ShareholdersPerCompany, 0)
-
-	if err := es.tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").
-		Where("`company_id` = ?", cmp.ID).
-		Group("`owner_id`").Order("`owner_id` asc").
-		Find(&shareholders).Error; err != nil {
-		panic(err)
-	}
-
-	for _, sh := range shareholders {
-		if err := es.tx.Table("players").Where(sh.OwnerID).Find(&sh.Owner).Error; err != nil {
-			panic(err)
-		}
 	}
 
 	return
@@ -185,7 +159,8 @@ func (es *EngineSession) GetOwnedCompanies(p *Player) (err error, companies []*C
 func (es *EngineSession) PromoteCEO(cmp *Company, newceo *Player) error {
 	newceoshares := 0
 	oldceoshares := 0
-	sh := &Share{}
+	newceosh := &Shareholder{}
+	oldceosh := &Shareholder{}
 
 	if es.timestamp.Before(es.opt.GameStart) {
 		return errors.New("Il gioco non e' iniziato!")
@@ -203,18 +178,23 @@ func (es *EngineSession) PromoteCEO(cmp *Company, newceo *Player) error {
 		}
 	}
 
-	sh.CompanyID = cmp.ID
-	sh.OwnerID = newceo.ID
+	newceosh.CompanyID = cmp.ID
+	newceosh.PlayerID = newceo.ID
 
-	if err := es.tx.Model(sh).Where(sh).Count(&newceoshares).Error; err != nil {
+	if err := es.tx.Where(newceosh).Find(&newceosh).Error; err != nil {
 		panic(err)
 	}
 
-	sh.OwnerID = cmp.CEOID
+	newceoshares = newceosh.Shares
 
-	if err := es.tx.Model(sh).Where(sh).Count(&oldceoshares).Error; err != nil {
+	oldceosh.CompanyID = cmp.ID
+	oldceosh.PlayerID = cmp.CEOID
+
+	if err := es.tx.Where(oldceosh).Find(&oldceosh).Error; err != nil {
 		panic(err)
 	}
+
+	oldceoshares = oldceosh.Shares
 
 	if newceoshares > oldceoshares {
 		cmp.CEOID = newceo.ID
@@ -278,10 +258,14 @@ func (es *EngineSession) GetCompanyFinancials(cmp *Company, effective bool) (err
 		}
 	}
 
+	if len(cmp.Shareholders) == 0 {
+		es.tx.Model(cmp).Related(&cmp.Shareholders)
+	}
+
 	cmpshares := 0
 
-	if err := es.tx.Table("shares").Where("`company_id` = ?", cmp.ID).Count(&cmpshares).Error; err != nil {
-		panic(err)
+	for _, sh := range cmp.Shareholders {
+		cmpshares += sh.Shares
 	}
 
 	pureIncome = int(math.Floor(float64(cmp.Income) * (float64(cmp.PureIncomePercentage) / 100.0)))

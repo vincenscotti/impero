@@ -101,7 +101,17 @@ type Company struct {
 	ActionPoints         int
 	Income               int `gorm:"-"`
 	PureIncomePercentage int
+	Shareholders         []Shareholder
 	Color                int32 `gorm:"-"`
+}
+
+type Shareholder struct {
+	gorm.Model
+	Company   Company
+	CompanyID uint
+	Player    Player
+	PlayerID  uint
+	Shares    int
 }
 
 type Partnership struct {
@@ -112,14 +122,6 @@ type Partnership struct {
 	ToID               uint
 	ProposalAccepted   bool
 	ProposalExpiration time.Time
-}
-
-type Share struct {
-	gorm.Model
-	Company   Company
-	CompanyID uint
-	Owner     Player
-	OwnerID   uint
 }
 
 type ShareAuction struct {

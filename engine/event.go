@@ -39,16 +39,24 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			}
 
 			if sa.HighestOfferPlayerID != 0 {
-				share := Share{}
-
-				share.CompanyID = sa.CompanyID
-				share.OwnerID = sa.HighestOfferPlayerID
-
-				cmp.ShareCapital += sa.HighestOffer
-
-				if err := es.tx.Create(&share).Error; err != nil {
+				sh := &Shareholder{}
+				sh.CompanyID = sa.CompanyID
+				sh.PlayerID = sa.HighestOfferPlayerID
+				if err := es.tx.Where(sh).First(sh).Error; err != nil && err != gorm.ErrRecordNotFound {
 					panic(err)
 				}
+
+				if sh.ID == 0 {
+					sh.Shares = 1
+				} else {
+					sh.Shares += 1
+				}
+
+				if err := es.tx.Save(&sh).Error; err != nil {
+					panic(err)
+				}
+
+				cmp.ShareCapital += sa.HighestOffer
 			}
 
 			if err := es.tx.Save(cmp).Error; err != nil {
@@ -213,11 +221,11 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 					panic(err)
 				}
 
-				shareholders := make([]*ShareholdersPerCompany, 0)
+				shareholders := make([]*Shareholder, 0)
 
 				shares := 0
 
-				if err := es.tx.Table("shares").Select("DISTINCT owner_id, count(owner_id) as shares").Where("`company_id` = ?", cmp.ID).Group("owner_id").Find(&shareholders).Error; err != nil {
+				if err := es.tx.Model(cmp).Related(&shareholders).Error; err != nil {
 					panic(err)
 				}
 
@@ -228,7 +236,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 				for _, sh := range shareholders {
 					shareholder.ID = 0
 
-					if err := es.tx.Where(sh.OwnerID).Find(shareholder).Error; err != nil {
+					if err := es.tx.Where(sh.PlayerID).Find(shareholder).Error; err != nil {
 						panic(err)
 					}
 
@@ -240,7 +248,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 						panic(err)
 					}
 
-					dividendsPerPlayer[sh.OwnerID] = append(dividendsPerPlayer[sh.OwnerID], Dividend{cmp, valuePerShare * sh.Shares})
+					dividendsPerPlayer[sh.PlayerID] = append(dividendsPerPlayer[sh.PlayerID], Dividend{cmp, valuePerShare * sh.Shares})
 				}
 
 				cmp.ShareCapital += int(pureIncome)
