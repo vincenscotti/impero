@@ -13,7 +13,7 @@
 
       <form action="/signup/" method="post">
         <div class="form-group has-feedback">
-          <input class="form-control" placeholder="Nome utente" type="text" name="name" required>
+          <input class="form-control" placeholder="Nome utente" type="text" name="name" required autofocus>
           <i class="form-control-feedback fa fa-user"></i>
         </div>
         <div class="form-group has-feedback">
