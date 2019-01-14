@@ -130,7 +130,7 @@ cp := p.CurrentPlayer
           <li class="dropdown notifications-menu">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" title="Turno">
               <i class="fa fa-clock-o"></i>
-              <span class="label label-danger">{%d p.Options.Turn %}</span>
+              <span class="label label-danger expiration expiration-compact" data-unixtime="{%v p.Options.LastTurnCalculated.Add(time.Duration(p.Options.TurnDuration) * time.Minute).Unix() %}"></span>
             </a>
             <ul class="dropdown-menu">
               <li>

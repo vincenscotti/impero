@@ -20,6 +20,22 @@ function formatDurationLong(duration) {
 	return ret;
 }
 
+function formatDurationCompact(duration) {
+	var seconds = duration % 60;
+	var minutes = Math.floor(duration / 60);
+	var hours   = Math.floor(minutes  / 60);
+
+	if (hours > 0) {
+		return hours + "h+";
+	}
+
+	if (minutes > 0) {
+		return minutes + "m+";
+	}
+
+	return seconds + "s";
+}
+
 function formatTime(time) {
 	var seconds = time.getSeconds();
 	var minutes = time.getMinutes();
@@ -67,7 +83,11 @@ function renderTime() {
 			countdown = 0;
 		}
 
-		target.text(formatDurationLong(countdown));
+		if ($(this).hasClass("expiration-compact")) {
+			target.text(formatDurationCompact(countdown));
+		} else {
+			target.text(formatDurationLong(countdown));
+		}
 	});
 }
 
