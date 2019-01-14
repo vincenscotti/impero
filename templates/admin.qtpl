@@ -52,6 +52,14 @@
 <input type="number" min="0" step="0.0001" name="BlackoutProbPerDollar" value="{%f p.Options.BlackoutProbPerDollar %}">
 <br>
 
+<label for="StabilityLevels">Livelli di stabilita' celle</label>
+<input type="number" min="1" name="StabilityLevels" value="{%d p.Options.StabilityLevels %}">
+<br>
+
+<label for="MaxBlackoutDeltaPerDollar">Massimo delta sulla probabilita' di blackout per dollaro di rendimento</label>
+<input type="number" min="0" step="0.0001" name="MaxBlackoutDeltaPerDollar" value="{%f p.Options.MaxBlackoutDeltaPerDollar %}">
+<br>
+
 <label for="Turn">Turno attuale</label>
 <input type="number" min="0" name="Turn" value="{%d p.Options.Turn %}">
 <br>

@@ -18,6 +18,8 @@ type Options struct {
 	InitialShares               int
 	CostPerYield                float64
 	BlackoutProbPerDollar       float64
+	StabilityLevels             int
+	MaxBlackoutDeltaPerDollar   float64
 	Turn                        int
 	EndGame                     int
 }
@@ -35,15 +37,17 @@ const (
 
 type Node struct {
 	gorm.Model
-	X           int
-	Y           int
-	Yield       int
-	BuyCost     int `gorm:"-"`
-	InvestCost  int `gorm:"-"`
-	NewYield    int `gorm:"-"`
-	PowerSupply int
-	Owner       Company
-	OwnerID     uint
+	X            int
+	Y            int
+	Yield        int
+	BuyCost      int `gorm:"-"`
+	InvestCost   int `gorm:"-"`
+	NewYield     int `gorm:"-"`
+	PowerSupply  int
+	Stability    int
+	BlackoutProb float64 `gorm:"-"`
+	Owner        Company
+	OwnerID      uint
 }
 
 type Player struct {

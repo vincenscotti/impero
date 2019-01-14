@@ -157,6 +157,8 @@ func main() {
 		opt.EndGame = 24
 		opt.InitialShares = 20
 		opt.BlackoutProbPerDollar = 0.001
+		opt.StabilityLevels = 5
+		opt.MaxBlackoutDeltaPerDollar = 0.0004
 		opt.GameStart = time.Now()
 		opt.LastTurnCalculated = time.Now()
 		opt.NewCompanyCost = 5

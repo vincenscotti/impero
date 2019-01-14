@@ -161,9 +161,10 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			es.tx.Find(&nodes)
 
 			for _, n := range nodes {
+				es.updateBlackoutP(n)
 				nodesByCoord[Coord{X: n.X, Y: n.Y}] = n
 
-				if randEvent(es.opt.BlackoutProbPerDollar * (float64(n.Yield) / 100.)) {
+				if randEvent(n.BlackoutProb) {
 					n.PowerSupply = PowerOff
 					nodesUpdated = append(nodesUpdated, n)
 				}

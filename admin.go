@@ -126,12 +126,12 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 	if err := validateAdmin(r); err != nil {
 		session.AddFlash(err.Error(), "message_")
 	} else {
-		if err := tx.UpdateMapYields(params.X0, params.X1, params.Y0, params.Y1, params.Generate); err != nil {
+		if err := tx.UpdateMapNodes(params.X0, params.X1, params.Y0, params.Y1, params.Generate); err != nil {
 			session.AddFlash(err.Error(), "message_")
 		} else {
 			tx.Commit()
 
-			session.AddFlash("Rendimenti aggiornati", "message_")
+			session.AddFlash("Celle aggiornate", "message_")
 		}
 	}
 

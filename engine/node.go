@@ -17,6 +17,12 @@ func effectiveYield(n *Node) int {
 	return int(math.Floor(float64(n.Yield) * PowerSupplyScale[n.PowerSupply]))
 }
 
+func (es *EngineSession) updateBlackoutP(n *Node) {
+	fyield := float64(n.Yield) / 100.
+	halfStabilityLevels := es.opt.StabilityLevels / 2
+	n.BlackoutProb = (es.opt.BlackoutProbPerDollar - float64(n.Stability-halfStabilityLevels)*(es.opt.MaxBlackoutDeltaPerDollar/float64(halfStabilityLevels))) * fyield
+}
+
 func (es *EngineSession) GetCostsByYield(yield int) (BuyCost int, InvestCost int, NewYield int) {
 	BuyCost, InvestCost, NewYield = -1, -1, -1
 

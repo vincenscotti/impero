@@ -51,6 +51,7 @@ func (es *EngineSession) GetMapInfo() (err error, mapnodes map[Coord]*Node, rent
 	colorn := 0
 	for _, n := range nodes {
 		n.BuyCost, n.InvestCost, n.NewYield = es.GetCostsByYield(n.Yield)
+		es.updateBlackoutP(n)
 		mapnodes[Coord{X: n.X, Y: n.Y}] = n
 
 		// cannot Preload, cause of sqlite bug
@@ -91,7 +92,7 @@ func (es *EngineSession) ImportMap() (err error) {
 	return es.tx.Exec(string(sql)).Error
 }
 
-func (es *EngineSession) UpdateMapYields(x0, x1, y0, y1 int, generate bool) error {
+func (es *EngineSession) UpdateMapNodes(x0, x1, y0, y1 int, generate bool) error {
 	xsize := x1 - x0
 	ysize := y1 - y0
 	sortednodes := make([]*Node, 0, xsize*ysize)
@@ -115,6 +116,7 @@ func (es *EngineSession) UpdateMapYields(x0, x1, y0, y1 int, generate bool) erro
 
 	for i, p := range perm {
 		shufflednodes[i] = sortednodes[p]
+		shufflednodes[i].Stability = rand.Intn(es.opt.StabilityLevels)
 	}
 
 	totalnodes := float64(len(shufflednodes))

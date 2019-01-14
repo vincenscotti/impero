@@ -53,7 +53,6 @@ $(function() {
 
 	$("td:not(.fakenode)").click(function(e) {
 		target = $(this);
-		blackoutp = $(".map-container").data("blackoutmultiplier");
 		var oldlink = $("#sel-owner-link").attr("href");
 
 		if (target.data("owner-name") != undefined) {
@@ -69,7 +68,7 @@ $(function() {
 		$(".sel-owner-id").val(target.data("owner-id"));
 		$("#sel-yield").text(target.data("yield") / 100);
 		$("#sel-powersupply").text(powersupplylabels[target.data("powersupply")]);
-		$("#sel-blackoutprob").text((target.data("yield") / 100) * blackoutp * 100);
+		$("#sel-blackoutprob").text(Math.round(target.data("blackoutp") * 10000) / 100);
 		$("#sel-buycost").text(target.data("buycost") / 100);
 		if (target.data("investcost") != undefined) {
 			$("#investbutton").show();
