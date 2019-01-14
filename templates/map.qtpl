@@ -12,17 +12,20 @@
         <!-- /.box-header -->
         <div class="box-body">
 
-        <p>Le celle in <s><b>blackout</s></b> non hanno generato profitti all'ultimo turno, mentre le celle <s>adiacenti</s> hanno reso la met&agrave;</p>
-        <span>Clicca sulle societ&agrave; da visualizzare</span>
-        <a id="company-selectall" href="#">tutte</a>
-        <a id="company-hideall" href="#">nessuna</a>
-        {% for _, c := range p.CompaniesByName %}
-          <span class="badge company-label" style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}" data-company-id="{%d int(c.ID) %}">
-          {% if c.CEOID == p.CurrentPlayer.ID %}
-            <i class="fa fa-star"></i>
+          <p>Le celle in <s><b>blackout</s></b> non hanno generato profitti all'ultimo turno, mentre le celle <s>adiacenti</s> hanno reso la met&agrave;</p>
+          {% if len(p.CompaniesByName) > 0 %}
+            <span>Clicca sulle societ&agrave; da visualizzare</span>
+            <button id="company-selectall" class="btn btn-success btn-xs">tutte</button>
+            <button id="company-hideall" class="btn btn-danger btn-xs">nessuna</button>
+            <br>
+            {% for _, c := range p.CompaniesByName %}
+              <span class="badge company-label" style="background-color: #{%s fmt.Sprintf("%06X", c.Color) %}" data-company-id="{%d int(c.ID) %}">
+              {% if c.CEOID == p.CurrentPlayer.ID %}
+                <i class="fa fa-star"></i>
+              {% endif %}
+              {%s c.Name %}</span>
+            {% endfor %}
           {% endif %}
-          {%s c.Name %}</span>
-        {% endfor %}
 
         </div>
         <!-- /.box-body -->
