@@ -75,16 +75,38 @@
                   %}
 
                   {% if ok %}
+
+                    {% code
+                      hasTenants := false
+                      for _, r := range p.Rentals {
+                        if r.Node.X == x && r.Node.Y == y {
+                          hasTenants = true
+                        }
+                      }
+                    %}
+
                     <td class="realnode" data-x="{%d x %}" data-y="{%d y %}" data-yield="{%d node.Yield %}" data-powersupply="{%d node.PowerSupply %}" data-toggle="modal" data-target="#modal-node" data-buycost="{%d node.BuyCost %}" data-stability="{%d node.Stability %}" data-blackoutp="{%f node.BlackoutProb %}"
                     {% if node.Owner.ID != 0 %}
-                      data-owner-name="{%s node.Owner.Name %}" data-owner-id="{%d int(node.Owner.ID) %}" data-newyield="{%d node.NewYield %}" style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})"
+                      data-owner-name="{%s node.Owner.Name %}" data-owner-id="{%d int(node.Owner.ID) %}" data-newyield="{%d node.NewYield %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})"
+                      {% if hasTenants %}
+                        style="background-image: linear-gradient(to bottom right, #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}, white)"
+                      {% else %}
+                        style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}"
+                      {% endif %}
                       {% if node.Owner.CEOID == p.CurrentPlayer.ID && node.InvestCost != -1 %}
                         data-investcost="{%d node.InvestCost %}" 
                       {% endif %}
                     {% else %}
                       title="({%d x %}, {%d y %})"
                     {% endif %}
-                    >
+
+                    data-tenants="
+                    {% for _, r := range p.Rentals %}
+                      {% if r.Node.X == x && r.Node.Y == y %}
+                        {%s r.Tenant.Name %}|
+                      {% endif %}
+                    {% endfor %}
+                    ">
 
                     {% if node.PowerSupply == PowerOff %}
                       <b><s data-x="{%d x %}" data-y="{%d y %}">
@@ -102,12 +124,6 @@
                   {% else %}
                     <td class="fakenode">
                   {% endif %}
-
-                  {% for _, r := range p.Rentals %}
-                    {% if r.Node.X == x && r.Node.Y == y %}
-                      <div style="height: 10%; background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[r.Tenant.Name].Color) %}" title="{%s r.Tenant.Name %}"><br></div>
-                    {% endif %}
-                  {% endfor %}
                 </td>
                 {% endfor %}
                 </tr>
@@ -131,39 +147,38 @@
               <p><i class="fa fa-money"></i> Rendimento per turno: <span id="sel-yield"></span> $</p>
               <p><i class="fa fa-bolt"></i> Stabilit&agrave; alimentazione: <span id="sel-stability"></span> su {%d p.Options.StabilityLevels %}</p>
               <p><i class="fa fa-bolt"></i> Probabilit&agrave; di blackout: <span id="sel-blackoutprob"></span> &percnt;</p>
-              <p><i class="fa fa-warning"></i> <span id="sel-powersupply"></span></p>
-            </div>
-            <div class="modal-footer">
+              <p id="sel-powersupply-p"><i class="fa fa-warning"></i> <span id="sel-powersupply"></span></p>
+              <p id="sel-tenants-p"><i class="fa fa-building-o"></i> Affittuari: <span id="sel-tenants"></span></p>
               <div id="investbutton">
+                <p class="text-center">Puoi potenziare la cella portandone il rendimento a <span id="sel-newyield">50</span> $</p>
                 <form action="{%s quickURL(p.HeaderData, "company_invest") %}" method="POST">
                   <input class="sel-owner-id" type="hidden" name="ID">
                   <input class="sel-x" type="hidden" name="X">
                   <input class="sel-y" type="hidden" name="Y">
-                  <button type="submit" class="btn btn-primary">Potenzia (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-investcost"></span>)</button>
+                  <button type="submit" class="btn btn-primary btn-block">Potenzia (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-investcost"></span>)</button>
                 </form>
-                <br>
               </div>
-              <div>
-                <form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
-                  <select class="form-control" name="ID">
-                    <optgroup label="Societ&agrave;">
-                    {% for _, c := range p.CompaniesByName %}
-                      {% if c.CEOID == p.CurrentPlayer.ID %}
-                        <option value="{%d int(c.ID) %}"
-                        {% if c.ActionPoints < 1 %}
-                          disabled
-                        {% endif %}
-                        >
-                        {%s c.Name %} ({%s markupMoney(c.ShareCapital) %} &nbsp;&nbsp;{%d c.ActionPoints %} PO)</option>
+            </div>
+            <div class="modal-footer">
+              <form action="{%s quickURL(p.HeaderData, "company_buy") %}" method="POST">
+                <select class="form-control" name="ID">
+                  <optgroup label="Societ&agrave;">
+                  {% for _, c := range p.CompaniesByName %}
+                    {% if c.CEOID == p.CurrentPlayer.ID %}
+                      <option value="{%d int(c.ID) %}"
+                      {% if c.ActionPoints < 1 %}
+                        disabled
                       {% endif %}
-                    {% endfor %}
-                    </optgroup>
-                  </select>
-                  <input class="sel-x" type="hidden" name="X">
-                  <input class="sel-y" type="hidden" name="Y">
-                  <button type="submit" class="btn btn-primary pull-right">Compra (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-buycost"></span>)</button>
-                </form>
-              </div>
+                      >
+                      {%s c.Name %} ({%s markupMoney(c.ShareCapital) %} &nbsp;&nbsp;{%d c.ActionPoints %} PO)</option>
+                    {% endif %}
+                  {% endfor %}
+                  </optgroup>
+                </select>
+                <input class="sel-x" type="hidden" name="X">
+                <input class="sel-y" type="hidden" name="Y">
+                <button type="submit" class="btn btn-primary btn-block">Compra (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-buycost"></span>)</button>
+              </form>
             </div>
           </div>
           <!-- /.modal-content -->

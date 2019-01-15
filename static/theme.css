@@ -30,6 +30,7 @@
 
 .company-deselected {
 	background-color: grey !important;
+	background-image: none !important;
 }
 
 .company-label, .map .realnode {

@@ -76,7 +76,6 @@ $(function() {
 		$(".sel-y").val(target.data("y"));
 		$(".sel-owner-id").val(target.data("owner-id"));
 		$("#sel-yield").text(target.data("yield") / 100);
-		$("#sel-powersupply").text(powersupplylabels[target.data("powersupply")]);
 		$("#sel-blackoutprob").text(Math.round(target.data("blackoutp") * 10000) / 100);
 		$("#sel-stability").text(target.data("stability"));
 		$("#sel-buycost").text(target.data("buycost") / 100);
@@ -87,6 +86,29 @@ $(function() {
 			$("#investbutton").hide();
 		}
 		$("#sel-newyield").text(target.data("newyield") / 100);
+
+		powersupply = target.data("powersupply");
+		if (powersupply != 0) {
+			$("#sel-powersupply-p").show();
+			$("#sel-powersupply").text(powersupplylabels[powersupply]);
+		} else {
+			$("#sel-powersupply-p").hide();
+		}
+
+		tenantslist = target.data("tenants").trim();
+		if (tenantslist != "") {
+			$("#sel-tenants-p").show();
+			tenants = tenantslist.split("|");
+			tenants = $.map(tenants, function(value, index) {
+				return value.trim();
+			});
+			tenants = $.grep(tenants, function(value, index) {
+				return value != "";
+			});
+			$("#sel-tenants").text(tenants.join(", "));
+		} else {
+			$("#sel-tenants-p").hide();
+		}
 
 		oldsize = target.css("font-size");
 		oldpadding = target.css("padding");
