@@ -65,7 +65,7 @@
                   %}
 
                   {% if ok %}
-                    <td class="realnode" data-x="{%d x %}" data-y="{%d y %}" data-yield="{%d node.Yield %}" data-powersupply="{%d node.PowerSupply %}" data-toggle="modal" data-target="#modal-node" data-buycost="{%d node.BuyCost %}" data-blackoutp="{%f node.BlackoutProb %}"
+                    <td class="realnode" data-x="{%d x %}" data-y="{%d y %}" data-yield="{%d node.Yield %}" data-powersupply="{%d node.PowerSupply %}" data-toggle="modal" data-target="#modal-node" data-buycost="{%d node.BuyCost %}" data-stability="{%d node.Stability %}" data-blackoutp="{%f node.BlackoutProb %}"
                     {% if node.Owner.ID != 0 %}
                       data-owner-name="{%s node.Owner.Name %}" data-owner-id="{%d int(node.Owner.ID) %}" data-newyield="{%d node.NewYield %}" style="background-color: #{%s fmt.Sprintf("%06X", p.CompaniesByName[node.Owner.Name].Color) %}" title="{%s node.Owner.Name %} ({%d node.X %}, {%d node.Y %})"
                       {% if node.Owner.CEOID == p.CurrentPlayer.ID && node.InvestCost != -1 %}
@@ -119,8 +119,9 @@
             </div>
             <div class="modal-body">
               <p><i class="fa fa-money"></i> Rendimento per turno: <span id="sel-yield"></span> $</p>
-              <p><i class="fa fa-bolt"></i> <span id="sel-powersupply"></span></p>
-              <p><i class="fa fa-warning"></i> Probabilit&agrave; di blackout: <span id="sel-blackoutprob"></span> &percnt;</p>
+              <p><i class="fa fa-bolt"></i> Stabilit&agrave; alimentazione: <span id="sel-stability"></span> su {%d p.Options.StabilityLevels %}</p>
+              <p><i class="fa fa-bolt"></i> Probabilit&agrave; di blackout: <span id="sel-blackoutprob"></span> &percnt;</p>
+              <p><i class="fa fa-warning"></i> <span id="sel-powersupply"></span></p>
             </div>
             <div class="modal-footer">
               <div id="investbutton">

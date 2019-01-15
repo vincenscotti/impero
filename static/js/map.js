@@ -69,6 +69,7 @@ $(function() {
 		$("#sel-yield").text(target.data("yield") / 100);
 		$("#sel-powersupply").text(powersupplylabels[target.data("powersupply")]);
 		$("#sel-blackoutprob").text(Math.round(target.data("blackoutp") * 10000) / 100);
+		$("#sel-stability").text(target.data("stability"));
 		$("#sel-buycost").text(target.data("buycost") / 100);
 		if (target.data("investcost") != undefined) {
 			$("#investbutton").show();
