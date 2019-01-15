@@ -43,10 +43,12 @@ cmp := p.Company
               <span class="info-box-text">Entrate</span>
               <span class="info-box-number">{%s markupMoney(cmp.Income) %}</span>
 
-              <div class="progress">
-                <div class="progress-bar bg-green" style="width: {%d cmp.PureIncomePercentage %}%"></div>
-              </div>
-                  <span class="progress-description">Il {%d cmp.PureIncomePercentage %} &percnt; resta nelle casse della societ&agrave;</span>
+              {% if p.IsShareHolder %}
+                <div class="progress">
+                  <div class="progress-bar bg-green" style="width: {%d cmp.PureIncomePercentage %}%"></div>
+                </div>
+                    <span class="progress-description">Il {%d cmp.PureIncomePercentage %} &percnt; resta alla societ&agrave;</span>
+              {% endif %}
 
             </div>
             <!-- /.info-box-content -->
