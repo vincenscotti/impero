@@ -71,7 +71,7 @@
                     </div>
                   </div>
                   <div class="col-lg-4">
-                    <button type="submit" class="btn btn-primary">Crea (<i class="fa fa-heart"></i> 5)</button>
+                    <button type="submit" class="btn btn-primary">Crea (<i class="fa fa-heart"></i> {%d p.Options.NewCompanyCost %})</button>
                   </div>
                 </div>
               </form>
