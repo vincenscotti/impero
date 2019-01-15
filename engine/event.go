@@ -75,6 +75,10 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 				if err := es.tx.Create(report).Error; err != nil {
 					panic(err)
 				}
+
+				player := &Player{}
+				player.ID = participant.PlayerID
+				es.e.notificator.NotifyAuctionEnd(sa, []*Player{player})
 			}
 
 			if err := es.tx.Delete(sa).Error; err != nil {

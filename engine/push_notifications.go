@@ -5,8 +5,8 @@ import (
 )
 
 type Notificator interface {
-	NotifyAuctionRaise(company *Company, auction *ShareAuction, players []*Player)
-	NotifyAuctionEnd(company *Company, auction *ShareAuction, players []*Player)
+	NotifyAuctionRaise(auction *ShareAuction, players []*Player)
+	NotifyAuctionEnd(auction *ShareAuction, players []*Player)
 	NotifyEndTurn()
 }
 

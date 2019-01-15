@@ -103,8 +103,23 @@ func (tg *TGUI) Run(debug bool) (err error) {
 			case auctionRaiseNotification:
 				for _, p := range value.players {
 					if chatid, ok := tg.playerToChat[p.ID]; ok && value.auction.HighestOfferPlayerID != p.ID {
-						msg := tgbotapi.NewMessage(chatid, fmt.Sprint("L'asta per l'azione della societa'", value.company.Name, "e' stata rialzata a", value.auction.HighestOffer))
+						msg := tgbotapi.NewMessage(chatid, fmt.Sprint("L'asta per l'azione della societa' ", value.auction.Company.Name, " e' stata rialzata a ", value.auction.HighestOffer/100, " $!\n\nClicca <a href=\""+tg.webURL+"/game/market/\">qui</a> per controllare il mercato!"))
+						msg.ParseMode = tgbotapi.ModeHTML
 						tg.bot.Send(msg)
+					}
+				}
+			case auctionEndNotification:
+				for _, p := range value.players {
+					if chatid, ok := tg.playerToChat[p.ID]; ok {
+						name := "te"
+						if value.auction.HighestOfferPlayerID != p.ID {
+							name = value.auction.HighestOfferPlayer.Name
+						}
+
+						msg := tgbotapi.NewMessage(chatid, fmt.Sprint("L'asta per l'azione della societa' ", value.auction.Company.Name, " e' stata vinta da ", name, " per ", value.auction.HighestOffer/100, " $!\n\nClicca <a href=\""+tg.webURL+"/game/market/\">qui</a> per controllare il mercato!"))
+						msg.ParseMode = tgbotapi.ModeHTML
+						tg.bot.Send(msg)
+					} else {
 					}
 				}
 			}

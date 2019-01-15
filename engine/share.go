@@ -191,7 +191,7 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 		panic(err)
 	}
 
-	if err := es.tx.First(shareauction).Error; err != nil && err != gorm.ErrRecordNotFound {
+	if err := es.tx.Preload("Company").First(shareauction).Error; err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
@@ -248,7 +248,7 @@ func (es *EngineSession) BidAuction(p *Player, shareauction *ShareAuction, amoun
 		panic(err)
 	}
 
-	es.e.notificator.NotifyAuctionRaise(nil, shareauction, nil)
+	es.e.notificator.NotifyAuctionRaise(shareauction, []*Player{oldp})
 
 	return nil
 }
