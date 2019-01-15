@@ -121,6 +121,7 @@ type MapData struct {
 	Nodes           map[Coord]*Node
 	Rentals         []*Rental
 	CompaniesByName map[string]*Company
+	MyCompanies     map[uint]bool
 	XMin            int
 	YMin            int
 	XMax            int

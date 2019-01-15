@@ -45,6 +45,15 @@ $(function() {
 		});
 	});
 
+	$("#company-selectmine").click(function(e) {
+		$(".company-label").each(function() {
+			hideCompany($(this));
+		});
+		$(".company-label.company-mine").each(function() {
+			showCompany($(this));
+		});
+	});
+
 	$("#company-hideall").click(function(e) {
 		$(".company-label").each(function() {
 			hideCompany($(this));
