@@ -239,6 +239,10 @@ func (es *EngineSession) InvestNode(p *Player, cmp *Company, coord Coord) error 
 		return errors.New("Capitale insufficiente!")
 	}
 
+	if newyield == -1 {
+		return errors.New("La cella e' gia' al livello massimo!")
+	}
+
 	cmp.ActionPoints -= 1
 	cmp.ShareCapital -= cost
 	if err := es.tx.Save(cmp).Error; err != nil {
