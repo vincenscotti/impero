@@ -148,7 +148,7 @@
               <p><i class="fa fa-bolt"></i> Stabilit&agrave; alimentazione: <span id="sel-stability"></span> su {%d p.Options.StabilityLevels %}</p>
               <p><i class="fa fa-bolt"></i> Probabilit&agrave; di blackout: <span id="sel-blackoutprob"></span> &percnt;</p>
               <p id="sel-powersupply-p"><i class="fa fa-warning"></i> <span id="sel-powersupply"></span></p>
-              <p id="sel-tenants-p"><i class="fa fa-building-o"></i> Affittuari: <span id="sel-tenants"></span></p>
+              <p id="sel-tenants-p"><i class="fa fa-building-o"></i> Noleggiata da: <span id="sel-tenants"></span></p>
               <div id="investbutton">
                 <p class="text-center">Puoi potenziare la cella portandone il rendimento a <span id="sel-newyield">50</span> $</p>
                 <form action="{%s quickURL(p.HeaderData, "company_invest") %}" method="POST">
@@ -177,7 +177,7 @@
                 </select>
                 <input class="sel-x" type="hidden" name="X">
                 <input class="sel-y" type="hidden" name="Y">
-                <button type="submit" class="btn btn-primary btn-block">Compra (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-buycost"></span>)</button>
+                <button type="submit" class="btn btn-primary btn-block"><span id="sel-mainaction"></span> (<i class="fa fa-cubes"></i> 1 &nbsp;&nbsp;<i class="fa fa-usd"></i> <span id="sel-buycost"></span>)</button>
               </form>
             </div>
           </div>

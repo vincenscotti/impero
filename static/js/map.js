@@ -74,7 +74,15 @@ $(function() {
 		$(".sel-x").val(target.data("x"));
 		$("#sel-y").text(target.data("y"));
 		$(".sel-y").val(target.data("y"));
-		$(".sel-owner-id").val(target.data("owner-id"));
+
+		var owner_id = target.data("owner-id");
+		if (owner_id != undefined) {
+			$(".sel-owner-id").val(owner_id);
+			$("#sel-mainaction").text("Noleggia");
+		} else {
+			$("#sel-mainaction").text("Compra");
+		}
+
 		$("#sel-yield").text(target.data("yield") / 100);
 		$("#sel-blackoutprob").text(Math.round(target.data("blackoutp") * 10000) / 100);
 		$("#sel-stability").text(target.data("stability"));
