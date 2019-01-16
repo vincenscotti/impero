@@ -26,13 +26,28 @@ cmp := p.Company
 
         <div class="col-md-3 col-sm-6 col-xs-12">
           <div class="info-box">
+            <span class="info-box-icon bg-yellow"><i class="fa fa-money"></i></span>
+
+            <div class="info-box-content">
+              <span class="info-box-text">Entrate</span>
+              <span class="info-box-number">{%s markupMoney(cmp.Income) %}</span>
+              <span>Ogni azione rende {%s markupMoney(p.IncomePerShare) %}</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
+
+        {% if p.IsShareHolder %}
+        <div class="col-md-3 col-sm-6 col-xs-12">
+          <div class="info-box">
 
             {% if cmp.CEO.ID == p.CurrentPlayer.ID %}
               <div class="pull-right">
                 <form action="{%s quickURL(p.HeaderData, "company_pureincome") %}" method="POST">
                   <input type="hidden" name="id" value="{%d int(cmp.ID) %}">
-                  <button type="submit" class="btn btn-danger btn-xs" name="action" value="dec"><i class="fa fa-arrow-circle-down"></i> 10 &percnt;</button>
-                  <button type="submit" class="btn btn-success btn-xs" name="action" value="inc"><i class="fa fa-arrow-circle-up"></i> 10 &percnt;</button>
+                  <button type="submit" class="btn btn-danger btn-xs" name="action" value="inc"><i class="fa fa-arrow-circle-down"></i> 10 &percnt;</button>
+                  <button type="submit" class="btn btn-success btn-xs" name="action" value="dec"><i class="fa fa-arrow-circle-up"></i> 10 &percnt;</button>
                 </form>
               </div>
             {% endif %}
@@ -40,34 +55,20 @@ cmp := p.Company
             <span class="info-box-icon bg-green"><i class="fa fa-pie-chart"></i></span>
 
             <div class="info-box-content">
-              <span class="info-box-text">Entrate</span>
-              <span class="info-box-number">{%s markupMoney(cmp.Income) %}</span>
+              <span class="info-box-text">Dividendi</span>
+              <span class="info-box-number">{%d 100-cmp.PureIncomePercentage %} % delle entrate</span>
 
-              {% if p.IsShareHolder %}
-                <div class="progress">
-                  <div class="progress-bar bg-green" style="width: {%d cmp.PureIncomePercentage %}%"></div>
-                </div>
-                    <span class="progress-description">Il {%d cmp.PureIncomePercentage %} &percnt; resta alla societ&agrave;</span>
-              {% endif %}
+              <div class="progress">
+                <div class="progress-bar bg-green" style="width: {%d cmp.PureIncomePercentage %}%"></div>
+              </div>
+                <span class="progress-description">Il {%d cmp.PureIncomePercentage %} &percnt; resta alla societ&agrave;</span>
 
             </div>
             <!-- /.info-box-content -->
           </div>
           <!-- /.info-box -->
         </div>
-
-        <div class="col-md-3 col-sm-6 col-xs-12">
-          <div class="info-box">
-            <span class="info-box-icon bg-yellow"><i class="fa fa-money"></i></span>
-
-            <div class="info-box-content">
-              <span class="info-box-text">Rendimento per azione</span>
-              <span class="info-box-number">{%s markupMoney(p.IncomePerShare) %}</span>
-            </div>
-            <!-- /.info-box-content -->
-          </div>
-          <!-- /.info-box -->
-        </div>
+        {% endif %}
 
         {% if p.IsShareHolder %}
         <div class="col-md-3 col-sm-6 col-xs-12">
