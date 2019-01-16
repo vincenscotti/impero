@@ -59,7 +59,7 @@ cmp := p.Company
               <span class="info-box-number">{%d 100-cmp.PureIncomePercentage %} % delle entrate</span>
 
               <div class="progress">
-                <div class="progress-bar bg-green" style="width: {%d cmp.PureIncomePercentage %}%"></div>
+                <div class="progress-bar bg-green" style="width: {%d 100-cmp.PureIncomePercentage %}%"></div>
               </div>
                 <span class="progress-description">Il {%d cmp.PureIncomePercentage %} &percnt; resta alla societ&agrave;</span>
 
