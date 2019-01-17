@@ -31,7 +31,8 @@ var logger *log.Logger
 var router *mux.Router
 
 func Help(w http.ResponseWriter, r *http.Request) {
-	RenderHTML(w, r, templates.HelpPage())
+	//RenderHTML(w, r, templates.HelpPage())
+	http.Redirect(w, r, "/static/rules.pdf", http.StatusFound)
 }
 
 func GameHome(w http.ResponseWriter, r *http.Request) {
