@@ -20,6 +20,10 @@
           <input class="form-control" placeholder="Password" type="password" name="password" required>
           <i class="form-control-feedback fa fa-lock"></i>
         </div>
+        <div class="form-group has-feedback">
+          <input class="form-control" placeholder="Ripeti password" type="password" name="password2" required>
+          <i class="form-control-feedback fa fa-lock"></i>
+        </div>
         <p><a href="/help/">Leggi il regolamento</a></p>
         <div class="row">
           <div class="col-xs-7">

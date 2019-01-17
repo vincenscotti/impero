@@ -10,27 +10,39 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
+	params := struct {
+		Name      string
+		Password  string
+		Password2 string
+	}{}
+
 	p := Player{}
 	msg := ""
 
-	if err := binder.Bind(&p, r); err != nil {
+	if err := binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
+	p.Name = params.Name
+	p.Password = params.Password
 
 	if r.Method == "POST" {
-		err, newp := tx.SignupPlayer(&p)
+		if params.Password != params.Password2 {
+			msg = "Le password non coincidono!"
+		} else {
+			err, newp := tx.SignupPlayer(&p)
 
-		if err == nil {
-			tx.Commit()
+			if err == nil {
+				tx.Commit()
 
-			session.Values["playerID"] = newp.ID
+				session.Values["playerID"] = newp.ID
 
-			Redirect(w, r, "gamehome")
+				Redirect(w, r, "gamehome")
 
-			return
+				return
+			}
+
+			msg = err.Error()
 		}
-
-		msg = err.Error()
 	}
 
 	RenderHTML(w, r, templates.SignupPage(msg))
