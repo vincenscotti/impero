@@ -70,6 +70,7 @@ func (et *eventThread) run() {
 			pendingRequestsCopy := make([]tokenRequest, len(et.pendingRequests))
 			fmt.Println("GOT", len(et.pendingRequests), "PENDING REQUESTS")
 			copy(pendingRequestsCopy, et.pendingRequests)
+			et.pendingRequests = make([]tokenRequest, 0)
 
 			// the send can block so we do it on another goroutine
 			go func() {
