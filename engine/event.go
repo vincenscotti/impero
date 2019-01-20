@@ -28,7 +28,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		es.e.logger.Println("doing everything between ", lastturn, " and ", endturn)
 
 		shareauctions := make([]*ShareAuction, 0)
-		if err := es.tx.Preload("HighestOfferPlayer").Where("`expiration` < ?", endturn).Find(&shareauctions).Error; err != nil {
+		if err := es.tx.Preload("HighestOfferPlayer").Where("`expiration` <= ?", endturn).Find(&shareauctions).Error; err != nil {
 			panic(err)
 		}
 
@@ -90,12 +90,12 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		}
 
 		// delete expired share offers
-		if err := es.tx.Delete(&ShareOffer{}, "`expiration` < ?", endturn).Error; err != nil {
+		if err := es.tx.Delete(&ShareOffer{}, "`expiration` <= ?", endturn).Error; err != nil {
 			panic(err)
 		}
 
 		transferproposals := make([]*TransferProposal, 0)
-		if err := es.tx.Preload("From").Preload("To").Where("`expiration` < ?", endturn).Find(&transferproposals).Error; err != nil {
+		if err := es.tx.Preload("From").Preload("To").Where("`expiration` <= ?", endturn).Find(&transferproposals).Error; err != nil {
 			panic(err)
 		}
 
@@ -129,7 +129,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		}
 
 		partnerships := make([]*Partnership, 0)
-		if err := es.tx.Preload("From").Preload("To").Where("`proposal_expiration` < ?", endturn).Find(&partnerships).Error; err != nil {
+		if err := es.tx.Preload("From").Preload("To").Where("`proposal_expiration` <= ?", endturn).Find(&partnerships).Error; err != nil {
 			panic(err)
 		}
 
