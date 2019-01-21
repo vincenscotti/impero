@@ -50,6 +50,10 @@ func (es *EngineSession) PostMessage(from *Player, to *Player, subject string, c
 		return errors.New("Non puoi inviare un messaggio vuoto!")
 	}
 
+	if msg.Subject == "" {
+		return errors.New("Devi specificare un oggetto!")
+	}
+
 	if msg.ToID == 0 {
 		return errors.New("Destinatario non valido!")
 	}
