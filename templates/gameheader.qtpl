@@ -212,7 +212,7 @@ cp := p.CurrentPlayer
         <li><a href="{%s quickURL(p, "market") %}"><i class="fa fa-btc"></i><span>Mercato</span></a></li>
         <li><a href="{%s quickURL(p, "map") %}"><i class="fa fa-globe"></i><span>Mappa</span></a></li>
         <li><a href="{%s quickURL(p, "stats") %}"><i class="fa fa-line-chart"></i><span>Statistiche</span></a></li>
-        <li><a href="{%s quickURL(p, "help") %}"><i class="fa fa-book"></i><span>Regolamento</span></a></li>
+        <li><a href="{%s quickURL(p, "help") %}" target="_blank"><i class="fa fa-book"></i><span>Regolamento</span></a></li>
         <li class="header">Telegram</li>
         <li><a target="_blank" href="http://t.me/ImperoTGBot"><i class="fa fa-paper-plane"></i><span>Attiva il bot</span></a></li>
       </ul>
