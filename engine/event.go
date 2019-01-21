@@ -28,16 +28,11 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 		es.e.logger.Println("doing everything between ", lastturn, " and ", endturn)
 
 		shareauctions := make([]*ShareAuction, 0)
-		if err := es.tx.Preload("HighestOfferPlayer").Where("`expiration` <= ?", endturn).Find(&shareauctions).Error; err != nil {
+		if err := es.tx.Preload("Company").Preload("HighestOfferPlayer").Where("`expiration` <= ?", endturn).Find(&shareauctions).Error; err != nil {
 			panic(err)
 		}
 
 		for _, sa := range shareauctions {
-			cmp := &Company{}
-			if err := es.tx.Where(sa.CompanyID).First(cmp).Error; err != nil {
-				panic(err)
-			}
-
 			if sa.HighestOfferPlayerID != 0 {
 				sh := &Shareholder{}
 				sh.CompanyID = sa.CompanyID
@@ -56,10 +51,10 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 					panic(err)
 				}
 
-				cmp.ShareCapital += sa.HighestOffer
+				sa.Company.ShareCapital += sa.HighestOffer
 			}
 
-			if err := es.tx.Save(cmp).Error; err != nil {
+			if err := es.tx.Save(sa.Company).Error; err != nil {
 				panic(err)
 			}
 
@@ -69,8 +64,8 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 			// report generation
 
 			for _, participant := range participations {
-				subject := "Asta " + cmp.Name
-				content := fmt.Sprintf("L'asta a cui hai partecipato per la societa' "+cmp.Name+" e' stata vinta da "+sa.HighestOfferPlayer.Name+" per %d $.", sa.HighestOffer/100)
+				subject := "Asta " + sa.Company.Name
+				content := fmt.Sprintf("L'asta a cui hai partecipato per la societa' "+sa.Company.Name+" e' stata vinta da "+sa.HighestOfferPlayer.Name+" per %d $.", sa.HighestOffer/100)
 				report := &Report{PlayerID: participant.PlayerID, Date: sa.Expiration, Subject: subject, Content: content}
 				if err := es.tx.Create(report).Error; err != nil {
 					panic(err)
