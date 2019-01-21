@@ -155,7 +155,7 @@ func main() {
 		opt.CompanyActionPoints = 5
 		opt.CompanyPureIncomePercentage = 30
 		opt.CostPerYield = 1.5
-		opt.EndGame = 24
+		opt.EndGame = 14
 		opt.InitialShares = 20
 		opt.BlackoutProbPerDollar = 0.001
 		opt.StabilityLevels = 5
