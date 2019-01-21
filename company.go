@@ -128,7 +128,7 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 		panic(blerr)
 	}
 
-	session.AddFlash("Sei diventato amministratore!", "error_")
+	session.AddFlash("Sei diventato amministratore!", "success_")
 	tx.Commit()
 
 	RedirectToURL(w, r, blerr.Redirect)
