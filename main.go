@@ -51,23 +51,6 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.GameHomePage(page))
 }
 
-type sortablePlayers []*Player
-
-func (sp sortablePlayers) Len() int {
-	return len([]*Player(sp))
-}
-
-func (sp sortablePlayers) Less(i, j int) bool {
-	p := []*Player(sp)
-	return p[i].VP > p[j].VP
-}
-
-func (sp sortablePlayers) Swap(i, j int) {
-	p := []*Player(sp)
-
-	p[i], p[j] = p[j], p[i]
-}
-
 func EndGamePage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
@@ -80,7 +63,7 @@ func EndGamePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(players) > 0 {
-		sort.Stable(sortablePlayers(players))
+		sort.Stable(PlayersSortableByVP(players))
 		max := players[0].VP
 
 		for _, p := range players {

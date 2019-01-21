@@ -7,6 +7,7 @@ import (
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
@@ -27,6 +28,7 @@ func Stats(w http.ResponseWriter, r *http.Request) {
 
 	_, companies := tx.GetCompanies()
 	_, players := tx.GetPlayers()
+	sort.Sort(CompaniesSortableByIncome(companies))
 
 	page := StatsData{HeaderData: header, Companies: companies, Players: players}
 
