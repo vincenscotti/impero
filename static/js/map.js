@@ -85,7 +85,7 @@ $(function() {
 
 		$("#sel-yield").text(target.data("yield") / 100);
 		$("#sel-blackoutprob").text(Math.round(target.data("blackoutp") * 10000) / 100);
-		$("#sel-stability").text(target.data("stability"));
+		$("#sel-stability").text(target.data("stability") + 1);
 		$("#sel-buycost").text(target.data("buycost") / 100);
 		if (target.data("investcost") != undefined) {
 			$("#investbutton").show();
