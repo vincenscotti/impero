@@ -1,15 +1,16 @@
 package main
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"net/http"
-	"strconv"
 )
 
-func ReportsPage(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ReportsPage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -20,13 +21,13 @@ func ReportsPage(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.ReportsPage(&page))
 }
 
-func ReportPage(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ReportPage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
 	blerr := BLError{}
 
-	if target, err := router.Get("report_all").URL(); err != nil {
+	if target, err := s.router.Get("report_all").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -52,7 +53,7 @@ func ReportPage(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.ReportPage(&page))
 }
 
-func DeleteReports(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) DeleteReports(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -60,7 +61,7 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 
 	blerr := BLError{}
 
-	if target, err := router.Get("report_all").URL(); err != nil {
+	if target, err := s.router.Get("report_all").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -70,7 +71,7 @@ func DeleteReports(w http.ResponseWriter, r *http.Request) {
 		IDs []int
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 

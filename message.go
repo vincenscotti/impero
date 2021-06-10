@@ -1,15 +1,16 @@
 package main
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"net/http"
-	"strconv"
 )
 
-func ComposeMessage(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ComposeMessage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -24,7 +25,7 @@ func ComposeMessage(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.ComposeMessagePage(&page))
 }
 
-func MessagesInbox(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) MessagesInbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -35,7 +36,7 @@ func MessagesInbox(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.MessagesInboxPage(&page))
 }
 
-func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -46,13 +47,13 @@ func MessagesOutbox(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.MessagesOutboxPage(&page))
 }
 
-func GetMessage(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) GetMessage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
 	blerr := BLError{}
 
-	if target, err := router.Get("message_inbox").URL(); err != nil {
+	if target, err := s.router.Get("message_inbox").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -78,7 +79,7 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.MessagePage(&page))
 }
 
-func NewMessagePost(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) NewMessagePost(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -86,7 +87,7 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 
 	blerr := BLError{}
 
-	if target, err := router.Get("message_outbox").URL(); err != nil {
+	if target, err := s.router.Get("message_outbox").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -94,7 +95,7 @@ func NewMessagePost(w http.ResponseWriter, r *http.Request) {
 
 	msg := &Message{}
 
-	if err := binder.Bind(msg, r); err != nil {
+	if err := s.binder.Bind(msg, r); err != nil {
 		panic(err)
 	}
 

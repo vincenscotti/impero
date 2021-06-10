@@ -1,12 +1,13 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gorilla/context"
 	. "github.com/vincenscotti/impero/model"
-	"net/http"
 )
 
-func BuyNode(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) BuyNode(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	tx := GetTx(r)
@@ -19,11 +20,11 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 		Y  int
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	if target, err := router.Get("map").URL(); err != nil {
+	if target, err := s.router.Get("map").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -43,7 +44,7 @@ func BuyNode(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func InvestNode(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) InvestNode(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	tx := GetTx(r)
@@ -56,11 +57,11 @@ func InvestNode(w http.ResponseWriter, r *http.Request) {
 		Y  int
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	if target, err := router.Get("map").URL(); err != nil {
+	if target, err := s.router.Get("map").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target

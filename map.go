@@ -1,13 +1,14 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gorilla/context"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"net/http"
 )
 
-func GetMap(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) GetMap(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 

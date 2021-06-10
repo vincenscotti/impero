@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"sort"
+	"strconv"
+
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"net/http"
-	"sort"
-	"strconv"
 )
 
-func Companies(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) Companies(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -22,7 +23,7 @@ func Companies(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.CompaniesPage(&page))
 }
 
-func Stats(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) Stats(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -35,7 +36,7 @@ func Stats(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.StatsPage(&page))
 }
 
-func GetCompany(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) GetCompany(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -66,14 +67,14 @@ func GetCompany(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.CompanyPage(&page))
 }
 
-func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	tx := GetTx(r)
 
 	blerr := BLError{}
 
-	if target, err := router.Get("gamehome").URL(); err != nil {
+	if target, err := s.router.Get("gamehome").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -81,7 +82,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 
 	cmp := &Company{}
 
-	if err := binder.Bind(cmp, r); err != nil {
+	if err := s.binder.Bind(cmp, r); err != nil {
 		panic(err)
 	}
 
@@ -96,7 +97,7 @@ func NewCompanyPost(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func PromoteCEO(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) PromoteCEO(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	tx := GetTx(r)
@@ -110,14 +111,14 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 		ID uint
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
 	cmp.ID = params.ID
 	newceo.ID = header.CurrentPlayer.ID
 
-	if target, err := router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
+	if target, err := s.router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -134,7 +135,7 @@ func PromoteCEO(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func ProposePartnership(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
@@ -145,14 +146,14 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	from := &Company{}
 	to := &Company{}
 
-	if err := binder.Bind(p, r); err != nil {
+	if err := s.binder.Bind(p, r); err != nil {
 		panic(err)
 	}
 
 	from.ID = p.FromID
 	to.ID = p.ToID
 
-	if target, err := router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
+	if target, err := s.router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -169,7 +170,7 @@ func ProposePartnership(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
@@ -180,7 +181,7 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 		ID uint
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
@@ -188,7 +189,7 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 
 	p.ID = params.ID
 
-	if target, err := router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
+	if target, err := s.router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -205,7 +206,7 @@ func ConfirmPartnership(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func DeletePartnership(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) DeletePartnership(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
@@ -216,14 +217,14 @@ func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 		ID uint
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
 	p := &Partnership{}
 	p.ID = params.ID
 
-	if target, err := router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
+	if target, err := s.router.Get("company").URL("id", fmt.Sprint(p.ToID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -240,7 +241,7 @@ func DeletePartnership(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func ModifyCompanyPureIncome(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ModifyCompanyPureIncome(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
@@ -254,13 +255,13 @@ func ModifyCompanyPureIncome(w http.ResponseWriter, r *http.Request) {
 		Action string
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
 	cmp.ID = params.ID
 
-	if target, err := router.Get("company").URL("id", fmt.Sprint(cmp.ID)); err != nil {
+	if target, err := s.router.Get("company").URL("id", fmt.Sprint(cmp.ID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target

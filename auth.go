@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/dgrijalva/jwt-go"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"net/http"
 )
 
-func Signup(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) Signup(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
@@ -19,7 +22,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	p := Player{}
 	msg := ""
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 	p.Name = params.Name
@@ -36,7 +39,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 				session.Values["playerID"] = newp.ID
 
-				Redirect(w, r, "gamehome")
+				s.Redirect(w, r, "gamehome")
 
 				return
 			}
@@ -48,14 +51,14 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.SignupPage(msg))
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) Login(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
 	_, ok := session.Values["playerID"].(uint)
 
 	if ok {
-		Redirect(w, r, "gamehome")
+		s.Redirect(w, r, "gamehome")
 
 		return
 	}
@@ -63,7 +66,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	p := Player{}
 	msg := ""
 
-	if err := binder.Bind(&p, r); err != nil {
+	if err := s.binder.Bind(&p, r); err != nil {
 		panic(err)
 	}
 
@@ -73,7 +76,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			session.Values["playerID"] = newp.ID
 
-			Redirect(w, r, "gamehome")
+			s.Redirect(w, r, "gamehome")
 
 			return
 		} else {
@@ -84,10 +87,45 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.LoginPage(msg))
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) APILogin(w http.ResponseWriter, r *http.Request) {
+	tx := GetTx(r)
+
+	p := Player{}
+
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, "invalid syntax", http.StatusBadRequest)
+		return
+	}
+
+	var response interface{}
+
+	if p.Name != "" && p.Password != "" {
+		err, _ := tx.LoginPlayer(&p)
+
+		if err == nil {
+			mySigningKey := []byte("AllYourBase")
+
+			// Create the Claims
+			claims := &jwt.StandardClaims{
+				ExpiresAt: 15000,
+				Issuer:    "test",
+			}
+
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+			ss, _ := token.SignedString(mySigningKey)
+			response = struct{ Token string }{ss}
+		} else {
+			response = err
+		}
+	}
+
+	RenderJSON(w, r, response)
+}
+
+func (s *httpBackend) Logout(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 
 	delete(session.Values, "playerID")
 
-	Redirect(w, r, "home")
+	s.Redirect(w, r, "home")
 }

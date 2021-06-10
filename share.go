@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/gorilla/context"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
-	"net/http"
 )
 
-func Market(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) Market(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -21,7 +22,7 @@ func Market(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.MarketPage(page))
 }
 
-func EmitShares(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) EmitShares(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -33,11 +34,11 @@ func EmitShares(w http.ResponseWriter, r *http.Request) {
 		Price     int
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	if target, err := router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
+	if target, err := s.router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -61,7 +62,7 @@ func EmitShares(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func SellShares(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) SellShares(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -73,11 +74,11 @@ func SellShares(w http.ResponseWriter, r *http.Request) {
 		Price     int
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	if target, err := router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
+	if target, err := s.router.Get("company").URL("id", fmt.Sprint(params.ID)); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -101,14 +102,14 @@ func SellShares(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func BidShare(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) BidShare(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	tx := GetTx(r)
 
 	blerr := BLError{}
 
-	if target, err := router.Get("market").URL(); err != nil {
+	if target, err := s.router.Get("market").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -119,7 +120,7 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 		Amount  int
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
@@ -138,14 +139,14 @@ func BidShare(w http.ResponseWriter, r *http.Request) {
 	RedirectToURL(w, r, blerr.Redirect)
 }
 
-func BuyShare(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) BuyShare(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	session := GetSession(r)
 	tx := GetTx(r)
 
 	blerr := BLError{}
 
-	if target, err := router.Get("market").URL(); err != nil {
+	if target, err := s.router.Get("market").URL(); err != nil {
 		panic(err)
 	} else {
 		blerr.Redirect = target
@@ -155,7 +156,7 @@ func BuyShare(w http.ResponseWriter, r *http.Request) {
 		Offer uint
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 

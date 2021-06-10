@@ -1,16 +1,22 @@
 package engine
 
 import (
-	"github.com/jinzhu/gorm"
-	. "github.com/vincenscotti/impero/model"
 	"log"
 	"time"
+
+	"github.com/jinzhu/gorm"
+	. "github.com/vincenscotti/impero/model"
 )
+
+type TimeProvider interface {
+	Now() time.Time
+}
 
 type Engine struct {
 	db          *gorm.DB
 	et          *eventThread
 	logger      *log.Logger
+	tp          TimeProvider
 	notificator Notificator
 }
 
@@ -22,8 +28,8 @@ type EngineSession struct {
 	toCommit  bool
 }
 
-func NewEngine(db *gorm.DB, logger *log.Logger) *Engine {
-	e := &Engine{db: db, logger: logger}
+func NewEngine(db *gorm.DB, logger *log.Logger, tp TimeProvider) *Engine {
+	e := &Engine{db: db, logger: logger, tp: tp}
 
 	e.et = NewEventThread(e)
 
@@ -31,8 +37,36 @@ func NewEngine(db *gorm.DB, logger *log.Logger) *Engine {
 }
 
 func (e *Engine) Boot() {
+	e.db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
+		&ChatMessage{}, &Company{}, &Partnership{}, &Shareholder{}, &Rental{},
+		&ShareAuction{}, &ShareAuctionParticipation{},
+		&TransferProposal{}, &ShareOffer{})
+
+	opt := &Options{}
+	if err := e.db.First(opt).Error; err == gorm.ErrRecordNotFound {
+		// insert sane default options
+		opt.CompanyActionPoints = 5
+		opt.CompanyPureIncomePercentage = 30
+		opt.CostPerYield = 1.5
+		opt.EndGame = 14
+		opt.InitialShares = 20
+		opt.BlackoutProbPerDollar = 0.001
+		opt.StabilityLevels = 5
+		opt.MaxBlackoutDeltaPerDollar = 0.0004
+		opt.GameStart = e.tp.Now()
+		opt.LastTurnCalculated = e.tp.Now()
+		opt.NewCompanyCost = 5
+		opt.PlayerActionPoints = 8
+		opt.PlayerBudget = 10000
+		opt.TurnDuration = 5
+		opt.Turn = 1
+
+		e.db.Create(opt)
+	}
+
 	tx := e.openSessionUnsafe()
 	defer tx.Close()
+
 	if nextEventValid, nextEventTs := tx.processEvents(); nextEventValid {
 		e.et.RegisterEvent(nextEventTs)
 	}
@@ -42,7 +76,7 @@ func (e *Engine) Boot() {
 func (e *Engine) OpenSession() *EngineSession {
 	es := &EngineSession{e: e}
 
-	es.timestamp = time.Now()
+	es.timestamp = e.tp.Now()
 	e.et.RequestToken(es.timestamp)
 
 	es.tx = e.db.Begin()
@@ -54,7 +88,7 @@ func (e *Engine) OpenSession() *EngineSession {
 func (e *Engine) openSessionUnsafe() *EngineSession {
 	es := &EngineSession{e: e}
 
-	es.timestamp = time.Now()
+	es.timestamp = e.tp.Now()
 	es.tx = e.db.Begin()
 	_, es.opt = es.GetOptions()
 
@@ -82,5 +116,5 @@ func (es *EngineSession) GetTimestamp() time.Time {
 }
 
 func (es *EngineSession) ForceEventProcessing() {
-	es.e.et.RegisterEvent(time.Now())
+	es.e.et.RegisterEvent(es.e.tp.Now())
 }

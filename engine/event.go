@@ -2,13 +2,15 @@ package engine
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
-	. "github.com/vincenscotti/impero/model"
 	"math/rand"
 	"time"
+
+	"github.com/jinzhu/gorm"
+	. "github.com/vincenscotti/impero/model"
 )
 
 func init() {
+	// FIXME: the random number generator should be injected when building an Engine.
 	rand.Seed(time.Now().Unix())
 }
 

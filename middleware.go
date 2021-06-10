@@ -2,25 +2,38 @@ package main
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httputil"
+
 	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
 	"github.com/vincenscotti/impero/engine"
 	. "github.com/vincenscotti/impero/model"
-	"net/http"
-	"net/http/httputil"
 )
 
-func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (s *httpBackend) LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		req, _ := httputil.DumpRequest(r, true)
-		logger.Println(string(req))
+		s.logger.Println(string(req))
 		next(w, r)
 	})
 }
 
-func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (s *httpBackend) APIMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tx := gameEngine.OpenSession()
+		tx := s.gameEngine.OpenSession()
+		defer tx.Close()
+
+		// TODO: handle panics
+
+		context.Set(r, "tx", tx)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *httpBackend) GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tx := s.gameEngine.OpenSession()
 		defer tx.Close()
 
 		var session *sessions.Session
@@ -36,9 +49,9 @@ func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 					session.Save(r, w)
 					http.Redirect(w, r, blerr.Redirect.Path, http.StatusFound)
 				} else if err, ok := errstruct.(error); ok {
-					ErrorHandler(err, w, r)
+					s.ErrorHandler(err, w, r)
 				} else if err, ok := errstruct.(string); ok {
-					ErrorHandler(errors.New(err), w, r)
+					s.ErrorHandler(errors.New(err), w, r)
 				} else {
 					panic(errstruct)
 				}
@@ -47,7 +60,7 @@ func GlobalMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}()
 
-		if session, err = store.Get(r, "sess"); err != nil {
+		if session, err = s.store.Get(r, "sess"); err != nil {
 			panic(err)
 		}
 
@@ -78,7 +91,7 @@ func GetSession(r *http.Request) *sessions.Session {
 	return session
 }
 
-func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (s *httpBackend) HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tx := GetTx(r)
 		_, opt := tx.GetOptions()
@@ -88,7 +101,7 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		pID, ok := session.Values["playerID"].(uint)
 
 		if !ok {
-			Redirect(w, r, "home")
+			s.Redirect(w, r, "home")
 
 			return
 		}
@@ -96,7 +109,7 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		err, p := tx.GetPlayer(int(pID))
 		if err != nil {
 			if p.ID == 0 {
-				Redirect(w, r, "logout")
+				s.Redirect(w, r, "logout")
 
 				return
 			} else {
@@ -106,7 +119,7 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		_, chats, msgs, reports := tx.GetPlayerNotifications(int(p.ID))
 
-		header := &HeaderData{CurrentPlayer: p, Router: router, NewChatMessages: chats, NewMessages: msgs, NewReports: reports, Now: now, Options: &opt}
+		header := &HeaderData{CurrentPlayer: p, Router: s.router, NewChatMessages: chats, NewMessages: msgs, NewReports: reports, Now: now, Options: &opt}
 		if s := session.Flashes("error_"); len(s) > 0 {
 			header.Error = s[0].(string)
 		}
@@ -125,8 +138,8 @@ func HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func GameMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (s *httpBackend) GameMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		LoggerMiddleware(GlobalMiddleware(HeaderMiddleware(next))).ServeHTTP(w, r)
+		s.LoggerMiddleware(s.GlobalMiddleware(s.HeaderMiddleware(next))).ServeHTTP(w, r)
 	})
 }

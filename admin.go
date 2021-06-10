@@ -2,13 +2,14 @@ package main
 
 import (
 	"errors"
-	. "github.com/vincenscotti/impero/model"
-	"github.com/vincenscotti/impero/templates"
 	"net/http"
 	"time"
+
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
 )
 
-func Admin(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) Admin(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
@@ -26,25 +27,21 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.AdminPage(p))
 }
 
-type PasswordForm struct {
-	Password string
-}
+func (s *httpBackend) validateAdmin(r *http.Request) (err error) {
+	p := struct{ Password string }{}
 
-func validateAdmin(r *http.Request) (err error) {
-	p := PasswordForm{}
-
-	if err := binder.Bind(&p, r); err != nil {
+	if err := s.binder.Bind(&p, r); err != nil {
 		panic(err)
 	}
 
-	if p.Password != AdminPass {
+	if p.Password != s.AdminPass {
 		err = errors.New("Password errata!")
 	}
 
 	return
 }
 
-func UpdateOptions(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) UpdateOptions(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
@@ -61,14 +58,14 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 		Action             string
 	}{}
 
-	if err := validateAdmin(r); err != nil {
+	if err := s.validateAdmin(r); err != nil {
 		session.AddFlash(err.Error(), "message_")
 	} else {
-		if err := binder.Bind(&newopt, r); err != nil {
+		if err := s.binder.Bind(&newopt, r); err != nil {
 			panic(err)
 		}
 
-		if err := binder.Bind(&otheropts, r); err != nil {
+		if err := s.binder.Bind(&otheropts, r); err != nil {
 			panic(err)
 		}
 
@@ -85,14 +82,14 @@ func UpdateOptions(w http.ResponseWriter, r *http.Request) {
 		session.AddFlash("Opzioni aggiornate", "message_")
 	}
 
-	Redirect(w, r, "admin")
+	s.Redirect(w, r, "admin")
 }
 
-func ImportMap(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ImportMap(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
-	if err := validateAdmin(r); err != nil {
+	if err := s.validateAdmin(r); err != nil {
 		session.AddFlash(err.Error(), "message_")
 	} else {
 		if err := tx.ImportMap(); err != nil {
@@ -104,10 +101,10 @@ func ImportMap(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	Redirect(w, r, "admin")
+	s.Redirect(w, r, "admin")
 }
 
-func GenerateMap(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) GenerateMap(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
@@ -119,11 +116,11 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 		Generate bool
 	}{}
 
-	if err := binder.Bind(&params, r); err != nil {
+	if err := s.binder.Bind(&params, r); err != nil {
 		panic(err)
 	}
 
-	if err := validateAdmin(r); err != nil {
+	if err := s.validateAdmin(r); err != nil {
 		session.AddFlash(err.Error(), "message_")
 	} else {
 		if err := tx.UpdateMapNodes(params.X0, params.X1, params.Y0, params.Y1, params.Generate); err != nil {
@@ -135,22 +132,22 @@ func GenerateMap(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	Redirect(w, r, "admin")
+	s.Redirect(w, r, "admin")
 }
 
-func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) BroadcastMessage(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
 	msg := &Message{}
 
-	if err := validateAdmin(r); err != nil {
+	if err := s.validateAdmin(r); err != nil {
 		session.AddFlash(err.Error(), "message_")
 
 		goto out
 	}
 
-	if err := binder.Bind(msg, r); err != nil {
+	if err := s.binder.Bind(msg, r); err != nil {
 		panic(err)
 	}
 
@@ -172,5 +169,5 @@ func BroadcastMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 out:
-	Redirect(w, r, "admin")
+	s.Redirect(w, r, "admin")
 }

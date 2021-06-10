@@ -2,10 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/gorilla/schema"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/gorilla/schema"
 )
 
 type gorillaBinder struct {
@@ -28,8 +29,6 @@ func (this *gorillaBinder) Bind(i interface{}, r *http.Request) error {
 
 	return this.decoder.Decode(i, r.PostForm)
 }
-
-var binder *gorillaBinder
 
 type formTime time.Time
 
@@ -70,8 +69,8 @@ func RenderJSON(w http.ResponseWriter, r *http.Request, obj interface{}) (err er
 	return
 }
 
-func Redirect(w http.ResponseWriter, r *http.Request, to string) {
-	u, err := router.Get(to).URL()
+func (s *httpBackend) Redirect(w http.ResponseWriter, r *http.Request, to string) {
+	u, err := s.router.Get(to).URL()
 	if err != nil {
 		panic(err)
 	}

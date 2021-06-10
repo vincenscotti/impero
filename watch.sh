@@ -8,8 +8,9 @@ while inotifywait -r -e modify --exclude "(.*.db.*|.*.swp|build)" .; do
 		cd templates/
 	fi
 	markdown spec.md > spec.html &&
-	qtc &&
+	$GOPATH/bin/qtc &&
 	cd ../ &&
 	go build &&
-		(./impero -pass="" -debug=true &)
+	go test ./...
+	#(./impero -pass="" -debug=true &)
 done

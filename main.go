@@ -4,15 +4,6 @@ import (
 	ctx "context"
 	"flag"
 	"fmt"
-	"github.com/gorilla/context"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/vincenscotti/impero/engine"
-	. "github.com/vincenscotti/impero/model"
-	"github.com/vincenscotti/impero/templates"
-	"github.com/vincenscotti/impero/tgui"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -23,19 +14,30 @@ import (
 	"sort"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/vincenscotti/impero/engine"
+	. "github.com/vincenscotti/impero/model"
+	"github.com/vincenscotti/impero/templates"
+	"github.com/vincenscotti/impero/tgui"
 )
 
-var db *gorm.DB
-var store sessions.Store
-var logger *log.Logger
-var router *mux.Router
+type defaultTimeProvider struct{}
 
-func Help(w http.ResponseWriter, r *http.Request) {
+func (tp defaultTimeProvider) Now() time.Time {
+	return time.Now()
+}
+
+func (s *httpBackend) Help(w http.ResponseWriter, r *http.Request) {
 	//RenderHTML(w, r, templates.HelpPage())
 	http.Redirect(w, r, "/static/rules.pdf", http.StatusFound)
 }
 
-func GameHome(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) GameHome(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -51,7 +53,7 @@ func GameHome(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.GameHomePage(page))
 }
 
-func EndGamePage(w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) EndGamePage(w http.ResponseWriter, r *http.Request) {
 	header := context.Get(r, "header").(*HeaderData)
 	tx := GetTx(r)
 
@@ -78,7 +80,7 @@ func EndGamePage(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.EndGamePage(page))
 }
 
-func ErrorHandler(err error, w http.ResponseWriter, r *http.Request) {
+func (s *httpBackend) ErrorHandler(err error, w http.ResponseWriter, r *http.Request) {
 	session, ok := context.Get(r, "session").(*sessions.Session)
 
 	var pID uint
@@ -91,14 +93,100 @@ func ErrorHandler(err error, w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, r, templates.ErrorPage(err, string(req), pID, string(debug.Stack())))
 }
 
-var AdminPass string
+type httpBackend struct {
+	binder     *gorillaBinder
+	store      sessions.Store
+	logger     *log.Logger
+	router     *mux.Router
+	AdminPass  string
+	gameEngine *engine.Engine
+}
 
-var gameEngine *engine.Engine
+func (s httpBackend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
+}
+
+func newHttpBackend(eng *engine.Engine, logger *log.Logger, adminPass string, debug bool) (s httpBackend) {
+	s.gameEngine = eng
+	s.logger = logger
+
+	s.store = sessions.NewCookieStore([]byte("secretpassword"))
+
+	s.router = mux.NewRouter()
+
+	s.binder = NewGorillaBinder()
+
+	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
+	s.router.HandleFunc("/api/login/", s.APIMiddleware(s.APILogin)).Name("api_login")
+
+	s.router.HandleFunc("/", s.GlobalMiddleware(s.Login)).Name("home")
+	s.router.HandleFunc("/signup/", s.GlobalMiddleware(s.Signup)).Name("signup")
+	s.router.HandleFunc("/login/", s.GlobalMiddleware(s.Login)).Name("login")
+	s.router.HandleFunc("/logout/", s.GlobalMiddleware(s.Logout)).Name("logout")
+	s.router.HandleFunc("/help/", s.GlobalMiddleware(s.Help)).Name("help")
+
+	s.router.HandleFunc("/admin/", s.GlobalMiddleware(s.Admin)).Name("admin")
+	s.router.HandleFunc("/admin/options/", s.GlobalMiddleware(s.UpdateOptions)).Name("admin_options")
+	s.router.HandleFunc("/admin/map/import/", s.GlobalMiddleware(s.ImportMap)).Name("admin_map_import")
+	s.router.HandleFunc("/admin/map/", s.GlobalMiddleware(s.GenerateMap)).Name("admin_map")
+	s.router.HandleFunc("/admin/broadcast/", s.GlobalMiddleware(s.BroadcastMessage)).Name("admin_broadcast")
+
+	game := s.router.PathPrefix("/game").Subrouter()
+
+	game.HandleFunc("/", s.GameMiddleware(s.GameHome)).Name("gamehome")
+	game.HandleFunc("/market/", s.GameMiddleware(s.Market)).Name("market")
+
+	game.HandleFunc("/player/all/", s.GameMiddleware(s.Players)).Name("player_all")
+	game.HandleFunc("/player/{id}", s.GameMiddleware(s.GetPlayer)).Name("player")
+	game.HandleFunc("/player/transfer/", s.GameMiddleware(s.Transfer)).Name("player_transfer")
+	game.HandleFunc("/player/transfer/confirm/", s.GameMiddleware(s.ConfirmTransfer)).Name("player_transfer_confirm")
+
+	game.HandleFunc("/chat/", s.GameMiddleware(s.GetChat)).Name("chat")
+	game.HandleFunc("/chat/post/", s.GameMiddleware(s.PostChat)).Name("chat_post")
+
+	game.HandleFunc("/message/compose/", s.GameMiddleware(s.ComposeMessage)).Name("message_compose")
+	game.HandleFunc("/message/inbox/", s.GameMiddleware(s.MessagesInbox)).Name("message_inbox")
+	game.HandleFunc("/message/outbox/", s.GameMiddleware(s.MessagesOutbox)).Name("message_outbox")
+	game.HandleFunc("/message/{id}", s.GameMiddleware(s.GetMessage)).Name("message")
+	game.HandleFunc("/message/new/", s.GameMiddleware(s.NewMessagePost)).Name("message_new")
+
+	game.HandleFunc("/report/all/", s.GameMiddleware(s.ReportsPage)).Name("report_all")
+	game.HandleFunc("/report/{id}", s.GameMiddleware(s.ReportPage)).Name("report")
+	game.HandleFunc("/report/delete/", s.GameMiddleware(s.DeleteReports)).Name("report_delete")
+
+	game.HandleFunc("/company/all/", s.GameMiddleware(s.Companies)).Name("company_all")
+	game.HandleFunc("/company/{id}", s.GameMiddleware(s.GetCompany)).Name("company")
+	game.HandleFunc("/company/new/", s.GameMiddleware(s.NewCompanyPost)).Name("company_new")
+	game.HandleFunc("/company/promoteceo/", s.GameMiddleware(s.PromoteCEO)).Name("company_promoteceo")
+	game.HandleFunc("/company/partnership/proposal/", s.GameMiddleware(s.ProposePartnership)).Name("company_partnership_proposal")
+	game.HandleFunc("/company/partnership/confirm/", s.GameMiddleware(s.ConfirmPartnership)).Name("company_partnership_confirm")
+	game.HandleFunc("/company/partnership/delete/", s.GameMiddleware(s.DeletePartnership)).Name("company_partnership_delete")
+	game.HandleFunc("/company/pureincome/", s.GameMiddleware(s.ModifyCompanyPureIncome)).Name("company_pureincome")
+	game.HandleFunc("/company/emitshares/", s.GameMiddleware(s.EmitShares)).Name("company_emitshares")
+	game.HandleFunc("/company/sellshares/", s.GameMiddleware(s.SellShares)).Name("company_sellshares")
+	game.HandleFunc("/company/buy/", s.GameMiddleware(s.BuyNode)).Name("company_buy")
+	game.HandleFunc("/company/invest/", s.GameMiddleware(s.InvestNode)).Name("company_invest")
+
+	game.HandleFunc("/stats/", s.GameMiddleware(s.Stats)).Name("stats")
+
+	game.HandleFunc("/share/bid/", s.GameMiddleware(s.BidShare)).Name("bid_share")
+	game.HandleFunc("/share/buy/", s.GameMiddleware(s.BuyShare)).Name("buy_share")
+	game.HandleFunc("/map/", s.GameMiddleware(s.GetMap)).Name("map")
+
+	game.HandleFunc("/chart/", s.GameMiddleware(s.EndGamePage)).Name("chart")
+
+	if debug {
+		s.router.PathPrefix("/debug/").Handler(http.DefaultServeMux)
+	}
+
+	return
+}
 
 func main() {
 	debug := flag.Bool("debug", true, "turn on debug facilities")
 	addr := flag.String("addr", ":8080", "address:port to bind to")
-	flag.StringVar(&AdminPass, "pass", "admin", "administrator password")
+	adminPass := flag.String("pass", "admin", "administrator password")
 	dbdriver := flag.String("dbdriver", "mysql", "database driver name")
 	dbstring := flag.String("dbstring", os.Getenv("MYSQL_CNX_STRING"), "database connection string")
 	tgtoken := flag.String("tgtoken", os.Getenv("TGUI_TOKEN"), "telegram bot connection token")
@@ -106,119 +194,26 @@ func main() {
 
 	flag.Parse()
 
-	var err error
-
-	db, err = gorm.Open(*dbdriver, *dbstring)
+	db, err := gorm.Open(*dbdriver, *dbstring)
 	if err != nil {
 		panic(err)
 	}
 
 	defer db.Close()
 
-	store = sessions.NewCookieStore([]byte("secretpassword"))
+	logger := log.New(os.Stdout, "impero: ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	logger = log.New(os.Stdout, "impero: ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
-
-	router = mux.NewRouter()
+	gameEngine := engine.NewEngine(db, logger, defaultTimeProvider{})
 
 	if *debug {
 		db.LogMode(true)
-
-		router.PathPrefix("/debug/").Handler(http.DefaultServeMux)
 	}
 
-	db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
-		&ChatMessage{}, &Company{}, &Partnership{}, &Shareholder{}, &Rental{},
-		&ShareAuction{}, &ShareAuctionParticipation{},
-		&TransferProposal{}, &ShareOffer{})
-
-	opt := &Options{}
-	if err := db.First(opt).Error; err == gorm.ErrRecordNotFound {
-		// insert sane default options
-		opt.CompanyActionPoints = 5
-		opt.CompanyPureIncomePercentage = 30
-		opt.CostPerYield = 1.5
-		opt.EndGame = 14
-		opt.InitialShares = 20
-		opt.BlackoutProbPerDollar = 0.001
-		opt.StabilityLevels = 5
-		opt.MaxBlackoutDeltaPerDollar = 0.0004
-		opt.GameStart = time.Now()
-		opt.LastTurnCalculated = time.Now()
-		opt.NewCompanyCost = 5
-		opt.PlayerActionPoints = 8
-		opt.PlayerBudget = 10000
-		opt.TurnDuration = 5
-		opt.Turn = 1
-
-		db.Create(opt)
-	}
-
-	binder = NewGorillaBinder()
-
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
-
-	router.HandleFunc("/", GlobalMiddleware(Login)).Name("home")
-	router.HandleFunc("/signup/", GlobalMiddleware(Signup)).Name("signup")
-	router.HandleFunc("/login/", GlobalMiddleware(Login)).Name("login")
-	router.HandleFunc("/logout/", GlobalMiddleware(Logout)).Name("logout")
-	router.HandleFunc("/help/", GlobalMiddleware(Help)).Name("help")
-
-	router.HandleFunc("/admin/", GlobalMiddleware(Admin)).Name("admin")
-	router.HandleFunc("/admin/options/", GlobalMiddleware(UpdateOptions)).Name("admin_options")
-	router.HandleFunc("/admin/map/import/", GlobalMiddleware(ImportMap)).Name("admin_map_import")
-	router.HandleFunc("/admin/map/", GlobalMiddleware(GenerateMap)).Name("admin_map")
-	router.HandleFunc("/admin/broadcast/", GlobalMiddleware(BroadcastMessage)).Name("admin_broadcast")
-
-	game := router.PathPrefix("/game").Subrouter()
-
-	game.HandleFunc("/", GameMiddleware(GameHome)).Name("gamehome")
-	game.HandleFunc("/market/", GameMiddleware(Market)).Name("market")
-
-	game.HandleFunc("/player/all/", GameMiddleware(Players)).Name("player_all")
-	game.HandleFunc("/player/{id}", GameMiddleware(GetPlayer)).Name("player")
-	game.HandleFunc("/player/transfer/", GameMiddleware(Transfer)).Name("player_transfer")
-	game.HandleFunc("/player/transfer/confirm/", GameMiddleware(ConfirmTransfer)).Name("player_transfer_confirm")
-
-	game.HandleFunc("/chat/", GameMiddleware(GetChat)).Name("chat")
-	game.HandleFunc("/chat/post/", GameMiddleware(PostChat)).Name("chat_post")
-
-	game.HandleFunc("/message/compose/", GameMiddleware(ComposeMessage)).Name("message_compose")
-	game.HandleFunc("/message/inbox/", GameMiddleware(MessagesInbox)).Name("message_inbox")
-	game.HandleFunc("/message/outbox/", GameMiddleware(MessagesOutbox)).Name("message_outbox")
-	game.HandleFunc("/message/{id}", GameMiddleware(GetMessage)).Name("message")
-	game.HandleFunc("/message/new/", GameMiddleware(NewMessagePost)).Name("message_new")
-
-	game.HandleFunc("/report/all/", GameMiddleware(ReportsPage)).Name("report_all")
-	game.HandleFunc("/report/{id}", GameMiddleware(ReportPage)).Name("report")
-	game.HandleFunc("/report/delete/", GameMiddleware(DeleteReports)).Name("report_delete")
-
-	game.HandleFunc("/company/all/", GameMiddleware(Companies)).Name("company_all")
-	game.HandleFunc("/company/{id}", GameMiddleware(GetCompany)).Name("company")
-	game.HandleFunc("/company/new/", GameMiddleware(NewCompanyPost)).Name("company_new")
-	game.HandleFunc("/company/promoteceo/", GameMiddleware(PromoteCEO)).Name("company_promoteceo")
-	game.HandleFunc("/company/partnership/proposal/", GameMiddleware(ProposePartnership)).Name("company_partnership_proposal")
-	game.HandleFunc("/company/partnership/confirm/", GameMiddleware(ConfirmPartnership)).Name("company_partnership_confirm")
-	game.HandleFunc("/company/partnership/delete/", GameMiddleware(DeletePartnership)).Name("company_partnership_delete")
-	game.HandleFunc("/company/pureincome/", GameMiddleware(ModifyCompanyPureIncome)).Name("company_pureincome")
-	game.HandleFunc("/company/emitshares/", GameMiddleware(EmitShares)).Name("company_emitshares")
-	game.HandleFunc("/company/sellshares/", GameMiddleware(SellShares)).Name("company_sellshares")
-	game.HandleFunc("/company/buy/", GameMiddleware(BuyNode)).Name("company_buy")
-	game.HandleFunc("/company/invest/", GameMiddleware(InvestNode)).Name("company_invest")
-
-	game.HandleFunc("/stats/", GameMiddleware(Stats)).Name("stats")
-
-	game.HandleFunc("/share/bid/", GameMiddleware(BidShare)).Name("bid_share")
-	game.HandleFunc("/share/buy/", GameMiddleware(BuyShare)).Name("buy_share")
-	game.HandleFunc("/map/", GameMiddleware(GetMap)).Name("map")
-
-	game.HandleFunc("/chart/", GameMiddleware(EndGamePage)).Name("chart")
-
-	gameEngine = engine.NewEngine(db, logger)
+	httpBackend := newHttpBackend(gameEngine, logger, *adminPass, *debug)
 
 	s := &http.Server{}
 	s.Addr = *addr
-	s.Handler = router
+	s.Handler = httpBackend
 
 	tgui := tgui.New(gameEngine, *tgtoken, *weburl)
 
