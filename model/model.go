@@ -1,8 +1,10 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/jinzhu/gorm"
 )
 
 type Options struct {
@@ -22,6 +24,16 @@ type Options struct {
 	MaxBlackoutDeltaPerDollar   float64
 	Turn                        int
 	EndGame                     int
+}
+
+type TokenClaims struct {
+	jwt.StandardClaims
+	TokenID uint
+}
+
+type Token struct {
+	gorm.Model
+	PlayerID uint
 }
 
 type Coord struct {

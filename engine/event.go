@@ -11,6 +11,8 @@ import (
 
 func init() {
 	// FIXME: the random number generator should be injected when building an Engine.
+	// The problem is that with the standard Go rand package there is no way to
+	// instantiate a non-global thread safe random number generator.
 	rand.Seed(time.Now().Unix())
 }
 

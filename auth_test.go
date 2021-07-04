@@ -25,7 +25,7 @@ func getTestServer() (httpBackend, *gorm.DB) {
 
 	logger := log.New(os.Stdout, "impero: ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	gameEngine := engine.NewEngine(db, logger, defaultTimeProvider{})
+	gameEngine := engine.NewEngine(db, logger, defaultTimeProvider{}, []byte("testJwtPassword"))
 	gameEngine.Boot()
 
 	return newHttpBackend(gameEngine, logger, testAdminPassword, true), db

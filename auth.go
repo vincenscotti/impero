@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	. "github.com/vincenscotti/impero/model"
 	"github.com/vincenscotti/impero/templates"
 )
@@ -55,12 +54,14 @@ func (s *httpBackend) Login(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
 	tx := GetTx(r)
 
-	_, ok := session.Values["playerID"].(uint)
+	tokenString, ok := session.Values["tokenString"].(string)
 
 	if ok {
-		s.Redirect(w, r, "gamehome")
+		if p, _ := tx.ValidateTokenString(tokenString); p != nil {
+			s.Redirect(w, r, "gamehome")
 
-		return
+			return
+		}
 	}
 
 	p := Player{}
@@ -71,10 +72,10 @@ func (s *httpBackend) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if p.Name != "" && p.Password != "" {
-		err, newp := tx.LoginPlayer(&p)
+		err, _, tokenString := tx.LoginPlayer(&p)
 
 		if err == nil {
-			session.Values["playerID"] = newp.ID
+			session.Values["tokenString"] = tokenString
 
 			s.Redirect(w, r, "gamehome")
 
@@ -100,19 +101,9 @@ func (s *httpBackend) APILogin(w http.ResponseWriter, r *http.Request) {
 	var response interface{}
 
 	if p.Name != "" && p.Password != "" {
-		err, _ := tx.LoginPlayer(&p)
+		err, _, ss := tx.LoginPlayer(&p)
 
 		if err == nil {
-			mySigningKey := []byte("AllYourBase")
-
-			// Create the Claims
-			claims := &jwt.StandardClaims{
-				ExpiresAt: 15000,
-				Issuer:    "test",
-			}
-
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-			ss, _ := token.SignedString(mySigningKey)
 			response = struct{ Token string }{ss}
 		} else {
 			response = err
@@ -124,8 +115,17 @@ func (s *httpBackend) APILogin(w http.ResponseWriter, r *http.Request) {
 
 func (s *httpBackend) Logout(w http.ResponseWriter, r *http.Request) {
 	session := GetSession(r)
+	tx := GetTx(r)
 
-	delete(session.Values, "playerID")
+	tokenString, ok := session.Values["tokenString"].(string)
+
+	if ok {
+		if _, token := tx.ValidateTokenString(tokenString); token != nil {
+			tx.DeleteToken(token)
+		}
+	}
+
+	delete(session.Values, "tokenString")
 
 	s.Redirect(w, r, "home")
 }

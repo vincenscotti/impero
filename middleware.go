@@ -98,7 +98,7 @@ func (s *httpBackend) HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		session := GetSession(r)
 		now := tx.GetTimestamp()
 
-		pID, ok := session.Values["playerID"].(uint)
+		tokenString, ok := session.Values["tokenString"].(string)
 
 		if !ok {
 			s.Redirect(w, r, "home")
@@ -106,15 +106,16 @@ func (s *httpBackend) HeaderMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		err, p := tx.GetPlayer(int(pID))
-		if err != nil {
-			if p.ID == 0 {
-				s.Redirect(w, r, "logout")
+		pID, _ := tx.ValidateTokenString(tokenString)
+		if pID == nil {
+			s.Redirect(w, r, "logout")
 
-				return
-			} else {
-				panic(err)
-			}
+			return
+		}
+
+		err, p := tx.GetPlayer(int(pID.ID))
+		if err != nil {
+			panic(err)
 		}
 
 		_, chats, msgs, reports := tx.GetPlayerNotifications(int(p.ID))

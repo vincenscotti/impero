@@ -2,8 +2,9 @@ package tgui
 
 import (
 	"fmt"
+
 	. "github.com/vincenscotti/impero/model"
-	"gopkg.in/telegram-bot-api.v4"
+	tgbotapi "gopkg.in/telegram-bot-api.v4"
 )
 
 func (tg *TGUI) Run(debug bool) (err error) {
@@ -75,7 +76,8 @@ func (tg *TGUI) Run(debug bool) (err error) {
 				state.State = StateWaitPassword
 			} else if state.State == StateWaitPassword {
 				tx := tg.e.OpenSession()
-				err, p := tx.LoginPlayer(&Player{Name: state.Username, Password: update.Message.Text})
+				p := &Player{Name: state.Username, Password: update.Message.Text}
+				err, _, _ := tx.LoginPlayer(p)
 				tx.Close()
 
 				if err == nil {

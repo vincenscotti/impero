@@ -18,6 +18,7 @@ type Engine struct {
 	logger      *log.Logger
 	tp          TimeProvider
 	notificator Notificator
+	jwtPass     []byte
 }
 
 type EngineSession struct {
@@ -28,8 +29,8 @@ type EngineSession struct {
 	toCommit  bool
 }
 
-func NewEngine(db *gorm.DB, logger *log.Logger, tp TimeProvider) *Engine {
-	e := &Engine{db: db, logger: logger, tp: tp}
+func NewEngine(db *gorm.DB, logger *log.Logger, tp TimeProvider, jwtPass []byte) *Engine {
+	e := &Engine{db: db, logger: logger, tp: tp, jwtPass: jwtPass}
 
 	e.et = NewEventThread(e)
 
@@ -40,7 +41,7 @@ func (e *Engine) Boot() {
 	e.db.AutoMigrate(&Options{}, &Node{}, &Player{}, &Message{}, &Report{},
 		&ChatMessage{}, &Company{}, &Partnership{}, &Shareholder{}, &Rental{},
 		&ShareAuction{}, &ShareAuctionParticipation{},
-		&TransferProposal{}, &ShareOffer{})
+		&TransferProposal{}, &ShareOffer{}, &Token{})
 
 	opt := &Options{}
 	if err := e.db.First(opt).Error; err == gorm.ErrRecordNotFound {

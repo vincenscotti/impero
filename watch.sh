@@ -11,6 +11,6 @@ while inotifywait -r -e modify --exclude "(.*.db.*|.*.swp|build)" .; do
 	$GOPATH/bin/qtc &&
 	cd ../ &&
 	go build &&
-	go test ./...
-	#(./impero -pass="" -debug=true &)
+	go test ./... #&&
+	#(./impero -pass="" -debug=true -dbstring="impero:password@tcp(localhost:mysql)/impero?parseTime=true&loc=Local" &)
 done

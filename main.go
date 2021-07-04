@@ -191,6 +191,7 @@ func main() {
 	dbstring := flag.String("dbstring", os.Getenv("MYSQL_CNX_STRING"), "database connection string")
 	tgtoken := flag.String("tgtoken", os.Getenv("TGUI_TOKEN"), "telegram bot connection token")
 	weburl := flag.String("weburl", os.Getenv("WEB_ROOT"), "URL where the web UI is deployed")
+	jwtPass := flag.String("jwtpass", "ImperoRocks", "password used to sign JWT authentication tokens")
 
 	flag.Parse()
 
@@ -203,7 +204,7 @@ func main() {
 
 	logger := log.New(os.Stdout, "impero: ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	gameEngine := engine.NewEngine(db, logger, defaultTimeProvider{})
+	gameEngine := engine.NewEngine(db, logger, defaultTimeProvider{}, []byte(*jwtPass))
 
 	if *debug {
 		db.LogMode(true)
