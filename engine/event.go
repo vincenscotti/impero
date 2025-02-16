@@ -58,7 +58,7 @@ func (es *EngineSession) processEvents() (nextEventValid bool, nextEvent time.Ti
 				sa.Company.ShareCapital += sa.HighestOffer
 			}
 
-			if err := es.tx.Save(sa.Company).Error; err != nil {
+			if err := es.tx.Save(&sa.Company).Error; err != nil {
 				panic(err)
 			}
 

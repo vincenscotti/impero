@@ -2,7 +2,6 @@ package main
 
 import (
 	ctx "context"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -81,12 +80,11 @@ func (s *httpBackend) EndGamePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *httpBackend) ErrorHandler(err error, w http.ResponseWriter, r *http.Request) {
-	session, ok := context.Get(r, "session").(*sessions.Session)
-
 	var pID uint
 
+	session, ok := context.Get(r, "session").(*sessions.Session)
 	if ok {
-		pID = session.Values["playerID"].(uint)
+		pID, _ = session.Values["playerID"].(uint)
 	}
 
 	req, _ := httputil.DumpRequest(r, true)
@@ -183,19 +181,51 @@ func newHttpBackend(eng *engine.Engine, logger *log.Logger, adminPass string, de
 	return
 }
 
+type EngineConf struct {
+	Debug     bool
+	Addr      string
+	AdminPass string
+	DbDriver  string
+	DbURL     string
+	TgToken   string
+	WebURL    string
+	JwtPass   string
+	StorePass string
+}
+
+func parseEngineConfFromEnviron() (c EngineConf) {
+	c.Debug = os.Getenv("DEBUG") != ""
+
+	getEnvOrDefault := func(key string, def string) string {
+		val := os.Getenv(key)
+		if val == "" {
+			val = def
+		}
+		return val
+	}
+	getEnvOrPanic := func(key string) string {
+		val := os.Getenv(key)
+		if val == "" {
+			panic(key + " environment variable not set")
+		}
+		return val
+	}
+
+	c.Addr = getEnvOrDefault("ADDR", ":8080")
+	c.AdminPass = getEnvOrPanic("ADMIN_PASS")
+	c.DbDriver = getEnvOrDefault("DATABASE_DRIVER", "mysql")
+	c.DbURL = getEnvOrPanic("DATABASE_URL")
+	c.TgToken = getEnvOrDefault("TGUI_TOKEN", "")
+	c.WebURL = getEnvOrDefault("WEB_ROOT", "")
+	c.JwtPass = getEnvOrPanic("JWT_PASS")
+	c.StorePass = getEnvOrPanic("STORE_PASS")
+	return
+}
+
 func main() {
-	debug := flag.Bool("debug", true, "turn on debug facilities")
-	addr := flag.String("addr", ":8080", "address:port to bind to")
-	adminPass := flag.String("pass", "admin", "administrator password")
-	dbdriver := flag.String("dbdriver", "mysql", "database driver name")
-	dbstring := flag.String("dbstring", os.Getenv("MYSQL_CNX_STRING"), "database connection string")
-	tgtoken := flag.String("tgtoken", os.Getenv("TGUI_TOKEN"), "telegram bot connection token")
-	weburl := flag.String("weburl", os.Getenv("WEB_ROOT"), "URL where the web UI is deployed")
-	jwtPass := flag.String("jwtpass", "ImperoRocks", "password used to sign JWT authentication tokens")
+	conf := parseEngineConfFromEnviron()
 
-	flag.Parse()
-
-	db, err := gorm.Open(*dbdriver, *dbstring)
+	db, err := gorm.Open(conf.DbDriver, conf.DbURL)
 	if err != nil {
 		panic(err)
 	}
@@ -204,19 +234,19 @@ func main() {
 
 	logger := log.New(os.Stdout, "impero: ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	gameEngine := engine.NewEngine(db, logger, defaultTimeProvider{}, []byte(*jwtPass))
+	gameEngine := engine.NewEngine(db, logger, defaultTimeProvider{}, []byte(conf.JwtPass))
 
-	if *debug {
+	if conf.Debug {
 		db.LogMode(true)
 	}
 
-	httpBackend := newHttpBackend(gameEngine, logger, *adminPass, *debug)
+	httpBackend := newHttpBackend(gameEngine, logger, conf.AdminPass, conf.Debug)
 
 	s := &http.Server{}
-	s.Addr = *addr
+	s.Addr = conf.Addr
 	s.Handler = httpBackend
 
-	tgui := tgui.New(gameEngine, *tgtoken, *weburl)
+	tgui := tgui.New(gameEngine, conf.TgToken, conf.WebURL)
 
 	gameEngine.RegisterNotificator(tgui)
 	gameEngine.Boot()
@@ -226,7 +256,7 @@ func main() {
 	}()
 
 	go func() {
-		fmt.Println(tgui.Run(*debug))
+		fmt.Println(tgui.Run(conf.Debug))
 	}()
 
 	stop := make(chan os.Signal, 1)

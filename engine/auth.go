@@ -22,6 +22,7 @@ func (es *EngineSession) SignupPlayer(p *Player) (error, *Player) {
 			_, opt := es.GetOptions()
 			p.Budget = opt.PlayerBudget
 			p.ActionPoints = opt.PlayerActionPoints
+			p.LastChatViewed = es.e.tp.Now()
 
 			pwdhash, err := bcrypt.GenerateFromPassword([]byte(p.Password), 10)
 
